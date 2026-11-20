@@ -10,8 +10,8 @@
 - [x] 6. Sync profile README `juw12/juw12` (game section)
 - [x] 7. Sync portfolio card (juwenlie.pages.dev)
 - [x] 8. Sync landing page (juw12.github.io/p/neon-coast/)
-- [ ] 9. Sync Obsidian: project note + Update Log, vault pushed
-- [ ] 10. `P --log`, lessons, final message
+- [x] 9. Sync Obsidian: project note + Update Log, vault pushed (`juw12/obsidian` f013d213)
+- [x] 10. `P --log`, lessons, final message
 
 ## Assumptions
 
