@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 9.0,
+        "C3": 10.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "Key-press runs on this build: 9 of 10 finished... the tenth hit a pedestrian... and was arrested",
+        "C2": "Player character is a simple block (Screenshot 7) while cars and buildings have detailed textures and lighting",
+        "C3": "Perks... tie the side activities together... jobs, police, money sinks and secrets that feed each other",
+        "C4": "Key binding 'R: Restart / handbrake' creates ambiguity between driving mechanics and resetting progress",
+        "C5": "Section 'Not covered by the tests' plainly states limits like 'No real players have tried it yet'"
+      },
+      "fixes": [
+        "Implement a 'tutorial shield' that prevents police arrests during the first story job to guarantee the sub-60s onboarding flow for all players.",
+        "Upgrade the player character model to match the fidelity of the vehicles and environment, reducing the tonal clash between the blocky avatar and the detailed city.",
+        "Disambiguate the 'R' key binding (currently 'Restart / handbrake') to prevent accidental job resets while driving or confusion in control schemes."
+      ],
+      "total": 9.35,
+      "seconds": 31.7
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen shows six keys and 'New Game'; first objective 'Get into the red car ahead [F]' is clear; first job cut to under a minute ending at Sol Wheel pier; learner car rule prevents burning-car ending; minimap and road arrows guide the route. However, 1 of 10 key-press runs still ended in BUSTED from a pedestrian collision, and the title screen carries settings, controls, 'what changed' line and disclaimer simultaneously.",
+        "C2": "Four districts with distinct palettes (Meridian aqua/coral/cream/lilac, Rustport rust/ochre/sea-green, Sol Beach pastel), 86 painted walls with district-specific designs, day/night cycle with lit windows and neon trim, Coastliner airship, Sol Wheel, parasols and gulls. Screenshots show recognisable mood (sunset beach, neon night street, painted RUSTPORT wall). Graphics remain low-poly and the city reads as a sandbox rather than a place with deep atmosphere.",
+        "C3": "Six story jobs ($250-$3,500), four odd-job types (Rush Order, Repo Run, Block Dash, Hot Parcel), cab fares with tip/streak math, four buyable properties with rent, 15 hidden packages, harbor courier shift, Sol Wheel ride, perks that tie activities together (5 packages = 25% less damage, 10 fares = double tips, all jobs = +50% rent), and money sinks (respray, repair, ammo, hospital, bail, three-stage tune-up). Activities clearly feed each other.",
+        "C4": "HUD reduced to cash and health; stars appear only when wanted; weapon line shows for 5s after change or on low ammo; clock moved to map and pause screens; pause screen is three buttons plus settings and perks; map legend integrated onto the big map; G8 passed at three resolutions. Screenshots show clean layout with cash top-right, health bar, minimap bottom-left, speed and car condition bottom-centre, objective top-centre.",
+        "C5": "Own city, names and art; G9 own-names gate passed; title screen carries 'An original open city sandbox in one file... not affiliated with the publisher or the series it is often compared to'; 'Not covered by the tests' section plainly states driving feel, synth radio, real-input coverage (only one job driven by key presses), single-platform testing, and 'No real players have tried it yet'."
+      },
+      "fixes": [
+        "Make the first job truly unwinnable-to-lose: the learner-car rule prevents a burning car but 1/10 scripted runs still ended in BUSTED from a pedestrian hit, so extend the protection to suppress arrests (or wanted level) until the first job beam is reached.",
+        "Add real-input test coverage beyond the single first job — five of six story jobs, all cab fares and the courier shift are only script-driven, so their time limits and difficulty are unmeasured and likely unbalanced for a human player.",
+        "Reduce title-screen information density: settings, six keys, 'what changed' line and the not-affiliated disclaimer all show at once; fold settings and the release history behind one button so the first screen reads as 'New Game / Harbor courier shift / Controls'."
+      ],
+      "total": 8.35,
+      "seconds": 15.3
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title 'shows six keys', first view prompts 'Get into the red car ahead [F]', learner car 'cannot be wrecked'; but 'the tenth hit a pedestrian 25 m short... was arrested by a patrol car that was passing' - 1 in 10 first minutes ends in BUSTED through no fault of the player",
+        "C2": "Dusk Sol Wheel shot, '86 painted walls', night where 'every car throws a pool of light' are strong; but the day Meridian screenshot reads as plain grey-blue blocks, so 'recognisable from one screenshot' holds only for dusk/night",
+        "C3": "'Six story jobs', four odd-job kinds, cab fares, property, packages, and 'Perks... tie the side activities together'; heat gates cab/tune-up/wheel. Docked because 'their difficulty and their time limits are not measured' for most activities",
+        "C4": "'the HUD is cash and health; the stars appear only when you are wanted', G8 'no overlaps at 3 sizes'; but the pause/map screens keep the driving HUD (minimap, speed, objective banner) visible beneath the overlay, and the perk card adds a text block under cash",
+        "C5": "'Own city, names and art', plain limits: 'No real players have tried it yet', only one job key-press tested; docked one point as the 'BUSTED' banner and 1-5 wanted stars mirror the disclaimed series' signature presentation"
+      },
+      "fixes": [
+        "Make the first job arrest-proof (no patrol spawns or a stars-grace on the first-job route) so 10 of 10 key-press runs finish; the reported random BUSTED 25 m short is the last real first-minute failure on the highest-weighted criterion",
+        "Give the daytime city the same instant identity as dusk/night - stronger district colour and landmark silhouettes at distance, since the day Meridian view still reads as generic grey blocks",
+        "Extend key-press testing (test/drive.py style) to the remaining jobs, cab fares and courier shift so their difficulty and timers are tuned for humans rather than script-teleported cars"
+      ],
+      "total": 8.35,
+      "seconds": 56.2
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.35,
+  "criterion_median": {
+    "C1": 8.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 8.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 1.0,
+    "C2": 1.0,
+    "C3": 1.0,
+    "C4": 1.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.35,
+    9.35
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Implement a 'tutorial shield' that prevents police arrests during the first story job to guarantee the sub-60s onboarding flow for all players."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Upgrade the player character model to match the fidelity of the vehicles and environment, reducing the tonal clash between the blocky avatar and the detailed city."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Disambiguate the 'R' key binding (currently 'Restart / handbrake') to prevent accidental job resets while driving or confusion in control schemes."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Make the first job truly unwinnable-to-lose: the learner-car rule prevents a burning car but 1/10 scripted runs still ended in BUSTED from a pedestrian hit, so extend the protection to suppress arrests (or wanted level) until the first job beam is reached."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Add real-input test coverage beyond the single first job — five of six story jobs, all cab fares and the courier shift are only script-driven, so their time limits and difficulty are unmeasured and likely unbalanced for a human player."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Reduce title-screen information density: settings, six keys, 'what changed' line and the not-affiliated disclaimer all show at once; fold settings and the release history behind one button so the first screen reads as 'New Game / Harbor courier shift / Controls'."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Make the first job arrest-proof (no patrol spawns or a stars-grace on the first-job route) so 10 of 10 key-press runs finish; the reported random BUSTED 25 m short is the last real first-minute failure on the highest-weighted criterion"
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Give the daytime city the same instant identity as dusk/night - stronger district colour and landmark silhouettes at distance, since the day Meridian view still reads as generic grey blocks"
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Extend key-press testing (test/drive.py style) to the remaining jobs, cab fares and courier shift so their difficulty and timers are tuned for humans rather than script-teleported cars"
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

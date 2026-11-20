@@ -269,13 +269,34 @@ const blurMat = postMat({ map: { value: null }, dir: { value: new T.Vector2() } 
     c += (texture2D(map, vUv + dir * 3.231).rgb + texture2D(map, vUv - dir * 3.231).rgb) * 0.070;
     gl_FragColor = vec4(c, 1.0);
   }`);
-const mixMat = postMat({ map: { value: null }, glow: { value: null }, strength: { value: 0.5 } }, `
+// the last pass also smooths edges (FXAA) on top of the 4x multisampling of the scene target
+const mixMat = postMat({ map: { value: null }, glow: { value: null }, strength: { value: 0.5 }, px: { value: new T.Vector2() } }, `
   uniform sampler2D map;
   uniform sampler2D glow;
   uniform float strength;
+  uniform vec2 px;
   varying vec2 vUv;
+  const vec3 LUMA = vec3(0.299, 0.587, 0.114);
+  vec3 smoothEdges(vec2 uv) {
+    vec3 m = texture2D(map, uv).rgb;
+    float nw = dot(texture2D(map, uv + vec2(-1.0, -1.0) * px).rgb, LUMA);
+    float ne = dot(texture2D(map, uv + vec2(1.0, -1.0) * px).rgb, LUMA);
+    float sw = dot(texture2D(map, uv + vec2(-1.0, 1.0) * px).rgb, LUMA);
+    float se = dot(texture2D(map, uv + vec2(1.0, 1.0) * px).rgb, LUMA);
+    float lm = dot(m, LUMA);
+    float lo = min(lm, min(min(nw, ne), min(sw, se)));
+    float hi = max(lm, max(max(nw, ne), max(sw, se)));
+    if (hi - lo < max(0.04, hi * 0.11)) return m;
+    vec2 dir = vec2(-((nw + ne) - (sw + se)), (nw + sw) - (ne + se));
+    float reduce = max((nw + ne + sw + se) * 0.03125, 0.0078125);
+    dir = clamp(dir / (min(abs(dir.x), abs(dir.y)) + reduce), -8.0, 8.0) * px;
+    vec3 a = 0.5 * (texture2D(map, uv + dir * (1.0 / 3.0 - 0.5)).rgb + texture2D(map, uv + dir * (2.0 / 3.0 - 0.5)).rgb);
+    vec3 b = a * 0.5 + 0.25 * (texture2D(map, uv - dir * 0.5).rgb + texture2D(map, uv + dir * 0.5).rgb);
+    float lb = dot(b, LUMA);
+    return (lb < lo || lb > hi) ? a : b;
+  }
   void main() {
-    vec3 c = texture2D(map, vUv).rgb + texture2D(glow, vUv).rgb * strength;
+    vec3 c = smoothEdges(vUv) + texture2D(glow, vUv).rgb * strength;
     vec2 q = vUv - 0.5;
     gl_FragColor = vec4(c * (1.0 - dot(q, q) * 0.5), 1.0);
   }`);
@@ -306,6 +327,7 @@ function renderFrame() {
     postPass(blurMat, post.b, post.a);
   }
   mixMat.uniforms.glow.value = post.a.texture;
+  mixMat.uniforms.px.value.set(1 / post.full.width, 1 / post.full.height);
   mixMat.uniforms.strength.value = lerp(0.3, 0.95, glowAmount);
   postPass(mixMat, post.full, null);
 }
@@ -488,7 +510,7 @@ $('btn-quit').onclick = () => {
 };
 
 // ---------- input ----------
-const GAME_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyF', 'KeyQ', 'KeyR', 'KeyH', 'KeyT', 'KeyE', 'KeyM', 'Tab']);
+const GAME_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyF', 'KeyQ', 'KeyR', 'KeyH', 'KeyT', 'KeyE', 'KeyM', 'KeyJ', 'Tab']);
 window.addEventListener('keydown', (e) => {
   if (state === 'play' && GAME_KEYS.has(e.code)) e.preventDefault();
   if (e.repeat) return;
@@ -508,6 +530,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyT') cabDuty();
   if (e.code === 'KeyE') interact();
   if (e.code === 'KeyM') toggleBigMap();
+  if (e.code === 'KeyJ') anotherJob();
   if (e.code === 'KeyH' && player.car) sfx.horn();
   if (e.code === 'KeyP' || e.code === 'Escape') pause();
   if (e.code === 'KeyQ') {
@@ -579,7 +602,7 @@ window.NEON = {
   },
   startGame, pause, resume, setWanted, tryEnterExit, playerAttack, crime, hurt, landmarks,
   route, cab, heli, bigMap, PROPERTIES, PERKS, perk, cabDuty, interact, toggleBigMap, addMoney, persist,
-  ride, checkPerks, packageSpots, damageVehicle,
+  ride, checkPerks, packageSpots, damageVehicle, audio, radio, STATIONS, setStation, anotherJob, offerMission, blocks,
   setTime(hours) {
     tod = hours;
   },

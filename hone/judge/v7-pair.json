@@ -1,0 +1,51 @@
+{
+  "mode": "pair",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "judges": {
+    "Pega-Vision": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Version 2 improves the first-minute experience by preventing early arrests (C1), adds significant visual detail and anti-aliasing (C2), and expands content with a new job type and distinct radio stations (C3), while still passing all hard gates.",
+        "Version 1 (v7) improves the critical first-minute onboarding by preventing arrests during the tutorial phase (a failure case observed in Version 2 testing), while adding visual fidelity (FXAA, building outlines) and content variety (5th job type, distinct radio stations) without compromising any hard gates."
+      ]
+    },
+    "Pega-Thinking": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "V2 improves on V1 across nearly every soft criterion: the learner phase prevents the first-minute arrest failure mode V1 had, building outlines plus the Rustport quay/cranes/freighter and FXAA add visible architectural variety and atmosphere, and a fifth odd job (Paper Round), the J key for job variety, and three distinct radio stations add more things to do. Both pass all 10 hard gates identically.",
+        "VERSION 1 (v7) improves on VERSION 2 (v6) with the learner phase (no stars until first job done), building outlines and Rustport quay for richer atmosphere, a fifth odd job (Paper Round) plus the J key for variety, three distinct radio stations instead of one tune at three speeds, and FXAA for smoother edges. Both pass all 10 hard gates, but v7's added content and polish give it a clear edge on C2 (look/atmosphere) and C3 (things to do)."
+      ]
+    },
+    "GLM-5.3-Flash": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both versions pass all 10 hard gates identically, but v7 strictly improves the soft criteria: the learner phase (no stars before the first job) fixes the first-minute arrest failure v6 still had (1 of 10 key-press runs ended BUSTED), building outlines/quay scenery and FXAA strengthen look and atmosphere, and Paper Round plus three distinct radio stations add variety, with no regressions (120 vs 144 fps both far exceed G7).",
+        "Both pass all 10 hard gates, but Version 1 improves every soft criterion: the learner phase (no stars before job 1) fixes the first-minute arrest failure seen in Version 2's own test runs (C1), building outlines/crowns and the Rustport quay give a more distinctive, recognisable city (C2), and it adds a fifth on-foot odd job plus three musically distinct radio stations (C3), with HUD/menu and honesty roughly equal or slightly better."
+      ]
+    }
+  },
+  "votes": {
+    "A": 0,
+    "B": 3,
+    "tie": 0
+  },
+  "quorum": 3,
+  "b_wins": true,
+  "label": "council-judged (3 judges)"
+}

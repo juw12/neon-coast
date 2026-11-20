@@ -1,5 +1,6 @@
 """City systems check: cab fares, property, perks, helicopter, route, big map, old saves (version 1.2),
-and police heat reaching fares, shops and your own front door, the Sol Wheel ride and the perk card (1.3).
+and police heat reaching fares, shops and your own front door, the Sol Wheel ride and the perk card (1.3),
+the learner phase, the J key, the Paper Round on foot and the building outlines (1.4).
 
 State is set through the game's test handle (window.NEON) so each rule can be
 checked in seconds. It proves the rules work; it does not prove they are fun.
@@ -229,6 +230,74 @@ def run():
         title_fits = page.evaluate("() => { const p = document.querySelector('#title .panel'); return p.scrollHeight <= p.clientHeight + 1; }")
         check("property and fares survive a reload", kept["props"] == ["bungalow"] and kept["fares"] == 10, json.dumps(kept))
         check("title screen fits a 720p screen without scrolling", title_fits)
+
+        # ---------- version 1.4 ----------
+        # 10. learner phase: a crime before the first job is done brings no stars, afterwards it does
+        page.click("#btn-new")
+        page.wait_for_timeout(900)
+        learner = page.evaluate("""() => { const n = NEON; n.crime(8); n.crime(8);
+            return { stars: n.wanted.stars, pts: n.wanted.pts, hint: document.getElementById('hint').textContent }; }""")
+        check("no stars for a crime before the first job is done", learner["stars"] == 0 and learner["pts"] == 0
+              and "police let that one go" in learner["hint"], json.dumps(learner))
+        watched = page.evaluate("""() => { const n = NEON; n.save.mission = 1; n.offerMission(); n.crime(8);
+            const out = { stars: n.wanted.stars }; n.setWanted(0); return out; }""")
+        check("the same crime earns stars once the first job is done", watched["stars"] >= 1, json.dumps(watched))
+
+        # 11. the skyline has outlines: roof lips, crowns, tanks, chimneys, the Rustport quay
+        outlines = page.evaluate("() => NEON.landmarks.outlines")
+        check("buildings carry roof shapes and the quay is built",
+              outlines["boxes"] > 300 and outlines["wedges"] > 20 and outlines["drums"] > 20, json.dumps(outlines))
+
+        # 12. J: during the story it only names the next job; after the story it deals a new kind each press
+        page.keyboard.press("j")
+        page.wait_for_timeout(250)
+        told = page.evaluate("() => ({ hint: document.getElementById('hint').textContent, job: NEON.mission.offer.name })")
+        check("J during the story names the next job and changes nothing",
+              told["job"] == "Hot Delivery" and "Hot Delivery" in told["hint"] and "after the story" in told["hint"], json.dumps(told))
+        page.evaluate("() => { NEON.save.mission = NEON.MISSIONS.length; NEON.offerMission(); }")
+        kinds = [page.evaluate("() => NEON.mission.offer.kind")]
+        for _ in range(4):
+            page.keyboard.press("j")
+            page.wait_for_timeout(200)
+            kinds.append(page.evaluate("() => NEON.mission.offer.kind"))
+        check("J deals five different kinds of odd job in turn", len(set(kinds)) == 5 and "foot" in kinds, json.dumps(kinds))
+
+        # 13. Paper Round: on foot only, four envelopes, pays $550
+        for _ in range(5):
+            if page.evaluate("() => NEON.mission.offer.kind") == "foot":
+                break
+            page.keyboard.press("j")
+            page.wait_for_timeout(200)
+        offer = page.evaluate("""() => { const o = NEON.mission.offer;
+            return { name: o.name, reward: o.reward, steps: o.steps.length, foot: o.steps.every(s => s.foot) }; }""")
+        check("Paper Round is offered: four stops on foot for $550",
+              offer["name"] == "Paper Round" and offer["reward"] == 550 and offer["steps"] == 4 and offer["foot"], json.dumps(offer))
+        # arrive by car: the job starts, but the first envelope does not count from the driver's seat
+        page.evaluate("""() => { const n = NEON, p = n.player;
+            const car = n.vehicles.filter(v => v.driver !== 'ai' && !v.dead)
+              .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
+            p.x = car.x + 2.2; p.z = car.z; n.tryEnterExit();
+            const at = n.mission.offer.at; n.player.car.x = at[0]; n.player.car.z = at[1]; n.player.car.vx = n.player.car.vz = 0; }""")
+        page.wait_for_timeout(500)
+        money_before = page.evaluate("() => NEON.save.money")
+        page.evaluate("""() => { const n = NEON, c = n.player.car, at = n.mission.def.steps[0].at;
+            c.x = at[0]; c.z = at[1]; c.vx = c.vz = 0; }""")
+        page.wait_for_timeout(600)
+        seated = page.evaluate("""() => ({ active: NEON.mission.active, name: NEON.mission.active ? NEON.mission.def.name : '', step: NEON.mission.step,
+            text: document.getElementById('objective').textContent })""")
+        check("an envelope cannot be delivered from a car", seated["active"] and seated["name"] == "Paper Round"
+              and seated["step"] == 0 and "on foot" in seated["text"], json.dumps(seated))
+        page.evaluate("() => { const c = NEON.player.car; c.vx = c.vz = 0; NEON.tryEnterExit(); }")
+        page.wait_for_timeout(300)
+        steps_seen = []
+        for stop in range(4):
+            page.evaluate("""(k) => { const n = NEON, at = n.mission.def.steps[k].at; n.player.x = at[0]; n.player.z = at[1]; }""", stop)
+            page.wait_for_timeout(350)
+            steps_seen.append(page.evaluate("() => NEON.mission.active ? NEON.mission.step : -1"))
+        paid = page.evaluate("() => ({ active: NEON.mission.active, money: NEON.save.money, car: !!NEON.player.car })")
+        check("four envelopes on foot finish the round and pay $550",
+              steps_seen == [1, 2, 3, -1] and not paid["active"] and paid["money"] - money_before == 550 and not paid["car"],
+              json.dumps({"steps": steps_seen, "paid": paid["money"] - money_before}))
         check("no console errors", not problems, "; ".join(problems[:3]))
         browser.close()
 

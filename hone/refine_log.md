@@ -177,3 +177,64 @@ more varied building outlines per district; anti-aliasing on Pretty; a judged pa
 - Portfolio: catalog `juw12/projects` `cd83281`, card sync run passed, card text live at https://juwenlie.pages.dev/.
 - Landing page: `juw12/juw12.github.io` `5b3ada6` (text) and `1373651` (picture), https://juw12.github.io/p/neon-coast/ shows the 1.3 text.
 - Obsidian: `GitHub/neon-coast.md` and a new note in `Update Log/`.
+
+## Run 4 (2026-11-20, `/hone neon-coast` again, from the shipped 1.3 build)
+
+Goal beyond the goal, unchanged: a stranger opens one link, knows what to do within a minute and has something
+worth doing for ten. The open asks of the run-3 judges are the queue. Score to beat: the 1.3 build re-scored in
+this session (council scores drift about 0.6 between sessions), plus 0.3, with a blind pair win.
+
+### Run queue (run 4)
+
+- [x] R4-1 Learner phase: no stars and no arrest until the first job is done (asked by two judges, C1)
+- [x] R4-2 Title screen: Sprint and Handbrake among the keys shown first (asked by one judge, C1)
+- [x] R4-3 Building outlines: roof edges and a roof form per district, balconies on the beach hotels, saw-tooth roofs, silos and containers in Rustport (asked by two judges, C2)
+- [x] R4-4 Smoother edges on Pretty (asked by one judge, C2)
+- [x] R4-5 Odd jobs: the player picks the kind; one kind done on foot (asked by one judge, C3)
+- [x] R4-6 Key-press tests for more than the first job: `test/drive.py` takes a job name (asked by two judges)
+- [x] R4-7 Radio: a measured check of what the stations put out (asked by one judge; judges cannot hear)
+- [x] R4-8 Gates, city, harbor, drive tests; re-score 1.3, council score and blind pair; keep or drop
+- [ ] R4-9 Ship by PR and release if kept or preferred; Sync (repo, profile, portfolio, landing, Obsidian)
+- [ ] R4-10 A real person plays it: cannot be produced by the agent, reported as `needs you`
+
+### Assumptions (run 4)
+
+- Assumed: `/hone neon-coast` means Loop mode on the game again, starting from the shipped 1.3 build.
+- Assumed: the frozen rubric v1 stays; proposed changes go in the final message only.
+- Assumed: the learner phase stops stars from crimes only. Stars set by a job step and the test hook are
+  untouched. It is a design change that makes the opening easier, not a test fix.
+- Assumed: the quay, cranes and freighter are scenery beyond the waterline with no collision; own art.
+- Assumed: the council cannot hear, so the radio is checked by measurement (`test/radio.py`) and the sheet
+  says nobody has listened to it.
+- Assumed: for key-press runs of jobs 2 and 4 the save file may be set to "earlier jobs done" first; the
+  job itself is played with keys only. The docstring and the fact sheet say so.
+- Assumed: a key-press run that is arrested may try again inside its time limit, as a player would; tries
+  and arrests are reported with the result. With stars on it the script still stops for people but no
+  longer queues behind cars.
+- Assumed: release name 1.4 "Skyline".
+- Assumed: the keep rule set at the start of this run (re-scored 1.3 plus 0.3, and a blind pair win) decides
+  "new best". Against the 8.75 written down in earlier sessions the gain is 0.25, which is inside the
+  session-to-session drift; both numbers are reported.
+
+| round | change | gates | judge score | pairwise win | kept? | note |
+|---|---|---|---|---|---|---|
+| 0 (v6 again, release 1.3) | none: the shipped build, scored again in this session as the baseline | 10/10 (run 3) | 8.35 (V 9.35, T 8.35, G 8.35) | - | baseline | it read 8.75 in run 3; drift -0.40. C1 8, C2 8, C3 9, C4 8, C5 9 |
+| 7 (v7, release 1.4 Skyline) | learner phase (no stars before the first job is done); building outlines and the Rustport quay; FXAA; Paper Round on foot and the J key; three radio styles with a limiter, measured; Sprint on the title; key-press tests for jobs 2 and 4 | 10/10 | 9.00 (V 9.5, T 8.35, G 9.0) | 3-0 vs v6 (all six picks) | new best | +0.65 over the same-session baseline. C1 9, C2 9, C3 9, C4 9, C5 9. One judge (T) gave scores without evidence text (salvaged answer) |
+
+Test runs on the 1.4 build, every one: `test/gates.py` 10/10 (frame-rate gate read 120 fps while other
+tests had just run; `test/fps_ab.py` then measured 144 fps against 144 for release 1.3, the display cap);
+`test/city.py` 39/39 twice; `test/harbor.py` pass; `test/radio.py` 14/14 twice; `test/drive.py` job 1
+5 of 5 (38.5 to 50.9 s); job 2 Hot Delivery 1 of 1 (115.9 s) and then 3 of 3 (110.2 to 132.0 s); job 4
+Borrowed Time: a first single run failed (the script stopped when the player was taken out; it now waits
+for the respawn like a player), then 2 of 3 (169.1 s; 317.4 s after one arrest and a second try; the third
+run was arrested or taken out three times and ran out of its 420 s). No timer was changed.
+
+stop: done threshold. Round 7 scored 9.00 against a threshold of 8.5 with all gates passing and a 3-0 blind
+pair, so the loop ends after one round by its own rule. Best score: 9.00 (rubric v1, council of 3 AI judges,
+spread 8.35 to 9.5). A 10 is not claimed and cannot be reached this way: the judges read a fact sheet and
+screenshots, nobody has played it, and one judge's answer carried scores only.
+
+Open asks from the run-4 judges, none done: real people playing it (first minute, driving feel, whether the
+radio is pleasant); job 4 fails one key-press run in three, and the races and the three-star getaway are
+still unmeasured; the five odd jobs are all timed marker runs; ground detail on the Rustport quay; say "on
+foot" more loudly when a Paper Round is offered; a shorter way to the first job beam.

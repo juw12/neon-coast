@@ -26,9 +26,11 @@
 - Police: wanted level 1 to 5, patrol cars chase and ram, officers shoot from 2 stars, an arrest when stopped
   beside a patrol car, escape by staying out of sight or paying for a respray.
 - Six story jobs from three contacts (delivery against the clock, two checkpoint races, a car theft, a
-  getaway with 3 stars). Rewards from $250 to $3,500. After the story, odd jobs come in four kinds taken in
+  getaway with 3 stars). Rewards from $250 to $3,500. After the story, odd jobs come in five kinds taken in
   turn: Rush Order (timed delivery), Repo Run (take a marked car, bring it to the garage with one star on
-  you), Block Dash (a checkpoint lap round a few blocks) and Hot Parcel (collect, then shake two stars).
+  you), Block Dash (a checkpoint lap round a few blocks), Hot Parcel (collect, then shake two stars) and,
+  since 1.4, Paper Round (four envelopes round one block on foot against the clock, $550; it does not count
+  from a driver's seat). Since 1.4 the J key asks for another kind instead of taking what comes.
 - Cab fares (release 1.2): in any City Cab, T starts a shift. A passenger waves from the kerb; stop in the
   ring to pick up, stop in the next ring to drop off before the clock runs out. Pay is $60 plus $0.38 a
   metre, a tip for spare seconds capped at half the fare, and 10% more for each fare in a row up to 50%.
@@ -57,12 +59,20 @@
   follow the beach road to the Sol Wheel pier. It used to end at the respray shop on the far side of town. Until that job is
   done the car you drive gets battered and smokes but cannot be wrecked, so a first minute cannot end in a
   burning car; after it, cars wreck as before.
+- A skyline with outlines (release 1.4): buildings are no longer plain boxes. Every flat roof has a lip;
+  Meridian towers end in slanted crowns, stepped crowns, corner fins or water tanks; Sol Beach hotels have
+  balcony bands, deco fins and round penthouses; Rustport sheds have saw-tooth roofs with glass and roof
+  tanks, and yards instead of bare ground; suburb houses have chimneys. Beyond the Rustport waterline there
+  is now a quay with container stacks, three gantry cranes and a freighter (scenery, out of reach).
+- Smoother edges (release 1.4): a second anti-aliasing pass (FXAA) on top of the 4x MSAA in Pretty graphics.
+- A learner phase (release 1.4): until the first job is done, crimes bring no stars, so the first minute
+  cannot end in an arrest. One line says so; after the first job a line says the police are now watching.
 - A quieter screen (release 1.3): the HUD is cash and health; the stars appear only when you are wanted, the
   weapon line only for five seconds after it changes or when ammo is low, and the clock moved to the map and
   pause screens. The pause screen is three buttons, settings and perks; the map legend moved onto the map
-  itself (M). The title screen shows six keys and folds the other eight away.
+  itself (M). The title screen shows the keys you need first (Sprint among them since 1.4) and folds the rest away.
 - Every gain or loss of money shows as a green or red amount under the cash figure.
-- The title screen has a "what changed" line that opens the release history (1.0 to 1.3).
+- The title screen has a "what changed" line that opens the release history (1.0 to 1.4).
 - Harbor courier shift (release 1.1, from the title screen or G in free roam): three timed stops, $450 plus
   a time bonus, best time saved; checked by `test/harbor.py`.
 - Money sinks: property, respray and repair $150 ($75 with the perk), ammo $80, hospital and bail fees of 10% of cash, and the Tune-up
@@ -70,13 +80,21 @@
   car you drive, kept in the save).
 - Each hidden package pays $100, all 15 pay a $5,000 bonus.
 - Health pickups, a round minimap with markers, district names, a car radio with
-  synth stations made in the browser (no audio files).
+  synth stations made in the browser (no audio files). Since 1.4 the three stations are three styles, not
+  one tune at three speeds: Neon FM (synthwave, 104 bpm, driving bass), Coast 98 (beach pop, 122 bpm,
+  off-beat bass, claps and a tune on top) and Low Tide (late night, 84 bpm, half-time swing, long bass,
+  seventh chords, bells). The dial crackles between stations and names the style; a limiter on the master
+  output keeps loud moments from clipping.
 - Title screen with settings (difficulty Easy / Normal / Hard, graphics Fast / Pretty, sound), a controls
   list, pause with Resume / Restart / Main menu, progress saved in the browser. A new player who stands
   still for 3.5 seconds is shown the walking keys; one who sets off never sees them.
 - Tests in the repository: `test/gates.py` (10 gates), `test/harbor.py` (the courier shift), `test/city.py`
-  (31 checks: cab fares, property, perks, helicopter, route, map, old saves, and for 1.3 the safehouse rule,
-  the wheel ride, the refusals while wanted and the perk card) and `test/drive.py`, which finishes the first
-  story job using key presses only (W A S D and F, nothing moved by script).
+  (39 checks: cab fares, property, perks, helicopter, route, map, old saves, for 1.3 the safehouse rule,
+  the wheel ride, the refusals while wanted and the perk card, and for 1.4 the learner phase, the J key,
+  the Paper Round and the building outlines), `test/radio.py` (new in 1.4: 14 checks that measure the
+  three stations at the master output: loudness, no clipping, the beat repeating at each station's own
+  tempo, different tone) and `test/drive.py`, which plays with key presses only (W A S D, F and Space,
+  nothing moved by script). Since 1.4 it plays three story jobs instead of one: job 1 First Wheels, job 2
+  Hot Delivery (against the 80 s clock) and job 4 Borrowed Time (a car theft with the police after it).
 - Own city, names and art. One line on the title screen says it is an original game and is not affiliated
   with the publisher or the series it is often compared to.

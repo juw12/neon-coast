@@ -89,9 +89,16 @@ const audio = { ctx: null };
 const radio = { station: 0, step: 0, next: 0, touched: false };
 const STATIONS = [
   { name: 'Radio Off' },
-  { name: 'Neon FM 88.1', bpm: 104, root: 45, prog: [0, -4, 3, -2], arp: [0, 7, 12, 7, 3, 7, 12, 15] },
-  { name: 'Coast 98', bpm: 122, root: 43, prog: [0, 5, -3, 2], arp: [0, null, 7, 12, null, 7, 4, null] },
-  { name: 'Low Tide', bpm: 84, root: 41, prog: [0, 3, -2, -5], arp: [12, null, 7, null, 3, null, 7, null] },
+  // synthwave: four on the floor, a driving saw bass, a busy square arpeggio
+  { name: 'Neon FM 88.1', tag: 'synthwave', bpm: 104, root: 45, prog: [0, -4, 3, -2], thirds: [3, 4, 4, 4], arp: [0, 7, 12, 7, 3, 7, 12, 15],
+    kick: [0, 4, 8, 12], snare: [4, 12], bass: 'drive', pad: 'triangle', lead: null, swing: 0 },
+  // beach pop in a major key: off-beat bass and open hats, hand claps, a tune on top
+  { name: 'Coast 98', tag: 'beach pop', bpm: 122, root: 43, prog: [0, 5, -3, 2], thirds: [4, 4, 3, 3], arp: [0, null, 7, 12, null, 7, 4, null],
+    kick: [0, 4, 8, 12], snare: [4, 12], bass: 'offbeat', pad: 'sawtooth', swing: 0,
+    lead: [0, null, 4, null, 7, null, 9, 7, null, 4, null, 2, 4, null, null, null, 0, null, 4, null, 7, null, 12, 9, null, 7, null, 4, 2, null, 0, null] },
+  // slow and warm: half-time drums with a late swing, long bass notes, seventh chords, a few bell notes
+  { name: 'Low Tide', tag: 'late night', bpm: 84, root: 41, prog: [0, 3, -2, -5], thirds: [3, 4, 4, 3], arp: [12, null, null, 7, null, null, 3, null, 10, null, null, 7, null, null, null, null],
+    kick: [0, 10], snare: [8], bass: 'long', pad: 'sine', lead: null, swing: 0.3 },
 ];
 
 function initAudio() {
@@ -100,7 +107,18 @@ function initAudio() {
   if (!Ctx) return;
   const ctx = (audio.ctx = new Ctx());
   audio.master = ctx.createGain();
-  audio.master.connect(ctx.destination);
+  // a limiter so a crash, a siren and the radio together cannot clip; the tap lets a test measure what comes out
+  audio.limit = ctx.createDynamicsCompressor();
+  audio.limit.threshold.value = -9;
+  audio.limit.knee.value = 6;
+  audio.limit.ratio.value = 14;
+  audio.limit.attack.value = 0.003;
+  audio.limit.release.value = 0.2;
+  audio.tap = ctx.createAnalyser();
+  audio.tap.fftSize = 2048;
+  audio.master.connect(audio.limit);
+  audio.limit.connect(ctx.destination);
+  audio.limit.connect(audio.tap);
   audio.fx = ctx.createGain();
   audio.fx.gain.value = 0.7;
   audio.fx.connect(audio.master);
@@ -226,7 +244,8 @@ function setStation(k) {
   radio.station = k;
   radio.step = 0;
   radio.next = 0;
-  toast('radio', STATIONS[k].name);
+  toast('radio', STATIONS[k].name + (STATIONS[k].tag ? '  ·  ' + STATIONS[k].tag : ''));
+  noiseBurst(0.09, 0.05, 2600, 0, audio.fx, 'bandpass');     // the dial crackles between stations
 }
 
 function updateAudio() {
@@ -256,15 +275,40 @@ function updateAudio() {
   while (radio.next < now + 0.2) {
     const step = radio.step++;
     const beat = step & 15;
-    const root = station.root + station.prog[(step >> 4) % station.prog.length];
-    if (beat % 4 === 0) musicKick(radio.next);
-    if (beat === 4 || beat === 12) noiseBurst(0.13, 0.22, 1900, radio.next, audio.music, 'bandpass');
-    if (beat % 2 === 0) noiseBurst(0.04, 0.07, 7000, radio.next, audio.music, 'highpass');
-    if (beat % 2 === 0) musicNote(radio.next, midiHz(root - 12 + (beat % 8 === 6 ? 12 : 0)), stepDur * 1.8, 0.24, 'sawtooth', 520);
+    const bar = (step >> 4) % station.prog.length;
+    const root = station.root + station.prog[bar];
+    const third = station.thirds[bar];
+    const when = radio.next + (beat & 1 ? stepDur * station.swing : 0);
+    // drums
+    if (station.kick.includes(beat)) musicKick(when);
+    if (station.snare.includes(beat)) {
+      noiseBurst(0.13, 0.22, 1900, when, audio.music, 'bandpass');
+      if (station.bass === 'offbeat') noiseBurst(0.1, 0.12, 1200, when + 0.012, audio.music, 'bandpass');   // a clap has two edges
+    }
+    if (station.bass === 'offbeat') {
+      if (beat % 4 === 2) noiseBurst(0.11, 0.09, 8000, when, audio.music, 'highpass');
+      else if (beat % 2 === 0) noiseBurst(0.03, 0.04, 9000, when, audio.music, 'highpass');
+    } else if (station.bass === 'long') {
+      if (beat % 4 === 2 || beat === 15) noiseBurst(0.03, 0.035, 6000, when, audio.music, 'highpass');
+    } else if (beat % 2 === 0) noiseBurst(0.04, 0.07, 7000, when, audio.music, 'highpass');
+    // bass
+    if (station.bass === 'drive' && beat % 2 === 0) musicNote(when, midiHz(root - 12 + (beat % 8 === 6 ? 12 : 0)), stepDur * 1.8, 0.24, 'sawtooth', 520);
+    if (station.bass === 'offbeat' && (beat % 4 === 2 || beat % 8 === 7)) musicNote(when, midiHz(root - 12 + (beat % 8 === 7 ? 7 : 0)), stepDur * 1.5, 0.25, 'sawtooth', 640);
+    if (station.bass === 'long' && (beat === 0 || beat === 10)) musicNote(when, midiHz(root - 12), stepDur * (beat ? 5 : 9), 0.34, 'triangle', 380);
+    // arpeggio (3 and 4 stand for the chord's own third), tune, chords
     const arp = station.arp[beat % station.arp.length];
-    if (arp !== null) musicNote(radio.next, midiHz(root + 12 + arp), stepDur * 1.6, 0.06, 'square', 2300);
+    if (arp !== null) {
+      const note = arp === 3 || arp === 4 ? third : arp === 15 || arp === 16 ? third + 12 : arp;
+      if (station.bass === 'long') musicNote(when, midiHz(root + 24 + note), stepDur * 5, 0.05, 'sine', 4000);
+      else musicNote(when, midiHz(root + 12 + note), stepDur * 1.6, station.lead ? 0.035 : 0.06, 'square', 2300);
+    }
+    if (station.lead) {
+      const tune = station.lead[step % station.lead.length];
+      if (tune !== null) musicNote(when, midiHz(station.root + 24 + tune), stepDur * 2.4, 0.075, 'triangle', 3200);
+    }
     if (beat === 0) {
-      for (const interval of [0, 3, 7]) musicNote(radio.next, midiHz(root + interval), stepDur * 15, 0.035, 'triangle', 1400);
+      const chord = station.bass === 'long' ? [0, third, 7, 10] : [0, third, 7];
+      for (const interval of chord) musicNote(when, midiHz(root + interval), stepDur * 15, station.pad === 'sawtooth' ? 0.018 : 0.035, station.pad, station.pad === 'sawtooth' ? 900 : 1400);
     }
     radio.next += stepDur;
   }
@@ -370,6 +414,12 @@ function refreshStars() {
 
 function crime(points) {
   if (state !== 'play' || points <= 0) return;
+  // learner phase: until the first job is done the police look away, so a first minute cannot end in an arrest
+  if (save.mission === 0) {
+    if (!wanted.letOff) hint('The police let that one go. After your first job they will not.', 4.5);
+    wanted.letOff = true;
+    return;
+  }
   wanted.pts = Math.min(20, wanted.pts + points);
   wanted.evade = 0;
   refreshStars();
@@ -1108,15 +1158,29 @@ function dispatch() {
   startMission();
 }
 
-// after the story: four kinds of odd job, taken in turn, one from each contact's line of work
+// after the story: five kinds of odd job, offered in turn; J asks for another kind
+const ODD_KINDS = ['delivery', 'repo', 'dash', 'heat', 'foot'];
 let oddCount = 0;
 function oddJob() {
-  const kind = ['delivery', 'repo', 'dash', 'heat'][oddCount++ % 4];
+  const kind = ODD_KINDS[oddCount++ % ODD_KINDS.length];
   const at = corner(irand(1, 8), irand(1, 8));
+  if (kind === 'foot') {
+    // on foot: four envelopes round one block, against the clock
+    let b = null;
+    while (!b || b.type === 'park') b = blocks[irand(1, 8)][irand(1, 8)];
+    const mx = (b.x0 + b.x1) / 2;
+    const mz = (b.z0 + b.z1) / 2;
+    const stops = [[mx, b.z0 + 2.4], [b.x1 - 2.4, mz], [mx, b.z1 - 2.4], [b.x0 + 2.4, mz]];
+    return {
+      name: 'Paper Round', by: 'Lena', at: blockCorner(b, 0), reward: 550, kind,
+      steps: stops.map((p, k) => ({ t: 'goto', at: p, foot: true, time: k === 0 ? 16 : 0, addTime: k === 0 ? 0 : 11,
+        text: `Envelope ${k + 1} of 4: on foot, round the block  [Shift] sprints` })),
+    };
+  }
   if (kind === 'repo') {
     const type = pick(['sports', 'muscle']);
     return {
-      name: 'Repo Run', by: 'Mo', at, reward: 750, spawn: { type, i: irand(1, 8), j: irand(0, 8) },
+      name: 'Repo Run', by: 'Mo', at, reward: 750, kind, spawn: { type, i: irand(1, 8), j: irand(0, 8) },
       steps: [
         { t: 'car', target: true, wantedAfter: 1, text: 'Take the marked ' + VEHICLE_TYPES[type].name + '. The owner will call it in.' },
         { t: 'goto', at: PLACES.garage, car: true, target: true, text: "Bring it to Mo's Respray in one piece" },
@@ -1129,13 +1193,13 @@ function oddJob() {
     const w = irand(2, 3);
     const h = irand(2, 3);
     return {
-      name: 'Block Dash', by: 'Rico', at: corner(i, j), reward: 500 + (w + h) * 80,
+      name: 'Block Dash', by: 'Rico', at: corner(i, j), reward: 500 + (w + h) * 80, kind,
       steps: [{ t: 'car', text: 'Get in something fast' }].concat(lap([[i + w, j], [i + w, j + h], [i, j + h], [i, j]], 22, 14)),
     };
   }
   if (kind === 'heat') {
     return {
-      name: 'Hot Parcel', by: 'Lena', at, reward: 650,
+      name: 'Hot Parcel', by: 'Lena', at, reward: 650, kind,
       steps: [
         { t: 'goto', at: corner(irand(0, 9), irand(0, 9)), text: 'Collect the parcel. Someone is watching it.' },
         { t: 'lose', stars: 2, text: 'Shake the two-star heat' },
@@ -1147,7 +1211,7 @@ function oddJob() {
   while (manhattan(to, from) < 250) to = corner(irand(0, 9), irand(0, 9));
   const metres = manhattan(to, from);
   return {
-    name: 'Rush Order', by: 'Lena', at, reward: Math.round(metres * 0.9 / 50) * 50 + 200,
+    name: 'Rush Order', by: 'Lena', at, reward: Math.round(metres * 0.9 / 50) * 50 + 200, kind,
     steps: [
       { t: 'goto', at: from, text: 'Pick up the package' },
       { t: 'goto', at: to, time: 30 + metres / 14, text: 'Deliver it before time runs out' },
@@ -1217,6 +1281,23 @@ function cabDuty() {
   cab.streak = 0;
   mission.def = cabFare();
   startMission();
+}
+
+// J: after the story, ask the contacts for another kind of odd job
+function anotherJob() {
+  if (mission.active) {
+    hint('Finish your current job first.');
+    return;
+  }
+  const job = mission.offer;
+  if (save.mission < MISSIONS.length) {
+    hint(`Next job: ${job.name} from ${job.by}, $${job.reward}. Odd jobs open after the story.`, 4.5);
+    return;
+  }
+  offerMission();
+  const next = mission.offer;
+  hint(`${next.name} from ${next.by}, $${next.reward}${next.kind === 'foot' ? ', on foot' : ''}.  [J] another kind`, 5);
+  sfx.cash();
 }
 
 function offerMission() {
@@ -1297,7 +1378,11 @@ function endMission(passed, reason) {
       rehome(rider);
       cab.nextT = 3.4;
     } else {
-      if (save.mission < MISSIONS.length) save.mission++;
+      if (save.mission < MISSIONS.length) {
+        save.mission++;
+        if (save.mission === 1) hint('From now on the police are watching you.', 5);
+        if (save.mission === MISSIONS.length) hint('Story finished. Odd jobs from here: [J] picks the kind.', 7);
+      }
       banner('pass', 'MISSION PASSED', '+$' + pay, 4.5);
     }
     addMoney(pay);
@@ -1360,6 +1445,10 @@ function updateMission(dt) {
     const r = step.car ? 6.5 : 3;
     done = dist2(step.at[0], step.at[1], px, pz) < r * r;
     if (step.car && !player.car) done = false;
+    if (step.foot && player.car) {
+      done = false;
+      setText('objective', 'This job is on foot: leave the car  [F]');
+    } else if (step.foot) setText('objective', step.text);
     if (step.target && player.car !== mission.car) done = false;
     if (step.stop) {
       const distance = Math.round(Math.hypot(step.at[0] - px, step.at[1] - pz));

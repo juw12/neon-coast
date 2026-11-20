@@ -1,10 +1,10 @@
 """Screenshots for the judges: the 1.2 city systems (cab fare, whole map, helicopter, property) and the
-1.3 day look, Sol Wheel ride and perk card.
+1.3 day look, Sol Wheel ride and perk card, and the 1.4 skyline, Rustport quay, Paper Round and radio dial.
 
 State is set through window.NEON to reach each scene quickly (time of day, where you stand, where the
 airship is on its lap); the pictures are the real game.
 
-    python test/city_shots.py       # writes test/shots/11-cab-fare.png ... 19-perk-card.png
+    python test/city_shots.py       # writes test/shots/11-cab-fare.png ... 25-radio-dial.png
 """
 import math
 from pathlib import Path
@@ -110,9 +110,48 @@ def run():
             const p = n.player; p.x = 425; p.z = 150; p.h = 0.5; n.cam.yaw = 0.5; n.cam.pitch = -0.02; }""")
         page.wait_for_timeout(900)
         page.screenshot(path=str(OUT / "19-perk-card.png"))
+
+        # ---------- version 1.4: building outlines, the Rustport quay, the Paper Round, the radio dial ----------
+        page.evaluate("() => { const n = NEON; n.save.packages = []; n.checkPerks(true); document.getElementById('perk').classList.remove('show'); }")
+        page.wait_for_timeout(5500)             # let the hints from the last scenes fade
+        stand(11.5, -252, 460, 0.35, 0.12, 4.2)
+        page.screenshot(path=str(OUT / "20-rustport-quay.png"))
+        stand(17.8, -336, -84, math.pi / 2, 0.22, 1.1)
+        page.screenshot(path=str(OUT / "21-meridian-crowns.png"))
+        stand(11.5, 455, 0, -1.9, 0.1, 0.3)
+        page.screenshot(path=str(OUT / "22-beach-balconies.png"))
+        stand(16.5, -80, 252, -1.2, 0.2, 2.0)
+        page.screenshot(path=str(OUT / "23-rustport-roofs.png"))
+
+        # the radio: R in a car turns the dial, the station and its style show for three seconds
+        page.evaluate("""() => { const n = NEON, p = n.player; n.setTime(19.3);
+            const car = n.vehicles.filter(v => v.driver !== 'ai' && !v.dead && ['sedan', 'sports', 'muscle'].includes(v.type))
+              .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
+            p.x = car.x + 2.2; p.z = car.z; n.tryEnterExit();
+            car.x = 339.2; car.z = -190; car.h = 0; car.vx = car.vz = 0; n.cam.yaw = 0; n.cam.pitch = 0.12;
+            n.cam.lastMouse = performance.now() + 60000; }""")
+        page.wait_for_timeout(4000)
+        for _ in range(4):
+            if page.evaluate("() => NEON.radio.station") == 2:
+                break
+            page.keyboard.press("r")
+            page.wait_for_timeout(120)
+        page.wait_for_timeout(500)
+        page.screenshot(path=str(OUT / "25-radio-dial.png"))
+        page.evaluate("() => { const c = NEON.player.car; c.vx = c.vz = 0; NEON.tryEnterExit(); }")
+        page.wait_for_timeout(3500)
+
+        # the Paper Round: an odd job done on foot, four envelopes round one block
+        page.evaluate("""() => { const n = NEON, p = n.player; n.setTime(10.5); n.save.mission = n.MISSIONS.length; n.offerMission();
+            for (let k = 0; k < 6 && n.mission.offer.kind !== 'foot'; k++) n.anotherJob();
+            const at = n.mission.offer.at, to = n.mission.offer.steps[0].at;
+            p.x = at[0]; p.z = at[1]; p.h = n.cam.yaw = Math.atan2(to[0] - at[0], to[1] - at[1]); n.cam.pitch = 0.1;
+            n.cam.lastMouse = performance.now() + 60000; }""")
+        page.wait_for_timeout(1700)
+        page.screenshot(path=str(OUT / "24-paper-round.png"))
         browser.close()
 
 
 if __name__ == "__main__":
     run()
-    print("wrote 10 shots to", OUT)
+    print("wrote 16 shots to", OUT)

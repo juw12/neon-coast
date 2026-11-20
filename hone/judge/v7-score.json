@@ -1,0 +1,131 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 9.0,
+        "C3": 10.0,
+        "C4": 10.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "The first job is 'shorter' and the car is indestructible, but the initial objective is 115m away (Image 2), which risks exceeding the 60-second anchor for a confused stranger.",
+        "C2": "Distinct districts and lighting (Sol Wheel, Meridian crowns) create mood, but the Rustport quay ground (Image 13) is a flat yellow plane lacking the detail of the cranes and containers.",
+        "C3": "Perks 'tie the side activities together' and money sinks (property, tune-up) ensure 'jobs, police, money sinks and secrets... feed each other'.",
+        "C4": "Gate G8 passed (no overlaps), and the HUD is minimal ('cash and health... stars appear only when you are wanted'), reading at a glance.",
+        "C5": "The fact sheet plainly states 'No real players have tried it yet' and details exactly what was tested by script versus AI judges."
+      },
+      "fixes": [
+        "Reduce the distance to the first job objective or add a 'Follow' arrow to guarantee a stranger can finish within 60 seconds.",
+        "Add ground decals (oil, cracks, gravel) to the Rustport quay area to match the high detail of the industrial buildings and cranes.",
+        "Make the 'on foot' requirement for jobs like the Paper Round more prominent in the UI to prevent players from driving to the location."
+      ],
+      "total": 9.5,
+      "seconds": 27.4
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": null,
+        "C2": null,
+        "C3": null,
+        "C4": null,
+        "C5": null
+      },
+      "fixes": [],
+      "salvaged": true,
+      "total": 8.35,
+      "seconds": 14.4
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 9.0,
+        "C3": 9.0,
+        "C4": 9.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Spawn banner 'Get into the red car ahead [F]' with 'JOB 335 m'; idle 3.5 s shows walking keys; learner phase means the first minute 'cannot end in an arrest' or 'a burning car'; job 1 passes 5/5 key-press runs in 38.5-50.9 s - only a stranger's unverified sub-minute finish and the text-heavy title screen keep it from 10.",
+        "C2": "Dusk Sol Wheel shot (pink sky, lit wheel, palms, beach) and the night glow pass are one-screenshot recognisable; 'Meridian towers are aqua, coral, cream and lilac'; but the Rustport container yard and some street views stay flat-coloured beside the best scenes.",
+        "C3": "Six story jobs, five odd-job kinds, cab fares, courier shift, property rent, 15 packages, perks ('10 cab fares double tips') and heat refusals tie systems together; but all five odd jobs are timed collect/deliver marker variants, and races/getaway difficulty is unmeasured.",
+        "C4": "'the HUD is cash and health; the stars appear only when you are wanted'; G8 'no overlaps at 3 sizes'; gains show 'green or red... under the cash figure'; the thin health/car-condition bars read least at speed.",
+        "C5": "'Own city, names and art' plus the title disclaimer; 'Not covered by the tests' states limits unusually plainly; yet the skeleton (wanted stars, respray, hidden packages) deliberately mirrors the series it 'is often compared to'."
+      },
+      "fixes": [
+        "Rebalance job 4 / police aggression: key-press runs fail 1 of 3 (arrested or taken out, 7-minute timeout), and the script-passed races (jobs 3, 6) and 3-star getaway have never had their difficulty measured for a human.",
+        "Differentiate the five odd jobs beyond timed collect/deliver marker runs (Rush Order, Repo Run, Block Dash, Hot Parcel, Paper Round) so ten minutes of post-story play vary more.",
+        "Playtest with real newcomers: driving feel, radio pleasantness and a stranger's first-minute timing are unverified (the script itself needs 38.5-50.9 s for job 1)."
+      ],
+      "total": 9.0,
+      "seconds": 88.7
+    }
+  },
+  "quorum": 3,
+  "council_score": 9.0,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 9.0,
+    "C3": 9.0,
+    "C4": 9.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 1.0,
+    "C2": 1.0,
+    "C3": 1.0,
+    "C4": 2.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.35,
+    9.5
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Reduce the distance to the first job objective or add a 'Follow' arrow to guarantee a stranger can finish within 60 seconds."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Add ground decals (oil, cracks, gravel) to the Rustport quay area to match the high detail of the industrial buildings and cranes."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Make the 'on foot' requirement for jobs like the Paper Round more prominent in the UI to prevent players from driving to the location."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Rebalance job 4 / police aggression: key-press runs fail 1 of 3 (arrested or taken out, 7-minute timeout), and the script-passed races (jobs 3, 6) and 3-star getaway have never had their difficulty measured for a human."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Differentiate the five odd jobs beyond timed collect/deliver marker runs (Rush Order, Repo Run, Block Dash, Hot Parcel, Paper Round) so ten minutes of post-story play vary more."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Playtest with real newcomers: driving feel, radio pleasantness and a stranger's first-minute timing are unverified (the script itself needs 38.5-50.9 s for job 1)."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}
