@@ -37,6 +37,8 @@ function updatePopulation(dt) {
 }
 
 // ---------- session control ----------
+// start spot: kerb of the beach road, clear of palms and lamp posts, looking up the street
+const START = { x: PLACES.home[0] - 2, z: PLACES.home[1] + 50, yaw: Math.PI + 0.2 };
 function resetSession() {
   for (const v of vehicles.slice()) removeVehicle(v);
   for (const ped of peds) scene.remove(ped.mesh);
@@ -52,16 +54,17 @@ function resetSession() {
   setWanted(0);
   wanted.pts = 0;
 
-  Object.assign(player, { x: PLACES.home[0], z: PLACES.home[1] + 8, y: 0, vy: 0, h: Math.PI, hp: 100, car: null, lastCar: null, ammo: 48, gun: true, fireT: 0, punchT: 0 });
+  Object.assign(player, { x: START.x, z: START.z, y: 0, vy: 0, h: START.yaw, hp: 100, car: null, lastCar: null, ammo: 48, gun: true, fireT: 0, punchT: 0 });
   player.mesh.visible = true;
   player.mesh.rotation.set(0, player.h, 0);
   player.mesh.position.set(player.x, 0, player.z);
-  cam.yaw = Math.PI;
+  cam.yaw = START.yaw;
   cam.pitch = -0.18;
+  cam.dist = 5;
   tod = 17.4;
 
   // a ride waiting at the kerb outside
-  addVehicle('muscle', roadC(9) + PARK, roadC(5) + 24, Math.PI, null, '#b3261e');
+  addVehicle('muscle', roadC(9) + PARK, START.z - 11, Math.PI, null, '#b3261e');
   packageSpots.forEach((spot, id) => {
     if (!save.packages.includes(id)) addPickup('package', spot[0], spot[1], 0, id);
   });
@@ -70,7 +73,7 @@ function resetSession() {
   }
   offerMission();
   for (let k = 0; k < 60; k++) spawnTraffic(22, 250, k % 3 === 0);
-  for (let k = 0; k < 80; k++) spawnWalker(8, 150);
+  for (let k = 0; k < 80; k++) spawnWalker(20, 150);   // nobody in the player's face at the start
 }
 
 function die(kind) {
@@ -254,7 +257,7 @@ function renderSettings() {
   $('btn-end-shift').hidden = !(mission.active && mission.def === FERRY);
   const jobs = Math.min(save.mission, MISSIONS.length) + ' / ' + MISSIONS.length;
   $('progress').textContent = 'Jobs ' + jobs + '     Packages ' + save.packages.length + ' / ' + packageSpots.length + '     Cash $' + save.money + (save.ferryRuns ? `     Ferry shifts ${save.ferryRuns} · best ${save.ferryBest}s` : '');
-  const hasSave = save.mission > 0 || save.packages.length > 0 || save.money !== SAVE_DEFAULTS.money;
+  const hasSave = save.mission > 0 || save.packages.length > 0 || save.tune > 0 || save.money !== SAVE_DEFAULTS.money;
   $('btn-continue').style.display = hasSave ? '' : 'none';
 }
 
@@ -262,6 +265,10 @@ function showScreen(id) {
   $('title').classList.toggle('hidden', id !== 'title');
   $('pause').classList.toggle('hidden', id !== 'pause');
   $('hud').classList.toggle('hidden', id === 'title');
+}
+
+function refreshLockHint() {
+  $('lockhint').classList.toggle('show', state === 'play' && document.pointerLockElement !== canvas);
 }
 
 function lockPointer() {
@@ -275,7 +282,7 @@ function lockPointer() {
 
 function startGame(fresh) {
   if (fresh) {
-    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], ferryRuns: 0, ferryBest: 0 });
+    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0 });
     persist();
   }
   initAudio();
@@ -284,8 +291,7 @@ function startGame(fresh) {
   state = 'play';
   showScreen(null);
   lockPointer();
-  banner('title', 'NEON COAST', 'Sol Beach', 4);
-  hint('Follow the yellow J on the map for your first job.  F gets you into a car.', 9);
+  hint('Mouse looks, W A S D moves, P pauses.', 6);
 }
 
 function pause() {
@@ -388,8 +394,8 @@ window.addEventListener('mouseup', () => {
 });
 document.addEventListener('pointerlockchange', () => {
   const locked = document.pointerLockElement === canvas;
-  $('lockhint').classList.toggle('show', !locked);
   if (!locked && state === 'play') pause();
+  refreshLockHint();
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) pause();
@@ -408,6 +414,7 @@ function frame(now) {
   const realDt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
   lastTime = now;
   frameNo++;
+  if ((frameNo & 15) === 0) refreshLockHint();
   if (state !== 'paused') update(state === 'dead' ? realDt * 0.4 : realDt, realDt);
   renderer.render(scene, camera);
 }
@@ -415,11 +422,11 @@ requestAnimationFrame(frame);
 
 // small handle for automated checks
 window.NEON = {
-  player, vehicles, peds, pickups, markers, wanted, mission, save, cam, keys, PLACES, MISSIONS,
+  player, vehicles, peds, pickups, markers, wanted, mission, save, cam, keys, PLACES, MISSIONS, scene, camera,
   get state() {
     return state;
   },
-  startGame, pause, resume, setWanted, tryEnterExit, playerAttack, crime, hurt,
+  startGame, pause, resume, setWanted, tryEnterExit, playerAttack, crime, hurt, landmarks,
   setTime(hours) {
     tod = hours;
   },

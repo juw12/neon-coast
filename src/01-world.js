@@ -54,7 +54,7 @@ const headingOf = (d) => Math.atan2(DX[d], DZ[d]);
 
 // ---------- save data ----------
 const SAVE_KEY = 'neon-coast-save-v1';
-const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], ferryRuns: 0, ferryBest: 0, difficulty: 1, quality: 1, sound: 1 };
+const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, difficulty: 1, quality: 1, sound: 1 };
 const save = Object.assign({}, SAVE_DEFAULTS);
 try {
   Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'));
@@ -332,6 +332,85 @@ function lotsFor(type, x0, x1, z0, z1) {
   ];
 }
 
+// shop signs and roof clutter; a separate random stream keeps the existing city layout unchanged
+const SIGN_NAMES = {
+  downtown: ['MERIDIAN BANK', 'LUNA LOUNGE', 'PIXEL ARCADE', 'NOODLE BAR', 'SKY HOTEL', '24H MART', 'VINYL CLUB'],
+  beach: ['CAFE BRISA', 'KITE & SURF', 'TIDE HOTEL', 'GELATO', 'SUNSET GRILL', 'BOARD SHOP'],
+  suburb: ['CORNER SHOP', 'LAUNDRY', 'PHARMACY', 'BAKERY'],
+  industrial: ['RUSTPORT TOOLS', 'TYRES', 'COLD STORE', 'SCRAP & CO'],
+};
+const SIGN_CHANCE = { downtown: 0.85, beach: 0.8, suburb: 0.35, industrial: 0.5 };
+const signs = {};
+const roofBits = [];
+const hipRoofs = [];
+const towerTops = [];
+const RS = seeded(4711);
+const HIP_COLORS = ['#a8553f', '#8f4a3a', '#5d6470', '#b06a45'].map((hex) => new T.Color(hex));
+
+function dressBuilding(block, x0, x1, z0, z1, h) {
+  const hip = block.type === 'suburb' && h < 15;
+  if (hip) {
+    hipRoofs.push({
+      x: (x0 + x1) / 2, z: (z0 + z1) / 2, y: h, sx: x1 - x0 + 1.2, sz: z1 - z0 + 1.2,
+      rise: 2.4 + ((x0 * 7 + z0 * 13) % 10 + 10) % 10 * 0.14,
+      color: HIP_COLORS[Math.abs(Math.round(x0 + z0)) % HIP_COLORS.length],
+    });
+  }
+  if (h < 70) {
+    const count = 1 + Math.floor(RS() * 3);
+    for (let k = 0; k < count; k++) {
+      const sx = 1.6 + RS() * 2.6;
+      const sz = 1.6 + RS() * 2.6;
+      const sy = 0.9 + RS() * 1.5;
+      if (hip || x1 - x0 < sx + 4 || z1 - z0 < sz + 4) continue;
+      roofBits.push({
+        x: x0 + 2 + sx / 2 + RS() * (x1 - x0 - sx - 4),
+        y: h + sy / 2,
+        z: z0 + 2 + sz / 2 + RS() * (z1 - z0 - sz - 4),
+        sx, sy, sz,
+      });
+    }
+  }
+  const names = SIGN_NAMES[block.type];
+  if (!names) return;
+  const near = WALK + 7;        // only walls that face a street get a sign
+  const streetFaces = [x0 - block.x0 < near, block.x1 - x1 < near, z0 - block.z0 < near, block.z1 - z1 < near];
+  const turn = [-Math.PI / 2, Math.PI / 2, Math.PI, 0];
+  for (let f = 0; f < 4; f++) {
+    const along = f < 2 ? z1 - z0 : x1 - x0;
+    if (!streetFaces[f] || along < 11 || RS() > SIGN_CHANCE[block.type]) continue;
+    const text = names[Math.floor(RS() * names.length)];
+    const slide = (RS() - 0.5) * (along - 10);
+    const x = f === 0 ? x0 - 0.14 : f === 1 ? x1 + 0.14 : (x0 + x1) / 2 + slide;
+    const z = f === 2 ? z0 - 0.14 : f === 3 ? z1 + 0.14 : (z0 + z1) / 2 + slide;
+    (signs[text] || (signs[text] = [])).push({ x, z, rot: turn[f] });
+  }
+}
+
+function signTexture(text, hex) {
+  const c = mkCanvas(512, 112);
+  const g = c.getContext('2d');
+  g.fillStyle = '#0b0d1c';
+  g.fillRect(0, 0, 512, 112);
+  g.strokeStyle = hex;
+  g.lineWidth = 6;
+  g.strokeRect(7, 7, 498, 98);
+  let size = 62;
+  do {
+    g.font = '900 ' + size + 'px "Segoe UI", Arial, sans-serif';
+    size -= 4;
+  } while (g.measureText(text).width > 460);
+  g.fillStyle = hex;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.shadowColor = hex;
+  g.shadowBlur = 14;
+  g.fillText(text, 256, 60);
+  const texture = new T.CanvasTexture(c);
+  texture.anisotropy = 4;
+  return texture;
+}
+
 function buildBlocks() {
   for (let i = 0; i < N; i++) {
     blocks.push([]);
@@ -372,9 +451,13 @@ function buildBlocks() {
         const col = hexRGB(pickR(PALETTE[block.type]));
         addBox(bx0, bx1, bz0, bz1, 0, h, col);
         block.boxes.push({ x0: bx0, x1: bx1, z0: bz0, z1: bz1, h });
+        dressBuilding(block, bx0, bx1, bz0, bz1, h);
+        let top = h;
         if (h > 55 && R() < 0.6) {
-          addBox(bx0 + 4, bx1 - 4, bz0 + 4, bz1 - 4, h, h + 12 + R() * 28, col);
+          top = h + 12 + R() * 28;
+          addBox(bx0 + 4, bx1 - 4, bz0 + 4, bz1 - 4, h, top, col);
         }
+        if (top > 60) towerTops.push({ x: (bx0 + bx1) / 2, z: (bz0 + bz1) / 2, y: top, w: Math.min(bx1 - bx0, bz1 - bz0) });
         const chance = block.type === 'downtown' ? 0.5 : block.type === 'beach' ? 0.75 : block.type === 'suburb' ? 0.12 : 0;
         if (R() < chance) neonBand(bx0, bx1, bz0, bz1, h - 0.7, pickR(NEON));
         if (R() < chance) neonBand(bx0, bx1, bz0, bz1, 4.3, pickR(NEON));
@@ -528,6 +611,165 @@ function buildProps() {
     d.position.set(n.x, n.y, n.z);
     d.scale.set(n.sx, n.sy, n.sz);
   });
+
+  // shop signs (one instanced mesh per name) and roof boxes
+  const signGeo = new T.PlaneGeometry(8, 1.75);
+  Object.keys(signs).forEach((text, k) => {
+    const material = new T.MeshBasicMaterial({ map: signTexture(text, NEON[k % NEON.length]) });
+    instanced(signGeo, material, signs[text], (d, s) => {
+      d.position.set(s.x, 3.1, s.z);
+      d.rotation.y = s.rot;
+    });
+  });
+  const roofMesh = instanced(boxGeo, mat('#70737f'), roofBits, (d, b) => {
+    d.position.set(b.x, b.y, b.z);
+    d.scale.set(b.sx, b.sy, b.sz);
+  });
+  roofMesh.castShadow = true;
+}
+
+// ---------- landmarks: things to steer by from anywhere in the city ----------
+const landmarks = { wheel: null };
+
+function buildLandmarks() {
+  // hip roofs for the low houses
+  const hipGeo = new T.ConeGeometry(1, 1, 4).toNonIndexed();
+  hipGeo.rotateY(Math.PI / 4);
+  hipGeo.computeVertexNormals();
+  const hipMesh = instanced(hipGeo, new T.MeshLambertMaterial({ color: '#ffffff' }), hipRoofs, (d, r) => {
+    d.position.set(r.x, r.y + r.rise / 2, r.z);
+    d.scale.set(r.sx / 1.4142, r.rise, r.sz / 1.4142);
+  });
+  hipMesh.castShadow = true;
+
+  // Meridian Spire on the tallest tower, masts with a red light on the others
+  towerTops.sort((a, b) => b.y - a.y);
+  const beacons = [];
+  const masts = [];
+  towerTops.forEach((t, k) => {
+    if (k === 0) return;
+    const len = 9 + RS() * 9;
+    masts.push({ x: t.x, y: t.y + len / 2, z: t.z, len });
+    beacons.push({ x: t.x, y: t.y + len + 0.4, z: t.z, s: 0.7 });
+  });
+  const tallest = towerTops[0];
+  if (tallest) {
+    const crown = new T.Mesh(new T.CylinderGeometry(tallest.w * 0.18, tallest.w * 0.34, 9, 8), mat('#c9d3dc'));
+    crown.position.set(tallest.x, tallest.y + 4.5, tallest.z);
+    const needle = new T.Mesh(new T.CylinderGeometry(0.25, tallest.w * 0.16, 44, 8), mat('#dfe6ee'));
+    needle.position.set(tallest.x, tallest.y + 9 + 22, tallest.z);
+    const halo = new T.Mesh(new T.TorusGeometry(tallest.w * 0.3, 0.45, 6, 28), glowMat('#3fe0ff'));
+    halo.rotation.x = Math.PI / 2;
+    halo.position.set(tallest.x, tallest.y + 9.4, tallest.z);
+    crown.castShadow = needle.castShadow = true;
+    scene.add(crown, needle, halo);
+    beacons.push({ x: tallest.x, y: tallest.y + 53.6, z: tallest.z, s: 1.3 });
+    landmarks.spire = { x: tallest.x, z: tallest.z, y: tallest.y + 53 };
+  }
+
+  // Rustport smokestacks
+  const stacks = [];
+  const bands = [];
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      const block = blocks[i][j];
+      if (block.type !== 'industrial') continue;
+      for (const box of block.boxes) {
+        if (RS() > 0.7) continue;
+        const pair = RS() < 0.5 ? 2 : 1;
+        for (let k = 0; k < pair; k++) {
+          const len = 20 + RS() * 14;
+          const x = box.x0 + 4 + k * 5.5;
+          const z = box.z0 + 4 + RS() * Math.max(1, box.z1 - box.z0 - 8);
+          stacks.push({ x, y: box.h + len / 2, z, len });
+          bands.push({ x, y: box.h + len - 2.2, z }, { x, y: box.h + len - 6.2, z });
+          beacons.push({ x, y: box.h + len + 0.5, z, s: 0.8 });
+        }
+      }
+    }
+  }
+  const stackGeo = new T.CylinderGeometry(1.05, 1.5, 1, 10);
+  const stackMesh = instanced(stackGeo, mat('#a35a41'), stacks, (d, s) => {
+    d.position.set(s.x, s.y, s.z);
+    d.scale.set(1, s.len, 1);
+  });
+  stackMesh.castShadow = true;
+  instanced(new T.CylinderGeometry(1.24, 1.3, 1.5, 10), mat('#ecece6'), bands, (d, b) => d.position.set(b.x, b.y, b.z));
+  instanced(boxGeo, mat('#8b909c'), masts, (d, m) => {
+    d.position.set(m.x, m.y, m.z);
+    d.scale.set(0.4, m.len, 0.4);
+  });
+  instanced(new T.SphereGeometry(0.5, 8, 6), glowMat('#ff3b3b'), beacons, (d, b) => {
+    d.position.set(b.x, b.y, b.z);
+    d.scale.setScalar(b.s);
+  });
+
+  // the Sol Wheel on its pier, out in the water off Sol Beach (looks only, nobody gets there)
+  const pierX0 = HALF + SHORE - 1;
+  const wheelX = HALF + SHORE + 46;
+  const wheelZ = roadC(7) + 6;
+  const radius = 25;
+  const hubY = radius + 5.5;
+  const pier = new T.Mesh(new T.BoxGeometry(wheelX + 16 - pierX0, 0.7, 9), mat('#8a6a4a'));
+  pier.position.set((pierX0 + wheelX + 16) / 2, 1.1, wheelZ);
+  pier.castShadow = true;
+  scene.add(pier);
+  const posts = [];
+  for (let x = pierX0 + 3; x < wheelX + 16; x += 9) posts.push({ x, z: wheelZ - 3.8 }, { x, z: wheelZ + 3.8 });
+  instanced(boxGeo, mat('#5e4631'), posts, (d, p) => {
+    d.position.set(p.x, -0.2, p.z);
+    d.scale.set(0.6, 2.4, 0.6);
+  });
+  const pierLamps = [];
+  for (let x = pierX0 + 5; x < wheelX - 8; x += 12) pierLamps.push({ x, z: wheelZ - 4.1 }, { x, z: wheelZ + 4.1 });
+  instanced(boxGeo, glowMat('#ffe9a8'), pierLamps, (d, p) => {
+    d.position.set(p.x, 2.2, p.z);
+    d.scale.set(0.35, 0.35, 0.35);
+  });
+
+  const wheel = new T.Group();
+  const steel = mat('#e6e9f2');
+  for (const side of [-1.6, 1.6]) {
+    const rim = new T.Mesh(new T.TorusGeometry(radius, 0.4, 6, 48), steel);
+    rim.position.z = side;
+    const glowRim = new T.Mesh(new T.TorusGeometry(radius - 1.6, 0.22, 5, 48), glowMat(side < 0 ? '#ff3fa4' : '#3fe0ff'));
+    glowRim.position.z = side;
+    wheel.add(rim, glowRim);
+  }
+  const SPOKES = 12;
+  for (let k = 0; k < SPOKES; k++) {
+    const angle = (k / SPOKES) * Math.PI * 2;
+    if (k < SPOKES / 2) {
+      const spoke = new T.Mesh(boxGeo, steel);
+      spoke.scale.set(radius * 2, 0.3, 0.3);
+      spoke.rotation.z = angle;
+      wheel.add(spoke);
+    }
+    const cabin = new T.Mesh(new T.SphereGeometry(1.7, 10, 8), glowMat(NEON[k % NEON.length]));
+    cabin.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
+    wheel.add(cabin);
+  }
+  const hub = new T.Mesh(new T.SphereGeometry(2.2, 12, 8), glowMat('#ffe14f'));
+  wheel.add(hub);
+  wheel.rotation.y = Math.PI / 2;          // face the beach
+  wheel.position.set(wheelX, hubY, wheelZ);
+  scene.add(wheel);
+  for (const lean of [-1, 1]) {
+    for (const side of [-2.6, 2.6]) {
+      const leg = new T.Mesh(boxGeo, steel);
+      leg.scale.set(0.8, hubY + 1.5, 0.8);
+      leg.position.set(wheelX + side, hubY / 2 + 0.6, wheelZ + lean * 7.5);
+      leg.rotation.x = -lean * Math.atan2(15, hubY * 2);
+      leg.castShadow = true;
+      scene.add(leg);
+    }
+  }
+  landmarks.wheel = wheel;
+  landmarks.wheelAt = { x: wheelX, y: hubY, z: wheelZ };
+}
+
+function updateLandmarks(dt) {
+  if (landmarks.wheel) landmarks.wheel.rotateZ(dt * 0.12);
 }
 
 // ---------- sky ----------
@@ -597,6 +839,7 @@ let nightAmount = 0;
 
 function updateSky(dt, fx, fz) {
   tod = (tod + dt / 60) % 24;     // one game minute per real second
+  updateLandmarks(dt);
   let k = 0;
   while (SKY[k + 1][0] < tod) k++;
   const a = SKY[k];
@@ -756,3 +999,4 @@ function zoneName(x, z) {
 buildGround();
 buildBlocks();
 buildProps();
+buildLandmarks();
