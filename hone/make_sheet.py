@@ -16,6 +16,8 @@ lines = [
     "screenshots taken from the running game by the test script: title screen, first view after New Game,",
     "driving, a job in progress, the Sol Wheel at dusk, a police chase, night, pause menu."
     + (" From v4 also: a cab fare, the whole map, the helicopter at four stars, a property by day." if version >= "v4" else "")
+    + (" From v5 also: Sol Beach by day, painted walls in three districts, the view from the Sol Wheel ride,"
+       " the perk card." if version >= "v5" else "")
     if version != "v0" and version != "v1"
     else "driving, a police chase, night, pause menu.",
     "",

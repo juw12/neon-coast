@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 9.0,
+        "C3": 10.0,
+        "C4": 10.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "Test log shows 1 of 10 scripted runs ended in arrest during the first job ('hit a pedestrian... arrested'), risking failure for a stranger.",
+        "C2": "Screenshots show visible aliasing (jagged edges) on vehicle and building silhouettes despite 'Pretty' graphics setting.",
+        "C3": "Systems interlock deeply: 'no cab pickup, tune-up or wheel ride while wanted' and perks tie side activities together.",
+        "C4": "HUD is minimal ('cash and health only'); stars and weapon info hide automatically when not needed.",
+        "C5": "Fact sheet plainly states limits: 'No real players have tried it yet' and 'Only tested in Chrome on one Windows laptop'."
+      },
+      "fixes": [
+        "Suppress police wanted levels and arrests during the first job (not just vehicle wrecking) to guarantee 100% tutorial completion.",
+        "Enable a post-processing anti-aliasing pass (FXAA or SMAA) in the 'Pretty' graphics preset to smooth jagged model edges.",
+        "Display 'Handbrake' and 'Sprint' keys in the visible section of the Title Screen controls by default, rather than folding them away."
+      ],
+      "total": 9.5,
+      "seconds": 29.9
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 9.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen shows six keys clearly with 'How to Play'; first job cut to under a minute ending at Sol Wheel pier; learner car prevents burning-car frustration; standing-still prompt for walking keys; screenshots show clear progression from title to objective to job completion",
+        "C2": "Distinct districts (Meridian towers, Sol Beach pastels, Rustport stencil), 86 painted walls, neon trim, day/night cycle with lit windows; sunset/dusk shots are atmospheric but buildings remain visibly boxy and textures flat in screenshots",
+        "C3": "Six story jobs, four odd-job types (Rush Order, Repo Run, Block Dash, Hot Parcel), cab fares with streak bonuses, property with rent, 15 hidden packages, harbor courier, Sol Wheel ride, helicopter at 4 stars, Tune-up shop, perks tying activities together",
+        "C4": "HUD reduced to cash and health; stars only when wanted; weapon line only 5s after change; clock moved to map/pause; pause screen is three buttons plus settings and perks; G8 passes no overlaps at three resolutions",
+        "C5": "Own names throughout (Meridian, Sol Beach, Rustport, Sol Wheel, Coastliner, Tidal, Vanta GT); explicit 'not affiliated' line; limits stated plainly: 'Only tested in Chrome on one Windows laptop; no phone or gamepad controls' and 'No real players have tried it yet'"
+      },
+      "fixes": [
+        "Get real players to test driving feel and jobs beyond the first one — currently only one of six story jobs is driven by real key presses, and the fact sheet admits 'No real players have tried it yet'",
+        "Add more architectural detail and silhouette variety to buildings — the boxy, flat-shaded structures visible in most screenshots limit the 'recognisable from one screenshot' atmosphere the rubric's 10-anchor demands",
+        "Evaluate and improve the synth radio audio — the fact sheet explicitly lists 'how the synth radio sounds' as not covered by tests, and audio is a major part of atmosphere for a driving game"
+      ],
+      "total": 8.75,
+      "seconds": 12.4
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 8.0,
+        "C4": 9.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "First prompt 'Get into the red car ahead [F]' with 'JOB 111 m', then 'Follow the beach road to the Sol Wheel pier'; key-press runs '9 of 10 finished, all nine in 38.6 to 47.3 s' - but 'the tenth hit a pedestrian 25 m short... (BUSTED)', so a stranger's first minute can still end in an arrest before the first job is finished.",
+        "C2": "Consistent pastel-neon style across shots: pink-dusk Sol Wheel, teal sea and pastel hotels by day, lit windows and lamp pools at night; but Rustport's flat grey ground and plain night roads stay generic, and the player model is a bare box figure.",
+        "C3": "Six story jobs, four odd-job kinds, cab fares, courier shift, property, 15 packages, perks, tune-up and police heat that gates side activities - yet most activities are drive-to-marker variants, odd jobs are 'taken in turn' not chosen, and 'their difficulty and their time limits are not measured'.",
+        "C4": "'The HUD is cash and health'; G8 'no overlaps at 3 sizes'; driving shots show objective, distance, route arrows and minimap reading at a glance; only nit is transient text stacking (perk card plus two message boxes during the wheel ride).",
+        "C5": "'Own city, names and art', G9 'own names only', plus a candid 'Not covered by the tests' section admitting one laptop, no real players and AI judges; only reserve is that the design still mirrors the compared series' structure (stars, respray, BUSTED, hidden packages)."
+      },
+      "fixes": [
+        "Make the learner phase arrest-proof: until the first job is done, suppress wanted stars from collisions/pedestrian hits or stop patrol cars from arresting, so 10 of 10 first runs end with the job finished instead of the documented 1-in-10 BUSTED.",
+        "Have a human play every job, cab fare and courier shift to tune timers, rewards and difficulty - the fact sheet admits these are only script-passed with the car moved between markers.",
+        "Widen activity variety beyond drive-to-marker: let players choose odd-job types instead of a fixed rotation and add on-foot or combat-flavoured tasks so ten minutes feel more varied."
+      ],
+      "total": 8.25,
+      "seconds": 144.7
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.75,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 9.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 1.0,
+    "C2": 1.0,
+    "C3": 2.0,
+    "C4": 1.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.25,
+    9.5
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Suppress police wanted levels and arrests during the first job (not just vehicle wrecking) to guarantee 100% tutorial completion."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Enable a post-processing anti-aliasing pass (FXAA or SMAA) in the 'Pretty' graphics preset to smooth jagged model edges."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Display 'Handbrake' and 'Sprint' keys in the visible section of the Title Screen controls by default, rather than folding them away."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Get real players to test driving feel and jobs beyond the first one — currently only one of six story jobs is driven by real key presses, and the fact sheet admits 'No real players have tried it yet'"
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Add more architectural detail and silhouette variety to buildings — the boxy, flat-shaded structures visible in most screenshots limit the 'recognisable from one screenshot' atmosphere the rubric's 10-anchor demands"
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Evaluate and improve the synth radio audio — the fact sheet explicitly lists 'how the synth radio sounds' as not covered by tests, and audio is a major part of atmosphere for a driving game"
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Make the learner phase arrest-proof: until the first job is done, suppress wanted stars from collisions/pedestrian hits or stop patrol cars from arresting, so 10 of 10 first runs end with the job finished instead of the documented 1-in-10 BUSTED."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Have a human play every job, cab fare and courier shift to tune timers, rewards and difficulty - the fact sheet admits these are only script-passed with the car moved between markers."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Widen activity variety beyond drive-to-marker: let players choose odd-job types instead of a fixed rotation and add on-foot or combat-flavoured tasks so ten minutes feel more varied."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

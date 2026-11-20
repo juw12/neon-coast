@@ -219,6 +219,10 @@ def run_hud_overlap(browser):
                 show('veh', 'Patrol Cruiser');
                 show('zone', 'Meridian');
                 show('drive');
+                document.querySelector('#perk b').textContent = 'Body armour  ·  4 / 5';
+                document.querySelector('#perk span').textContent = 'You take 25% less damage';
+                show('perk');
+                show('weapon', 'Pistol  48');
                 if (document.getElementById('way')) { document.getElementById('way-dist').textContent = 'JOB  1250 m'; show('way'); }
                 const ids = ['tr', 'map', 'drive', 'objective', 'timer', 'hint', 'br'].concat(document.getElementById('way') ? ['way'] : []);
                 const rects = ids.map(id => [id, document.getElementById(id).getBoundingClientRect()]);

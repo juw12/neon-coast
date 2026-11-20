@@ -1,9 +1,12 @@
-"""Screenshots of the version 1.2 city systems for the judges: cab fare, whole map, helicopter, property.
+"""Screenshots for the judges: the 1.2 city systems (cab fare, whole map, helicopter, property) and the
+1.3 day look, Sol Wheel ride and perk card.
 
-State is set through window.NEON to reach each scene quickly; the pictures are the real game.
+State is set through window.NEON to reach each scene quickly (time of day, where you stand, where the
+airship is on its lap); the pictures are the real game.
 
-    python test/city_shots.py       # writes test/shots/11-cab-fare.png ... 14-property-day.png
+    python test/city_shots.py       # writes test/shots/11-cab-fare.png ... 19-perk-card.png
 """
+import math
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -63,9 +66,53 @@ def run():
         page.evaluate("() => { const n = NEON, at = n.PROPERTIES[0].at; n.player.x = at[0] - 1; n.player.z = at[1]; }")
         page.wait_for_timeout(700)
         page.screenshot(path=str(OUT / "14-property-day.png"))
+
+        # ---- version 1.3 ----
+        def stand(tod, x, z, cam_yaw, pitch, ship_lap):
+            page.evaluate("""([tod, x, z, yaw, pitch, lap]) => { const n = NEON, p = n.player;
+                if (p.car) { p.car.vx = p.car.vz = 0; n.tryEnterExit(); }
+                n.setTime(tod); p.x = x; p.z = z; p.h = yaw; n.cam.yaw = yaw; n.cam.pitch = pitch;
+                n.cam.lastMouse = performance.now() + 60000; n.landmarks.shipT = lap / 0.021; }""", [tod, x, z, cam_yaw, pitch, ship_lap])
+            page.wait_for_timeout(1300)
+
+        # Sol Beach by day: parasols, sails, the wheel, the airship
+        stand(10.5, 470, 420, 3.46, 0.06, 0.3)
+        page.wait_for_timeout(8000)             # let the property offer from the last scene fade
+        page.screenshot(path=str(OUT / "15-day-sol-beach.png"))
+        # a painted wall in each of three districts: the mural nearest a point, seen from across its street
+        def mural(tod, near_x, near_z, back, side, ship_lap):
+            m = page.evaluate("""([x, z]) => NEON.landmarks.murals.slice()
+                .sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z))[0]""", [near_x, near_z])
+            nx, nz = [(-1, 0), (1, 0), (0, -1), (0, 1)][m["f"]]
+            x = m["x"] + nx * back - nz * side
+            z = m["z"] + nz * back + nx * side
+            stand(tod, x, z, math.atan2(m["x"] - x, m["z"] - z), 0.3, ship_lap)
+
+        mural(13.0, 404, 278, 17.0, 6.0, 5.9)
+        page.screenshot(path=str(OUT / "16-day-mural-beach.png"))
+        mural(11.0, -100, 42, 17.0, 6.0, 3.4)
+        page.screenshot(path=str(OUT / "17-day-mural-meridian.png"))
+        mural(11.0, -308, 351, 15.0, -7.0, 2.6)
+        page.screenshot(path=str(OUT / "18-day-mural-rustport.png"))
+
+        # the Sol Wheel ride: E at the foot of the pier, then the view from near the top
+        page.evaluate("""() => { const n = NEON, p = n.player, m = n.markers.find(k => k.kind === 'wheel');
+            n.setTime(16.4); n.landmarks.shipT = 2.75 / 0.021; p.x = m.x; p.z = m.z; }""")
+        page.wait_for_timeout(600)
+        page.keyboard.press("e")
+        page.wait_for_timeout(6500)
+        page.screenshot(path=str(OUT / "10b-sol-wheel-ride.png"))
+        page.keyboard.press("f")
+        page.wait_for_timeout(500)
+
+        # the perk card: what a found package shows in play
+        page.evaluate("""() => { const n = NEON; n.setTime(17.6); n.checkPerks(true); n.save.packages = [0, 1, 2, 3]; n.checkPerks();
+            const p = n.player; p.x = 425; p.z = 150; p.h = 0.5; n.cam.yaw = 0.5; n.cam.pitch = -0.02; }""")
+        page.wait_for_timeout(900)
+        page.screenshot(path=str(OUT / "19-perk-card.png"))
         browser.close()
 
 
 if __name__ == "__main__":
     run()
-    print("wrote 4 shots to", OUT)
+    print("wrote 10 shots to", OUT)

@@ -320,15 +320,38 @@ const PERKS = [
 const perkHeld = (p) => p.count()[0] >= p.count()[1];
 const perk = (id) => perkHeld(PERKS.find((p) => p.id === id));
 let perksSeen = [];
+let perkCounts = null;
+// a small card under the cash: which perk just moved, how far along it is, what it gives
+function perkNote(title, body, part, got) {
+  const el = $('perk');
+  el.querySelector('b').textContent = title;
+  el.querySelector('span').textContent = body;
+  el.querySelector('i').style.width = Math.round(clamp(part, 0, 1) * 100) + '%';
+  el.classList.toggle('got', !!got);
+  el.classList.add('show');
+  clearTimeout(toastTimers.perk);
+  toastTimers.perk = setTimeout(() => el.classList.remove('show'), got ? 8000 : 5000);
+}
 function checkPerks(quiet) {
+  const counts = PERKS.map((p) => p.count()[0]);
   const held = PERKS.filter(perkHeld);
-  for (const p of held) {
-    if (!quiet && !perksSeen.includes(p.id)) {
-      hint('Perk unlocked: ' + p.name + '. ' + p.what + '.', 8);
+  if (!quiet) {
+    let unlocked = false;
+    for (const p of held) {
+      if (perksSeen.includes(p.id)) continue;
+      perkNote('PERK UNLOCKED  \u00b7  ' + p.name, p.what, 1, true);
+      unlocked = true;
       if (p.id === 'discount') placeGarage();
+    }
+    // nothing unlocked: say how far the nearest perk on this track has come
+    const moved = PERKS.find((p, k) => perkCounts && counts[k] > perkCounts[k] && !perkHeld(p));
+    if (!unlocked && moved) {
+      const [now, need] = moved.count();
+      perkNote(moved.name + '  \u00b7  ' + now + ' / ' + need, moved.what, now / need, false);
     }
   }
   perksSeen = held.map((p) => p.id);
+  perkCounts = counts;
 }
 
 // ---------- wanted level ----------
@@ -721,6 +744,8 @@ const PLACES = {
   hospital: kerb(7, 2),
   police: kerb(2, 4),
   bank: kerb(4, 4),
+  pier: [roadC(10), roadC(7)],                 // where the beach road meets the Sol Wheel pier
+  wheel: [HALF + SHORE - 9, roadC(7) + 6],     // the foot of the pier, on the sand
 };
 freeSpots.push([HALF + 30, -210], [-HALF - 28, 150], [120, HALF + 30], [-260, -HALF - 26]);
 const packageSpots = freeSpots
@@ -839,17 +864,25 @@ function buyProperty(p) {
   hint('Yours. Walk back into the ring any time: it holds up to ' + RENT_HOURS + ' hours of rent and patches you up.', 7);
 }
 
+const SAFE_STARS = 2;             // your own front door hides you from this much heat
 function collectRent(p) {
   const rent = Math.floor(save.props[p.id]);
   player.hp = 100;
+  let lay = '';
+  if (wanted.stars > SAFE_STARS) {
+    lay = ' Too much heat to hide here: get under ' + (SAFE_STARS + 1) + ' stars first.';
+  } else if (wanted.stars > 0) {
+    setWanted(0);
+    lay = ' You lie low and the police lose you.';
+  }
   if (rent < 1) {
-    hint(p.name + ': the till is empty. You are patched up.', 4);
+    hint(p.name + ': the till is empty. You are patched up.' + lay, lay ? 6 : 4);
     return;
   }
   save.props[p.id] -= rent;
   addMoney(rent);
   sfx.cash();
-  hint(p.name + ': ' + dollars(rent) + ' rent collected, health restored.', 5);
+  hint(p.name + ': ' + dollars(rent) + ' rent collected, health restored.' + lay, lay ? 6 : 5);
 }
 
 let rentSaveT = 0;
@@ -867,8 +900,40 @@ function updateRent(dt) {
   }
 }
 
-// E: buy the property you are standing at
+// ---------- the Sol Wheel: a paid ride, a rest, and a look at where the packages are ----------
+const RIDE_PRICE = 25;
+const RIDE_SECS = 16;
+const ride = { t: 0 };
+const wheelGate = addMarker('wheel', PLACES.wheel[0], PLACES.wheel[1], 2.4, '#ff8fd0', 'SOL WHEEL  $' + RIDE_PRICE);
+function startRide() {
+  if (wanted.stars > 0) return hint('Sol Wheel: no rides while the police are after you.', 4);
+  if (mission.active) return hint('Sol Wheel: finish your job first.', 4);
+  if (save.money < RIDE_PRICE) return hint('A ride on the Sol Wheel costs $' + RIDE_PRICE + '.', 4);
+  addMoney(-RIDE_PRICE);
+  ride.t = RIDE_SECS;
+  player.mesh.visible = false;
+  // from the top you can see what is lying around: the three nearest packages go on the map
+  const fresh = packageSpots
+    .map((spot, id) => ({ id, d: dist2(spot[0], spot[1], player.x, player.z) }))
+    .filter((s) => !save.packages.includes(s.id) && !save.spotted.includes(s.id))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, 3);
+  for (const s of fresh) save.spotted.push(s.id);
+  persist();
+  sfx.cash();
+  hint(fresh.length ? 'From up here you spot ' + fresh.length + ' hidden package' + (fresh.length > 1 ? 's' : '') + '. They are marked ? on your map.  F gets off.' : 'Nothing left to spot from up here.  F gets off.', 9);
+}
+function endRide() {
+  if (ride.t <= 0) return;
+  ride.t = 0;
+  player.hp = 100;
+  player.mesh.visible = !player.car;
+  hint('Back on the sand, rested.', 3);
+}
+
+// E: ride the wheel, or buy the property you are standing at
 function interact() {
+  if (wheelGate.inside && !player.car) return startRide();
   for (const p of PROPERTIES) {
     if (!p.marker.inside) continue;
     if (player.car) hint('Get out of the car to visit ' + p.name + '.');
@@ -891,7 +956,9 @@ function updateMarkers(dt) {
     if (m.kind === 'tune') {
       // you have to stop in the ring, so driving past never buys anything
       if (!inside) m.armed = true;
-      else if (player.car) {
+      else if (wanted.stars > 0) {
+        if (entered) hint('Tune-up: shutters down while the police are after you.', 4);
+      } else if (player.car) {
         if (entered && save.tune < TUNE_PRICES.length) hint('Stop here for tune-up stage ' + (save.tune + 1) + ': $' + TUNE_PRICES[save.tune], 4);
         if (m.armed && Math.hypot(player.car.vx, player.car.vz) < 1.5) {
           m.armed = false;
@@ -901,6 +968,10 @@ function updateMarkers(dt) {
       continue;
     }
     if (!entered) continue;
+    if (m.kind === 'wheel') {
+      hint(player.car ? 'Sol Wheel: leave the car and walk up.' : 'Sol Wheel: $' + RIDE_PRICE + ' a ride.  Press E.', 6);
+      continue;
+    }
     if (m.kind === 'prop') {
       const p = m.prop;
       if (player.car) hint(p.name + ': get out of the car to visit.', 4);
@@ -947,7 +1018,7 @@ const MISSIONS = [
     name: 'First Wheels', by: 'Mo', at: corner(9, 4), reward: 250,
     steps: [
       { t: 'car', text: 'Get into any vehicle  [F]' },
-      { t: 'goto', at: PLACES.garage, car: true, text: "Drive to Mo's Respray in Rustport" },
+      { t: 'goto', at: PLACES.pier, car: true, label: 'SOL WHEEL', text: 'Follow the beach road to the Sol Wheel pier' },
     ],
   },
   {
@@ -1292,10 +1363,12 @@ function updateMission(dt) {
     if (step.target && player.car !== mission.car) done = false;
     if (step.stop) {
       const distance = Math.round(Math.hypot(step.at[0] - px, step.at[1] - pz));
-      const stopped = done && Math.hypot(player.car.vx, player.car.vz) < 1.5;
+      // nobody gets into a cab with the police on its tail
+      const hot = !!mission.def.cab && mission.step === 0 && wanted.stars > 0;
+      const stopped = done && !hot && Math.hypot(player.car.vx, player.car.vz) < 1.5;
       mission.handoff = stopped ? mission.handoff + dt : 0;
       const busy = !mission.def.cab ? 'Loading…' : mission.step === 0 ? 'Getting in…' : 'Paying…';
-      const action = !player.car ? 'Get a vehicle [F]' : distance > 12 ? `${distance} m` : stopped ? busy : 'Stop inside ring [Space]';
+      const action = !player.car ? 'Get a vehicle [F]' : hot ? 'Lose the police first' : distance > 12 ? `${distance} m` : stopped ? busy : 'Stop inside ring [Space]';
       setText('objective', `${step.text}  |  ${action}`);
       done = mission.handoff >= .65;
     }
@@ -1500,6 +1573,7 @@ function drawMap() {
   blip(PLACES.hospital[0], PLACES.hospital[1], '#ff6b78', 'H');
   blip(PLACES.police[0], PLACES.police[1], '#6fa2ff', 'P');
   for (const p of PROPERTIES) blip(p.at[0], p.at[1], owned(p) ? '#7dffa5' : '#d6dbe6', '$');
+  for (const id of save.spotted) if (!save.packages.includes(id)) blip(packageSpots[id][0], packageSpots[id][1], '#c58bff', '?');
   if (heli.on) blip(heli.x, heli.z, Math.floor(performance.now() / 200) % 2 ? '#ffffff' : '#3f7bff', '', true);
   for (const v of vehicles) {
     if (v.siren && !v.dead) blip(v.x, v.z, Math.floor(performance.now() / 200) % 2 ? '#ff3344' : '#3f7bff');
@@ -1630,6 +1704,8 @@ function drawBigMap() {
   dot(PLACES.hospital[0], PLACES.hospital[1], '#ff6b78', 'H');
   dot(PLACES.police[0], PLACES.police[1], '#6fa2ff', 'P');
   for (const p of PROPERTIES) dot(p.at[0], p.at[1], owned(p) ? '#7dffa5' : '#d6dbe6', '$');
+  dot(PLACES.wheel[0], PLACES.wheel[1], '#ff8fd0', 'W');
+  for (const id of save.spotted) if (!save.packages.includes(id)) dot(packageSpots[id][0], packageSpots[id][1], '#c58bff', '?', 8);
   for (const v of vehicles) {
     if (v.siren && !v.dead) dot(v.x, v.z, '#ff3344', '', 4);
   }
@@ -1654,7 +1730,7 @@ function drawBigMap() {
   g.restore();
 
   const have = PROPERTIES.filter(owned).length;
-  setText('bigmap-note', 'You are the white arrow in ' + zoneName(px, pz) + '  ·  Packages ' + save.packages.length + ' / ' + packageSpots.length + '  ·  Property ' + have + ' / ' + PROPERTIES.length + '  ·  M closes the map');
+  setText('bigmap-note', clockText() + '  ·  You are the white arrow in ' + zoneName(px, pz) + '  ·  Packages ' + save.packages.length + ' / ' + packageSpots.length + '  ·  Property ' + have + ' / ' + PROPERTIES.length + '  ·  M closes the map');
 }
 
 function toggleBigMap(open) {
@@ -1665,13 +1741,25 @@ function toggleBigMap(open) {
 
 // ---------- HUD refresh ----------
 let lastZone = '';
-function updateHud() {
-  setText('money', '$' + save.money.toLocaleString('en-US'));
+const weaponShown = { text: 'Pistol  48', until: 0 };
+function clockText() {
   const hours = Math.floor(tod);
   const minutes = Math.floor((tod - hours) * 60);
-  setText('clock', String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0'));
+  return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
+}
+function updateHud() {
+  setText('money', '$' + save.money.toLocaleString('en-US'));
   $('hp').style.width = clamp(player.hp, 0, 100) + '%';
-  setText('weapon', player.gun && player.ammo > 0 ? 'Pistol  ' + player.ammo : 'Fists');
+  // the weapon line shows for a few seconds after it changes (drawn, fired, bought), and when ammo runs low
+  const weaponText = player.gun && player.ammo > 0 ? 'Pistol  ' + player.ammo : 'Fists';
+  if (weaponText !== weaponShown.text) {
+    weaponShown.text = weaponText;
+    weaponShown.until = performance.now() + 5000;
+  }
+  setText('weapon', weaponText);
+  const lowAmmo = player.gun && player.ammo > 0 && player.ammo <= 12;
+  $('weapon').classList.toggle('show', !player.car && (performance.now() < weaponShown.until || lowAmmo));
+  $('stars').classList.toggle('idle', wanted.stars === 0);
   if (bigMap.open && (bigMap.t -= 1) <= 0) {
     bigMap.t = 12;                // redraw a few times a second
     drawBigMap();

@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 9.0,
+        "C3": 10.0,
+        "C4": 10.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "First job cut to under a minute, but scripted test failed once: 'one did not finish (the car was wrecked in traffic)'.",
+        "C2": "Strong neon night atmosphere, but day mode screenshots appear flatter and less distinct than night.",
+        "C3": "Jobs, police, money sinks and secrets feed each other; 'Perks... tie the side activities together'.",
+        "C4": "HUD is cash and health only; 'stars appear only when you are wanted', passes overlap tests.",
+        "C5": "Fact sheet states 'No real players have tried it yet' and 'Own names only' confirmed by Gate 9."
+      },
+      "fixes": [
+        "Make the tutorial vehicle indestructible or add a 'Mission Failed' restart trigger to prevent players getting stuck if they crash (scripted test failed once).",
+        "Enhance day mode lighting and textures to match the atmospheric quality and distinct mood of the night cycle.",
+        "Add a specific early-game prompt connecting the $250 job reward to the first affordable upgrade or property to clarify the economy loop."
+      ],
+      "total": 9.5,
+      "seconds": 29.9
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen shows six keys clearly with 'what changed' line; first job cut to under a minute ending at Sol Wheel pier; HUD reduced to cash and health; 'A new player who stands still for 3.5 seconds is shown the walking keys'. Still requires reading the title screen controls and the job prompt to proceed.",
+        "C2": "Four districts with distinct palettes (Meridian aqua/coral, Sol Beach pastel, Rustport rust/ochre), 86 painted walls with district-specific designs, day/night cycle with lit windows and neon, Sol Wheel and Coastliner airship as landmarks. Screenshots show recognizable mood but city geometry remains somewhat generic blocky towers.",
+        "C3": "Six story jobs, four odd-job types (Rush Order, Repo Run, Block Dash, Hot Parcel), cab fares with streak bonuses, four properties with rent, 15 hidden packages, harbor courier, Sol Wheel ride, tune-up shop in three stages, perks that cross-feed (5 packages -> 25% less damage, 10 fares -> double tips, all jobs -> +50% rent). 'Perks tie the side activities together'.",
+        "C4": "HUD is cash and health only; stars appear only when wanted; weapon line for 5s after change; clock moved to map/pause; pause screen is three buttons plus settings and perks; map legend moved onto map; G8 no overlaps at three resolutions. Perk card shows progress like 'Body armour 4/5'.",
+        "C5": "Own city/names (G9 passed), one 'not affiliated' line on title, fact sheet plainly states 'No real players have tried it yet', 'Only tested in Chrome on one Windows laptop; no phone or gamepad controls', 'Every other job, the cab fares and the courier shift are passed by script'. Limits and test coverage stated honestly."
+      },
+      "fixes": [
+        "Run the remaining five story jobs, cab fares, and courier shift through real key-press tests like test/drive.py does for the first job, so difficulty and time limits are measured by a human-paced driver rather than teleported between markers.",
+        "Get a small group of real players (even 3-5) to play for 10-15 minutes each and report where they got stuck, what felt unclear, and whether the synth radio and driving feel land; the fact sheet itself flags 'No real players have tried it yet' as the biggest unknown.",
+        "Strengthen the city's silhouette so it reads as Neon Coast from a single screenshot: add more varied rooflines, a second or third pier landmark, and district-specific skyline accents beyond the Sol Wheel and Spire, since the current skyline still leans on generic stepped towers."
+      ],
+      "total": 8.35,
+      "seconds": 15.8
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "First view already shows 'Get into the red car ahead [F]' with 'JOB 111 m' and a minimap marker; first job 'cut... to under a minute' and 12 of 14 scripted runs finished in 38.9-51.2 s - but one ran 111.3 s and one ended with the car 'wrecked in traffic after 105.6 s', so the first minute can still go wrong for a stranger.",
+        "C2": "'86 painted walls', district palettes ('aqua, coral, cream and lilac'), a 'glow pass' at night and the dusk Sol Wheel shot give a consistent, readable neon-beach mood by day and night; but buildings remain simple boxes with flat window grids, so the mood is pleasant rather than yet recognisable as its own from any one screenshot.",
+        "C3": "Six story jobs, 'odd jobs come in four kinds', cab fares, property, 15 packages, wheel ride, tune-up; 'Perks... tie the side activities together' and 'Police heat now reaches the other systems' make them feed each other - docked because the side jobs' 'difficulty and their time limits are not measured' and odd jobs are 'taken in turn'.",
+        "C4": "HUD cut to 'cash and health', stars only when wanted, weapon line for 5 s; G8 reports 'no overlaps at 3 sizes'; title 'shows six keys' with eight folded away - only the big-map legend (dense small coloured text) and the temporary perk card under the cash fall short of 'reads at a glance'.",
+        "C5": "'Own city, names and art' with G9 'own names only' and the single 'not affiliated' line; the 'Not covered by the tests' section states limits plainly - driving feel, script-passed jobs, one Chrome laptop, no phone/gamepad, 'No real players have tried it yet'."
+      },
+      "fixes": [
+        "Harden the first job against traffic: 2 of 14 scripted runs failed or overran (one car 'wrecked in traffic after 105.6 s'), so thin traffic on the beach road or make the first car wreck-proof/replaceable until the job ends - a stranger's first minute should not be able to end in a wreck.",
+        "Verify side-activity difficulty with real input: cab fares, the courier shift and the four odd-job types are only 'passed by script' with the car moved between markers, so their timers and difficulty are unmeasured - drive each once by key presses and tune the clocks.",
+        "Differentiate the city beyond painted fronts: add varied rooflines and block massing per district (beyond Meridian tiers and suburb pitches) so the world reads as its own place from any screenshot, not only the landmark shots."
+      ],
+      "total": 8.85,
+      "seconds": 63.8
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.85,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 9.0,
+    "C5": 10.0
+  },
+  "criterion_spread": {
+    "C1": 1.0,
+    "C2": 1.0,
+    "C3": 1.0,
+    "C4": 2.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.35,
+    9.5
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Make the tutorial vehicle indestructible or add a 'Mission Failed' restart trigger to prevent players getting stuck if they crash (scripted test failed once)."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Enhance day mode lighting and textures to match the atmospheric quality and distinct mood of the night cycle."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Add a specific early-game prompt connecting the $250 job reward to the first affordable upgrade or property to clarify the economy loop."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Run the remaining five story jobs, cab fares, and courier shift through real key-press tests like test/drive.py does for the first job, so difficulty and time limits are measured by a human-paced driver rather than teleported between markers."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Get a small group of real players (even 3-5) to play for 10-15 minutes each and report where they got stuck, what felt unclear, and whether the synth radio and driving feel land; the fact sheet itself flags 'No real players have tried it yet' as the biggest unknown."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Strengthen the city's silhouette so it reads as Neon Coast from a single screenshot: add more varied rooflines, a second or third pier landmark, and district-specific skyline accents beyond the Sol Wheel and Spire, since the current skyline still leans on generic stepped towers."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Harden the first job against traffic: 2 of 14 scripted runs failed or overran (one car 'wrecked in traffic after 105.6 s'), so thin traffic on the beach road or make the first car wreck-proof/replaceable until the job ends - a stranger's first minute should not be able to end in a wreck."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Verify side-activity difficulty with real input: cab fares, the courier shift and the four odd-job types are only 'passed by script' with the car moved between markers, so their timers and difficulty are unmeasured - drive each once by key presses and tune the clocks."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Differentiate the city beyond painted fronts: add varied rooflines and block massing per district (beyond Meridian tiers and suburb pitches) so the world reads as its own place from any screenshot, not only the landmark shots."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

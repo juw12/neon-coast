@@ -13,7 +13,7 @@ with sync_playwright() as pw:
     browser = pw.chromium.launch(channel="chrome", headless=True, args=[
         "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"])
     for round_number in range(2):
-        for label, target in (("new", sys.argv[1]), ("live-1.1", sys.argv[2])):
+        for label, target in (("new", sys.argv[1]), ("old", sys.argv[2])):
             page = browser.new_page(viewport={"width": 1280, "height": 720})
             page.goto(Path(target).resolve().as_uri())
             page.wait_for_timeout(1200)

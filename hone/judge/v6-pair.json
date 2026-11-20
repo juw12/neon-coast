@@ -1,0 +1,51 @@
+{
+  "mode": "pair",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "judges": {
+    "Pega-Vision": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Version 2 improves the 'First minute' criterion (C1) by introducing a 'learner car' rule that prevents the vehicle from being wrecked during the tutorial job, addressing a failure mode in Version 1 where traffic collisions could prematurely end the run and block progress.",
+        "Version 1 is superior due to the 'Learner car' mechanic that prevents vehicle destruction during the first job, ensuring a smoother onboarding experience (C1) compared to Version 2 where test runs resulted in wrecks. Additionally, Version 1 demonstrates better stability with 31/31 consistent test checks, while Version 2 had initial test failures."
+      ]
+    },
+    "Pega-Thinking": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "VERSION 2 adds a learner-car rule that prevents the first job from ending in a wrecked car, directly improving the first-minute experience (C1) for a stranger; all other rubric criteria and gate results are identical.",
+        "Both versions pass all 10 hard gates and share the same look, activities, HUD, and originality. VERSION 1 (v6) adds the 'learner car' rule that prevents the car from being wrecked during the first job, directly improving the first-minute experience (C1) so a stranger cannot end up in a burning car, and its key-press runs show 9/10 finishing in 38.6–47.3s with the car undamaged versus VERSION 2's 13/14 with one wreck and one 111.3s outlier."
+      ]
+    },
+    "GLM-5.3-Flash": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both versions pass all 10 gates and are otherwise the same game, but Version 2's learner-car rule guarantees a stranger's first job cannot end in a wrecked car (a failure actually observed in Version 1's scripted runs), directly strengthening the first-minute experience (C1) with one extra test check; its minor internal inconsistency in the 'not covered' run counts is a small C5 ding that doesn't offset that.",
+        "Both versions are the same game with all 10 gates passed and near-identical screenshots, but Version 1's learner-car rule eliminates the one observed way a newcomer's first job could dead-end in a wrecked car (v5 had 1 DNF in 14 runs from exactly this), directly strengthening the heavily weighted first-minute criterion, and it carries a slightly stronger test record (31/31 city checks on this build, gates on four builds). Version 1's only blemish—a messier 'not covered' drive-test stat—is disclosed honesty, not a rubric failure."
+      ]
+    }
+  },
+  "votes": {
+    "A": 0,
+    "B": 3,
+    "tie": 0
+  },
+  "quorum": 3,
+  "b_wins": true,
+  "label": "council-judged (3 judges)"
+}
