@@ -571,6 +571,7 @@ const kerb = (i, j) => [(roadC(i) + roadC(i + 1)) / 2, roadC(j) + ROAD / 2 + 2.6
 const PLACES = {
   home: corner(9, 5),
   garage: [(roadC(2) + roadC(3)) / 2, roadC(8)],
+  tune: [(roadC(6) + roadC(7)) / 2, roadC(3)],
   ammo: kerb(6, 6),
   hospital: kerb(7, 2),
   police: kerb(2, 4),
@@ -603,7 +604,8 @@ function addMarker(kind, x, z, r, hex, text) {
   group.add(ring, beam);
   if (text) {
     const label = labelSprite(text, hex);
-    label.position.y = 5.4;
+    label.position.y = kind === 'mission' ? 9 : 5.4;
+    if (kind === 'mission') label.scale.set(13, 3.25, 1);
     group.add(label);
   }
   group.position.set(x, 0, z);
@@ -621,7 +623,25 @@ function removeMarker(marker) {
 }
 
 addMarker('garage', PLACES.garage[0], PLACES.garage[1], 4.5, '#57ff9a', 'RESPRAY $150');
+addMarker('tune', PLACES.tune[0], PLACES.tune[1], 4.5, '#3fe0ff', 'TUNE-UP');
 addMarker('ammo', PLACES.ammo[0], PLACES.ammo[1], 2.2, '#ff8a3f', 'AMMO $80');
+
+// Tune-up: three stages, kept in the save, they make every car you drive quicker
+const TUNE_PRICES = [1500, 3000, 6000];
+function buyTune() {
+  const price = TUNE_PRICES[save.tune];
+  if (price === undefined) {
+    hint('Tune-up: all three stages fitted.');
+  } else if (save.money < price) {
+    hint('Tune-up stage ' + (save.tune + 1) + ' costs $' + price + '. You have $' + save.money + '.', 5);
+  } else {
+    addMoney(-price);
+    save.tune += 1;
+    persist();
+    sfx.cash();
+    banner('pass', 'TUNE-UP ' + save.tune + ' / 3', 'Quicker off the line, higher top speed.  -$' + price, 3.5);
+  }
+}
 addMarker('info', PLACES.hospital[0], PLACES.hospital[1], 1.6, '#ff4d5e', 'HOSPITAL');
 addMarker('info', PLACES.police[0], PLACES.police[1], 1.6, '#4f8dff', 'POLICE');
 
@@ -631,6 +651,18 @@ function updateMarkers() {
     const inside = dist2(m.x, m.z, px, pz) < m.r * m.r;
     const entered = inside && !m.inside;
     m.inside = inside;
+    if (m.kind === 'tune') {
+      // you have to stop in the ring, so driving past never buys anything
+      if (!inside) m.armed = true;
+      else if (player.car) {
+        if (entered && save.tune < TUNE_PRICES.length) hint('Stop here for tune-up stage ' + (save.tune + 1) + ': $' + TUNE_PRICES[save.tune], 4);
+        if (m.armed && Math.hypot(player.car.vx, player.car.vz) < 1.5) {
+          m.armed = false;
+          buyTune();
+        }
+      }
+      continue;
+    }
     if (!entered) continue;
     if (m.kind === 'garage' && player.car && !(mission.active && currentStep().at === PLACES.garage)) {
       const car = player.car;
@@ -965,6 +997,7 @@ function drawMap() {
     }
   };
   blip(PLACES.garage[0], PLACES.garage[1], '#57ff9a', 'R');
+  blip(PLACES.tune[0], PLACES.tune[1], '#3fe0ff', 'T');
   blip(PLACES.ammo[0], PLACES.ammo[1], '#ff8a3f', 'A');
   blip(PLACES.hospital[0], PLACES.hospital[1], '#ff6b78', 'H');
   blip(PLACES.police[0], PLACES.police[1], '#6fa2ff', 'P');
@@ -1030,7 +1063,24 @@ function updateHud() {
     $('timer').classList.remove('show');
   }
 
+  // until the first job has been started, the top pill says what to do next
+  const guide = !mission.active && save.mission === 0;
+  if (guide) setText('objective', car ? 'Drive into the yellow beam to meet Mo' : 'Get into the red car ahead  [F]');
+  if (!mission.active) $('objective').classList.toggle('show', guide);
+
+  // arrow and distance to the current target, relative to where the camera looks
   const [px, pz] = focus();
+  const target = mission.blip;
+  const far = target ? Math.hypot(target[0] - px, target[1] - pz) : 0;
+  if (target && far > 14) {
+    const rel = wrapPi(Math.atan2(target[0] - px, target[1] - pz) - cam.yaw);
+    $('way-arrow').style.transform = 'rotate(' + (-rel).toFixed(2) + 'rad)';
+    setText('way-dist', (mission.active ? '' : 'JOB  ') + Math.round(far / 5) * 5 + ' m');
+    $('way').className = mission.active ? 'show goal' : 'show';
+  } else {
+    $('way').className = '';
+  }
+
   const zone = zoneName(px, pz);
   if (zone !== lastZone) {
     lastZone = zone;

@@ -1,0 +1,3 @@
+test/shots/
+test/*-result.json
+__pycache__/

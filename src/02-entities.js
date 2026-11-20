@@ -513,8 +513,11 @@ function updateVehicle(v, dt) {
   let vl = v.vx * rx + v.vz * rz;
 
   const power = v.hp < 30 ? 0.6 : 1;
+  const tuned = v === player.car && save.tune > 0;
+  const accel = t.acc * (tuned ? 1 + 0.14 * save.tune : 1);
+  const topSpeed = t.max * (tuned ? 1 + 0.07 * save.tune : 1);
   if (throttle > 0) {
-    vf += (vf < -0.5 ? t.brake : t.acc * power * Math.max(0, 1 - vf / t.max)) * throttle * dt;
+    vf += (vf < -0.5 ? t.brake : accel * power * Math.max(0, 1 - vf / topSpeed)) * throttle * dt;
   } else if (throttle < 0) {
     vf += (vf > 0.5 ? t.brake : t.acc * 0.6 * Math.max(0, 1 + vf / (t.max * 0.3))) * throttle * dt;
   } else {

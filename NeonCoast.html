@@ -64,10 +64,21 @@ SOFTWARE.
     padding: 9px 20px; border-radius: 999px; background: rgba(8,10,24,.72); border: 1px solid rgba(255,63,164,.6);
     font-size: 17px; font-weight: 600; opacity: 0; transition: opacity .3s; text-shadow: none; white-space: nowrap; }
   #objective.show { opacity: 1; }
-  #timer { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); font-size: 34px; font-weight: 800;
+  #timer { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); font-size: 34px; font-weight: 800;
     font-variant-numeric: tabular-nums; opacity: 0; }
   #timer.show { opacity: 1; }
   #timer.low { color: #ff4d5e; }
+
+  #way { position: absolute; top: 68px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 9px;
+    padding: 3px 13px 3px 10px; border-radius: 999px; background: rgba(8,10,24,.62); font-size: 14px; font-weight: 700;
+    letter-spacing: .6px; color: var(--gold); opacity: 0; transition: opacity .3s; text-shadow: none; white-space: nowrap; }
+  #way.show { opacity: 1; }
+  #way.goal { color: var(--pink); }
+  #way-arrow { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent;
+    border-bottom: 13px solid currentColor; }
+  .keys kbd.blip { min-width: 0; width: 24px; height: 24px; padding: 0; line-height: 24px; border-radius: 50%; border: 0;
+    justify-self: center; text-align: center; background: var(--c); color: #0a0c18; font-weight: 800; }
+  .keynote { margin: 12px 0 0; font-size: 12.5px; opacity: .7; line-height: 1.5; }
 
   .toast { opacity: 0; transition: opacity .4s; }
   .toast.show { opacity: 1; }
@@ -151,6 +162,7 @@ SOFTWARE.
     </div>
   </div>
   <div id="objective"></div>
+  <div id="way"><i id="way-arrow"></i><span id="way-dist"></span></div>
   <div id="timer"></div>
   <div id="hint" class="toast"></div>
   <div id="br">
@@ -216,15 +228,18 @@ SOFTWARE.
         <div class="settings"></div>
       </div>
       <div class="card">
-        <h2>HOW IT WORKS</h2>
+        <h2>ON THE MAP</h2>
         <div class="keys">
-          <kbd>J</kbd><span>Yellow marker: start the next job</span>
-          <kbd>R</kbd><span>Respray: $150 repairs the car and clears your wanted level</span>
-          <kbd>A</kbd><span>Ammo: $80 for 24 rounds (walk in)</span>
-          <kbd>&#9733;</kbd><span>Stay out of police sight until the stars blink out</span>
-          <kbd>F</kbd><span>Get in or out of a vehicle</span>
-          <kbd>Q</kbd><span>Pistol / fists</span>
+          <kbd class="blip" style="--c:#ffe14f">J</kbd><span>Job: enter the yellow beam</span>
+          <kbd class="blip" style="--c:#57ff9a">R</kbd><span>Respray $150: repair, lose the police</span>
+          <kbd class="blip" style="--c:#3fe0ff">T</kbd><span>Tune-up: stop in the ring, 3 stages</span>
+          <kbd class="blip" style="--c:#ff8a3f">A</kbd><span>Ammo $80: 24 rounds, on foot</span>
+          <kbd class="blip" style="--c:#ff6b78">H</kbd><span>Hospital: you wake up here</span>
+          <kbd class="blip" style="--c:#6fa2ff">P</kbd><span>Police: you are released here</span>
+          <kbd class="blip" style="--c:#ffe14f">&#9733;</kbd><span>Wanted: hide until the stars go out</span>
         </div>
+        <p class="keynote">Keys: W A S D move, mouse look, F in or out of a car, Space jump or handbrake, left click
+          shoot, Q pistol or fists, R radio, H horn, P pause.</p>
       </div>
     </div>
   </div>
@@ -296,7 +311,7 @@ const headingOf = (d) => Math.atan2(DX[d], DZ[d]);
 
 // ---------- save data ----------
 const SAVE_KEY = 'neon-coast-save-v1';
-const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], ferryRuns: 0, ferryBest: 0, difficulty: 1, quality: 1, sound: 1 };
+const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, difficulty: 1, quality: 1, sound: 1 };
 const save = Object.assign({}, SAVE_DEFAULTS);
 try {
   Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'));
@@ -574,6 +589,85 @@ function lotsFor(type, x0, x1, z0, z1) {
   ];
 }
 
+// shop signs and roof clutter; a separate random stream keeps the existing city layout unchanged
+const SIGN_NAMES = {
+  downtown: ['MERIDIAN BANK', 'LUNA LOUNGE', 'PIXEL ARCADE', 'NOODLE BAR', 'SKY HOTEL', '24H MART', 'VINYL CLUB'],
+  beach: ['CAFE BRISA', 'KITE & SURF', 'TIDE HOTEL', 'GELATO', 'SUNSET GRILL', 'BOARD SHOP'],
+  suburb: ['CORNER SHOP', 'LAUNDRY', 'PHARMACY', 'BAKERY'],
+  industrial: ['RUSTPORT TOOLS', 'TYRES', 'COLD STORE', 'SCRAP & CO'],
+};
+const SIGN_CHANCE = { downtown: 0.85, beach: 0.8, suburb: 0.35, industrial: 0.5 };
+const signs = {};
+const roofBits = [];
+const hipRoofs = [];
+const towerTops = [];
+const RS = seeded(4711);
+const HIP_COLORS = ['#a8553f', '#8f4a3a', '#5d6470', '#b06a45'].map((hex) => new T.Color(hex));
+
+function dressBuilding(block, x0, x1, z0, z1, h) {
+  const hip = block.type === 'suburb' && h < 15;
+  if (hip) {
+    hipRoofs.push({
+      x: (x0 + x1) / 2, z: (z0 + z1) / 2, y: h, sx: x1 - x0 + 1.2, sz: z1 - z0 + 1.2,
+      rise: 2.4 + ((x0 * 7 + z0 * 13) % 10 + 10) % 10 * 0.14,
+      color: HIP_COLORS[Math.abs(Math.round(x0 + z0)) % HIP_COLORS.length],
+    });
+  }
+  if (h < 70) {
+    const count = 1 + Math.floor(RS() * 3);
+    for (let k = 0; k < count; k++) {
+      const sx = 1.6 + RS() * 2.6;
+      const sz = 1.6 + RS() * 2.6;
+      const sy = 0.9 + RS() * 1.5;
+      if (hip || x1 - x0 < sx + 4 || z1 - z0 < sz + 4) continue;
+      roofBits.push({
+        x: x0 + 2 + sx / 2 + RS() * (x1 - x0 - sx - 4),
+        y: h + sy / 2,
+        z: z0 + 2 + sz / 2 + RS() * (z1 - z0 - sz - 4),
+        sx, sy, sz,
+      });
+    }
+  }
+  const names = SIGN_NAMES[block.type];
+  if (!names) return;
+  const near = WALK + 7;        // only walls that face a street get a sign
+  const streetFaces = [x0 - block.x0 < near, block.x1 - x1 < near, z0 - block.z0 < near, block.z1 - z1 < near];
+  const turn = [-Math.PI / 2, Math.PI / 2, Math.PI, 0];
+  for (let f = 0; f < 4; f++) {
+    const along = f < 2 ? z1 - z0 : x1 - x0;
+    if (!streetFaces[f] || along < 11 || RS() > SIGN_CHANCE[block.type]) continue;
+    const text = names[Math.floor(RS() * names.length)];
+    const slide = (RS() - 0.5) * (along - 10);
+    const x = f === 0 ? x0 - 0.14 : f === 1 ? x1 + 0.14 : (x0 + x1) / 2 + slide;
+    const z = f === 2 ? z0 - 0.14 : f === 3 ? z1 + 0.14 : (z0 + z1) / 2 + slide;
+    (signs[text] || (signs[text] = [])).push({ x, z, rot: turn[f] });
+  }
+}
+
+function signTexture(text, hex) {
+  const c = mkCanvas(512, 112);
+  const g = c.getContext('2d');
+  g.fillStyle = '#0b0d1c';
+  g.fillRect(0, 0, 512, 112);
+  g.strokeStyle = hex;
+  g.lineWidth = 6;
+  g.strokeRect(7, 7, 498, 98);
+  let size = 62;
+  do {
+    g.font = '900 ' + size + 'px "Segoe UI", Arial, sans-serif';
+    size -= 4;
+  } while (g.measureText(text).width > 460);
+  g.fillStyle = hex;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.shadowColor = hex;
+  g.shadowBlur = 14;
+  g.fillText(text, 256, 60);
+  const texture = new T.CanvasTexture(c);
+  texture.anisotropy = 4;
+  return texture;
+}
+
 function buildBlocks() {
   for (let i = 0; i < N; i++) {
     blocks.push([]);
@@ -614,9 +708,13 @@ function buildBlocks() {
         const col = hexRGB(pickR(PALETTE[block.type]));
         addBox(bx0, bx1, bz0, bz1, 0, h, col);
         block.boxes.push({ x0: bx0, x1: bx1, z0: bz0, z1: bz1, h });
+        dressBuilding(block, bx0, bx1, bz0, bz1, h);
+        let top = h;
         if (h > 55 && R() < 0.6) {
-          addBox(bx0 + 4, bx1 - 4, bz0 + 4, bz1 - 4, h, h + 12 + R() * 28, col);
+          top = h + 12 + R() * 28;
+          addBox(bx0 + 4, bx1 - 4, bz0 + 4, bz1 - 4, h, top, col);
         }
+        if (top > 60) towerTops.push({ x: (bx0 + bx1) / 2, z: (bz0 + bz1) / 2, y: top, w: Math.min(bx1 - bx0, bz1 - bz0) });
         const chance = block.type === 'downtown' ? 0.5 : block.type === 'beach' ? 0.75 : block.type === 'suburb' ? 0.12 : 0;
         if (R() < chance) neonBand(bx0, bx1, bz0, bz1, h - 0.7, pickR(NEON));
         if (R() < chance) neonBand(bx0, bx1, bz0, bz1, 4.3, pickR(NEON));
@@ -770,6 +868,165 @@ function buildProps() {
     d.position.set(n.x, n.y, n.z);
     d.scale.set(n.sx, n.sy, n.sz);
   });
+
+  // shop signs (one instanced mesh per name) and roof boxes
+  const signGeo = new T.PlaneGeometry(8, 1.75);
+  Object.keys(signs).forEach((text, k) => {
+    const material = new T.MeshBasicMaterial({ map: signTexture(text, NEON[k % NEON.length]) });
+    instanced(signGeo, material, signs[text], (d, s) => {
+      d.position.set(s.x, 3.1, s.z);
+      d.rotation.y = s.rot;
+    });
+  });
+  const roofMesh = instanced(boxGeo, mat('#70737f'), roofBits, (d, b) => {
+    d.position.set(b.x, b.y, b.z);
+    d.scale.set(b.sx, b.sy, b.sz);
+  });
+  roofMesh.castShadow = true;
+}
+
+// ---------- landmarks: things to steer by from anywhere in the city ----------
+const landmarks = { wheel: null };
+
+function buildLandmarks() {
+  // hip roofs for the low houses
+  const hipGeo = new T.ConeGeometry(1, 1, 4).toNonIndexed();
+  hipGeo.rotateY(Math.PI / 4);
+  hipGeo.computeVertexNormals();
+  const hipMesh = instanced(hipGeo, new T.MeshLambertMaterial({ color: '#ffffff' }), hipRoofs, (d, r) => {
+    d.position.set(r.x, r.y + r.rise / 2, r.z);
+    d.scale.set(r.sx / 1.4142, r.rise, r.sz / 1.4142);
+  });
+  hipMesh.castShadow = true;
+
+  // Meridian Spire on the tallest tower, masts with a red light on the others
+  towerTops.sort((a, b) => b.y - a.y);
+  const beacons = [];
+  const masts = [];
+  towerTops.forEach((t, k) => {
+    if (k === 0) return;
+    const len = 9 + RS() * 9;
+    masts.push({ x: t.x, y: t.y + len / 2, z: t.z, len });
+    beacons.push({ x: t.x, y: t.y + len + 0.4, z: t.z, s: 0.7 });
+  });
+  const tallest = towerTops[0];
+  if (tallest) {
+    const crown = new T.Mesh(new T.CylinderGeometry(tallest.w * 0.18, tallest.w * 0.34, 9, 8), mat('#c9d3dc'));
+    crown.position.set(tallest.x, tallest.y + 4.5, tallest.z);
+    const needle = new T.Mesh(new T.CylinderGeometry(0.25, tallest.w * 0.16, 44, 8), mat('#dfe6ee'));
+    needle.position.set(tallest.x, tallest.y + 9 + 22, tallest.z);
+    const halo = new T.Mesh(new T.TorusGeometry(tallest.w * 0.3, 0.45, 6, 28), glowMat('#3fe0ff'));
+    halo.rotation.x = Math.PI / 2;
+    halo.position.set(tallest.x, tallest.y + 9.4, tallest.z);
+    crown.castShadow = needle.castShadow = true;
+    scene.add(crown, needle, halo);
+    beacons.push({ x: tallest.x, y: tallest.y + 53.6, z: tallest.z, s: 1.3 });
+    landmarks.spire = { x: tallest.x, z: tallest.z, y: tallest.y + 53 };
+  }
+
+  // Rustport smokestacks
+  const stacks = [];
+  const bands = [];
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      const block = blocks[i][j];
+      if (block.type !== 'industrial') continue;
+      for (const box of block.boxes) {
+        if (RS() > 0.7) continue;
+        const pair = RS() < 0.5 ? 2 : 1;
+        for (let k = 0; k < pair; k++) {
+          const len = 20 + RS() * 14;
+          const x = box.x0 + 4 + k * 5.5;
+          const z = box.z0 + 4 + RS() * Math.max(1, box.z1 - box.z0 - 8);
+          stacks.push({ x, y: box.h + len / 2, z, len });
+          bands.push({ x, y: box.h + len - 2.2, z }, { x, y: box.h + len - 6.2, z });
+          beacons.push({ x, y: box.h + len + 0.5, z, s: 0.8 });
+        }
+      }
+    }
+  }
+  const stackGeo = new T.CylinderGeometry(1.05, 1.5, 1, 10);
+  const stackMesh = instanced(stackGeo, mat('#a35a41'), stacks, (d, s) => {
+    d.position.set(s.x, s.y, s.z);
+    d.scale.set(1, s.len, 1);
+  });
+  stackMesh.castShadow = true;
+  instanced(new T.CylinderGeometry(1.24, 1.3, 1.5, 10), mat('#ecece6'), bands, (d, b) => d.position.set(b.x, b.y, b.z));
+  instanced(boxGeo, mat('#8b909c'), masts, (d, m) => {
+    d.position.set(m.x, m.y, m.z);
+    d.scale.set(0.4, m.len, 0.4);
+  });
+  instanced(new T.SphereGeometry(0.5, 8, 6), glowMat('#ff3b3b'), beacons, (d, b) => {
+    d.position.set(b.x, b.y, b.z);
+    d.scale.setScalar(b.s);
+  });
+
+  // the Sol Wheel on its pier, out in the water off Sol Beach (looks only, nobody gets there)
+  const pierX0 = HALF + SHORE - 1;
+  const wheelX = HALF + SHORE + 46;
+  const wheelZ = roadC(7) + 6;
+  const radius = 25;
+  const hubY = radius + 5.5;
+  const pier = new T.Mesh(new T.BoxGeometry(wheelX + 16 - pierX0, 0.7, 9), mat('#8a6a4a'));
+  pier.position.set((pierX0 + wheelX + 16) / 2, 1.1, wheelZ);
+  pier.castShadow = true;
+  scene.add(pier);
+  const posts = [];
+  for (let x = pierX0 + 3; x < wheelX + 16; x += 9) posts.push({ x, z: wheelZ - 3.8 }, { x, z: wheelZ + 3.8 });
+  instanced(boxGeo, mat('#5e4631'), posts, (d, p) => {
+    d.position.set(p.x, -0.2, p.z);
+    d.scale.set(0.6, 2.4, 0.6);
+  });
+  const pierLamps = [];
+  for (let x = pierX0 + 5; x < wheelX - 8; x += 12) pierLamps.push({ x, z: wheelZ - 4.1 }, { x, z: wheelZ + 4.1 });
+  instanced(boxGeo, glowMat('#ffe9a8'), pierLamps, (d, p) => {
+    d.position.set(p.x, 2.2, p.z);
+    d.scale.set(0.35, 0.35, 0.35);
+  });
+
+  const wheel = new T.Group();
+  const steel = mat('#e6e9f2');
+  for (const side of [-1.6, 1.6]) {
+    const rim = new T.Mesh(new T.TorusGeometry(radius, 0.4, 6, 48), steel);
+    rim.position.z = side;
+    const glowRim = new T.Mesh(new T.TorusGeometry(radius - 1.6, 0.22, 5, 48), glowMat(side < 0 ? '#ff3fa4' : '#3fe0ff'));
+    glowRim.position.z = side;
+    wheel.add(rim, glowRim);
+  }
+  const SPOKES = 12;
+  for (let k = 0; k < SPOKES; k++) {
+    const angle = (k / SPOKES) * Math.PI * 2;
+    if (k < SPOKES / 2) {
+      const spoke = new T.Mesh(boxGeo, steel);
+      spoke.scale.set(radius * 2, 0.3, 0.3);
+      spoke.rotation.z = angle;
+      wheel.add(spoke);
+    }
+    const cabin = new T.Mesh(new T.SphereGeometry(1.7, 10, 8), glowMat(NEON[k % NEON.length]));
+    cabin.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius, 0);
+    wheel.add(cabin);
+  }
+  const hub = new T.Mesh(new T.SphereGeometry(2.2, 12, 8), glowMat('#ffe14f'));
+  wheel.add(hub);
+  wheel.rotation.y = Math.PI / 2;          // face the beach
+  wheel.position.set(wheelX, hubY, wheelZ);
+  scene.add(wheel);
+  for (const lean of [-1, 1]) {
+    for (const side of [-2.6, 2.6]) {
+      const leg = new T.Mesh(boxGeo, steel);
+      leg.scale.set(0.8, hubY + 1.5, 0.8);
+      leg.position.set(wheelX + side, hubY / 2 + 0.6, wheelZ + lean * 7.5);
+      leg.rotation.x = -lean * Math.atan2(15, hubY * 2);
+      leg.castShadow = true;
+      scene.add(leg);
+    }
+  }
+  landmarks.wheel = wheel;
+  landmarks.wheelAt = { x: wheelX, y: hubY, z: wheelZ };
+}
+
+function updateLandmarks(dt) {
+  if (landmarks.wheel) landmarks.wheel.rotateZ(dt * 0.12);
 }
 
 // ---------- sky ----------
@@ -839,6 +1096,7 @@ let nightAmount = 0;
 
 function updateSky(dt, fx, fz) {
   tod = (tod + dt / 60) % 24;     // one game minute per real second
+  updateLandmarks(dt);
   let k = 0;
   while (SKY[k + 1][0] < tod) k++;
   const a = SKY[k];
@@ -998,6 +1256,7 @@ function zoneName(x, z) {
 buildGround();
 buildBlocks();
 buildProps();
+buildLandmarks();
 
 // =====================================================================
 // NEON COAST - part 2: people, vehicles, driving physics, traffic AI
@@ -1514,8 +1773,11 @@ function updateVehicle(v, dt) {
   let vl = v.vx * rx + v.vz * rz;
 
   const power = v.hp < 30 ? 0.6 : 1;
+  const tuned = v === player.car && save.tune > 0;
+  const accel = t.acc * (tuned ? 1 + 0.14 * save.tune : 1);
+  const topSpeed = t.max * (tuned ? 1 + 0.07 * save.tune : 1);
   if (throttle > 0) {
-    vf += (vf < -0.5 ? t.brake : t.acc * power * Math.max(0, 1 - vf / t.max)) * throttle * dt;
+    vf += (vf < -0.5 ? t.brake : accel * power * Math.max(0, 1 - vf / topSpeed)) * throttle * dt;
   } else if (throttle < 0) {
     vf += (vf > 0.5 ? t.brake : t.acc * 0.6 * Math.max(0, 1 + vf / (t.max * 0.3))) * throttle * dt;
   } else {
@@ -2376,6 +2638,7 @@ const kerb = (i, j) => [(roadC(i) + roadC(i + 1)) / 2, roadC(j) + ROAD / 2 + 2.6
 const PLACES = {
   home: corner(9, 5),
   garage: [(roadC(2) + roadC(3)) / 2, roadC(8)],
+  tune: [(roadC(6) + roadC(7)) / 2, roadC(3)],
   ammo: kerb(6, 6),
   hospital: kerb(7, 2),
   police: kerb(2, 4),
@@ -2408,7 +2671,8 @@ function addMarker(kind, x, z, r, hex, text) {
   group.add(ring, beam);
   if (text) {
     const label = labelSprite(text, hex);
-    label.position.y = 5.4;
+    label.position.y = kind === 'mission' ? 9 : 5.4;
+    if (kind === 'mission') label.scale.set(13, 3.25, 1);
     group.add(label);
   }
   group.position.set(x, 0, z);
@@ -2426,7 +2690,25 @@ function removeMarker(marker) {
 }
 
 addMarker('garage', PLACES.garage[0], PLACES.garage[1], 4.5, '#57ff9a', 'RESPRAY $150');
+addMarker('tune', PLACES.tune[0], PLACES.tune[1], 4.5, '#3fe0ff', 'TUNE-UP');
 addMarker('ammo', PLACES.ammo[0], PLACES.ammo[1], 2.2, '#ff8a3f', 'AMMO $80');
+
+// Tune-up: three stages, kept in the save, they make every car you drive quicker
+const TUNE_PRICES = [1500, 3000, 6000];
+function buyTune() {
+  const price = TUNE_PRICES[save.tune];
+  if (price === undefined) {
+    hint('Tune-up: all three stages fitted.');
+  } else if (save.money < price) {
+    hint('Tune-up stage ' + (save.tune + 1) + ' costs $' + price + '. You have $' + save.money + '.', 5);
+  } else {
+    addMoney(-price);
+    save.tune += 1;
+    persist();
+    sfx.cash();
+    banner('pass', 'TUNE-UP ' + save.tune + ' / 3', 'Quicker off the line, higher top speed.  -$' + price, 3.5);
+  }
+}
 addMarker('info', PLACES.hospital[0], PLACES.hospital[1], 1.6, '#ff4d5e', 'HOSPITAL');
 addMarker('info', PLACES.police[0], PLACES.police[1], 1.6, '#4f8dff', 'POLICE');
 
@@ -2436,6 +2718,18 @@ function updateMarkers() {
     const inside = dist2(m.x, m.z, px, pz) < m.r * m.r;
     const entered = inside && !m.inside;
     m.inside = inside;
+    if (m.kind === 'tune') {
+      // you have to stop in the ring, so driving past never buys anything
+      if (!inside) m.armed = true;
+      else if (player.car) {
+        if (entered && save.tune < TUNE_PRICES.length) hint('Stop here for tune-up stage ' + (save.tune + 1) + ': $' + TUNE_PRICES[save.tune], 4);
+        if (m.armed && Math.hypot(player.car.vx, player.car.vz) < 1.5) {
+          m.armed = false;
+          buyTune();
+        }
+      }
+      continue;
+    }
     if (!entered) continue;
     if (m.kind === 'garage' && player.car && !(mission.active && currentStep().at === PLACES.garage)) {
       const car = player.car;
@@ -2770,6 +3064,7 @@ function drawMap() {
     }
   };
   blip(PLACES.garage[0], PLACES.garage[1], '#57ff9a', 'R');
+  blip(PLACES.tune[0], PLACES.tune[1], '#3fe0ff', 'T');
   blip(PLACES.ammo[0], PLACES.ammo[1], '#ff8a3f', 'A');
   blip(PLACES.hospital[0], PLACES.hospital[1], '#ff6b78', 'H');
   blip(PLACES.police[0], PLACES.police[1], '#6fa2ff', 'P');
@@ -2835,7 +3130,24 @@ function updateHud() {
     $('timer').classList.remove('show');
   }
 
+  // until the first job has been started, the top pill says what to do next
+  const guide = !mission.active && save.mission === 0;
+  if (guide) setText('objective', car ? 'Drive into the yellow beam to meet Mo' : 'Get into the red car ahead  [F]');
+  if (!mission.active) $('objective').classList.toggle('show', guide);
+
+  // arrow and distance to the current target, relative to where the camera looks
   const [px, pz] = focus();
+  const target = mission.blip;
+  const far = target ? Math.hypot(target[0] - px, target[1] - pz) : 0;
+  if (target && far > 14) {
+    const rel = wrapPi(Math.atan2(target[0] - px, target[1] - pz) - cam.yaw);
+    $('way-arrow').style.transform = 'rotate(' + (-rel).toFixed(2) + 'rad)';
+    setText('way-dist', (mission.active ? '' : 'JOB  ') + Math.round(far / 5) * 5 + ' m');
+    $('way').className = mission.active ? 'show goal' : 'show';
+  } else {
+    $('way').className = '';
+  }
+
   const zone = zoneName(px, pz);
   if (zone !== lastZone) {
     lastZone = zone;
@@ -2882,6 +3194,8 @@ function updatePopulation(dt) {
 }
 
 // ---------- session control ----------
+// start spot: kerb of the beach road, clear of palms and lamp posts, looking up the street
+const START = { x: PLACES.home[0] - 2, z: PLACES.home[1] + 50, yaw: Math.PI + 0.2 };
 function resetSession() {
   for (const v of vehicles.slice()) removeVehicle(v);
   for (const ped of peds) scene.remove(ped.mesh);
@@ -2897,16 +3211,17 @@ function resetSession() {
   setWanted(0);
   wanted.pts = 0;
 
-  Object.assign(player, { x: PLACES.home[0], z: PLACES.home[1] + 8, y: 0, vy: 0, h: Math.PI, hp: 100, car: null, lastCar: null, ammo: 48, gun: true, fireT: 0, punchT: 0 });
+  Object.assign(player, { x: START.x, z: START.z, y: 0, vy: 0, h: START.yaw, hp: 100, car: null, lastCar: null, ammo: 48, gun: true, fireT: 0, punchT: 0 });
   player.mesh.visible = true;
   player.mesh.rotation.set(0, player.h, 0);
   player.mesh.position.set(player.x, 0, player.z);
-  cam.yaw = Math.PI;
+  cam.yaw = START.yaw;
   cam.pitch = -0.18;
+  cam.dist = 5;
   tod = 17.4;
 
   // a ride waiting at the kerb outside
-  addVehicle('muscle', roadC(9) + PARK, roadC(5) + 24, Math.PI, null, '#b3261e');
+  addVehicle('muscle', roadC(9) + PARK, START.z - 11, Math.PI, null, '#b3261e');
   packageSpots.forEach((spot, id) => {
     if (!save.packages.includes(id)) addPickup('package', spot[0], spot[1], 0, id);
   });
@@ -2915,7 +3230,7 @@ function resetSession() {
   }
   offerMission();
   for (let k = 0; k < 60; k++) spawnTraffic(22, 250, k % 3 === 0);
-  for (let k = 0; k < 80; k++) spawnWalker(8, 150);
+  for (let k = 0; k < 80; k++) spawnWalker(20, 150);   // nobody in the player's face at the start
 }
 
 function die(kind) {
@@ -3099,7 +3414,7 @@ function renderSettings() {
   $('btn-end-shift').hidden = !(mission.active && mission.def === FERRY);
   const jobs = Math.min(save.mission, MISSIONS.length) + ' / ' + MISSIONS.length;
   $('progress').textContent = 'Jobs ' + jobs + '     Packages ' + save.packages.length + ' / ' + packageSpots.length + '     Cash $' + save.money + (save.ferryRuns ? `     Ferry shifts ${save.ferryRuns} · best ${save.ferryBest}s` : '');
-  const hasSave = save.mission > 0 || save.packages.length > 0 || save.money !== SAVE_DEFAULTS.money;
+  const hasSave = save.mission > 0 || save.packages.length > 0 || save.tune > 0 || save.money !== SAVE_DEFAULTS.money;
   $('btn-continue').style.display = hasSave ? '' : 'none';
 }
 
@@ -3107,6 +3422,10 @@ function showScreen(id) {
   $('title').classList.toggle('hidden', id !== 'title');
   $('pause').classList.toggle('hidden', id !== 'pause');
   $('hud').classList.toggle('hidden', id === 'title');
+}
+
+function refreshLockHint() {
+  $('lockhint').classList.toggle('show', state === 'play' && document.pointerLockElement !== canvas);
 }
 
 function lockPointer() {
@@ -3120,7 +3439,7 @@ function lockPointer() {
 
 function startGame(fresh) {
   if (fresh) {
-    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], ferryRuns: 0, ferryBest: 0 });
+    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0 });
     persist();
   }
   initAudio();
@@ -3129,8 +3448,7 @@ function startGame(fresh) {
   state = 'play';
   showScreen(null);
   lockPointer();
-  banner('title', 'NEON COAST', 'Sol Beach', 4);
-  hint('Follow the yellow J on the map for your first job.  F gets you into a car.', 9);
+  hint('Mouse looks, W A S D moves, P pauses.', 6);
 }
 
 function pause() {
@@ -3233,8 +3551,8 @@ window.addEventListener('mouseup', () => {
 });
 document.addEventListener('pointerlockchange', () => {
   const locked = document.pointerLockElement === canvas;
-  $('lockhint').classList.toggle('show', !locked);
   if (!locked && state === 'play') pause();
+  refreshLockHint();
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) pause();
@@ -3253,6 +3571,7 @@ function frame(now) {
   const realDt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
   lastTime = now;
   frameNo++;
+  if ((frameNo & 15) === 0) refreshLockHint();
   if (state !== 'paused') update(state === 'dead' ? realDt * 0.4 : realDt, realDt);
   renderer.render(scene, camera);
 }
@@ -3260,11 +3579,11 @@ requestAnimationFrame(frame);
 
 // small handle for automated checks
 window.NEON = {
-  player, vehicles, peds, pickups, markers, wanted, mission, save, cam, keys, PLACES, MISSIONS,
+  player, vehicles, peds, pickups, markers, wanted, mission, save, cam, keys, PLACES, MISSIONS, scene, camera,
   get state() {
     return state;
   },
-  startGame, pause, resume, setWanted, tryEnterExit, playerAttack, crime, hurt,
+  startGame, pause, resume, setWanted, tryEnterExit, playerAttack, crime, hurt, landmarks,
   setTime(hours) {
     tod = hours;
   },

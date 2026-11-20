@@ -64,10 +64,21 @@ SOFTWARE.
     padding: 9px 20px; border-radius: 999px; background: rgba(8,10,24,.72); border: 1px solid rgba(255,63,164,.6);
     font-size: 17px; font-weight: 600; opacity: 0; transition: opacity .3s; text-shadow: none; white-space: nowrap; }
   #objective.show { opacity: 1; }
-  #timer { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); font-size: 34px; font-weight: 800;
+  #timer { position: absolute; top: 100px; left: 50%; transform: translateX(-50%); font-size: 34px; font-weight: 800;
     font-variant-numeric: tabular-nums; opacity: 0; }
   #timer.show { opacity: 1; }
   #timer.low { color: #ff4d5e; }
+
+  #way { position: absolute; top: 68px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 9px;
+    padding: 3px 13px 3px 10px; border-radius: 999px; background: rgba(8,10,24,.62); font-size: 14px; font-weight: 700;
+    letter-spacing: .6px; color: var(--gold); opacity: 0; transition: opacity .3s; text-shadow: none; white-space: nowrap; }
+  #way.show { opacity: 1; }
+  #way.goal { color: var(--pink); }
+  #way-arrow { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent;
+    border-bottom: 13px solid currentColor; }
+  .keys kbd.blip { min-width: 0; width: 24px; height: 24px; padding: 0; line-height: 24px; border-radius: 50%; border: 0;
+    justify-self: center; text-align: center; background: var(--c); color: #0a0c18; font-weight: 800; }
+  .keynote { margin: 12px 0 0; font-size: 12.5px; opacity: .7; line-height: 1.5; }
 
   .toast { opacity: 0; transition: opacity .4s; }
   .toast.show { opacity: 1; }
@@ -151,6 +162,7 @@ SOFTWARE.
     </div>
   </div>
   <div id="objective"></div>
+  <div id="way"><i id="way-arrow"></i><span id="way-dist"></span></div>
   <div id="timer"></div>
   <div id="hint" class="toast"></div>
   <div id="br">
@@ -216,15 +228,18 @@ SOFTWARE.
         <div class="settings"></div>
       </div>
       <div class="card">
-        <h2>HOW IT WORKS</h2>
+        <h2>ON THE MAP</h2>
         <div class="keys">
-          <kbd>J</kbd><span>Yellow marker: start the next job</span>
-          <kbd>R</kbd><span>Respray: $150 repairs the car and clears your wanted level</span>
-          <kbd>A</kbd><span>Ammo: $80 for 24 rounds (walk in)</span>
-          <kbd>&#9733;</kbd><span>Stay out of police sight until the stars blink out</span>
-          <kbd>F</kbd><span>Get in or out of a vehicle</span>
-          <kbd>Q</kbd><span>Pistol / fists</span>
+          <kbd class="blip" style="--c:#ffe14f">J</kbd><span>Job: enter the yellow beam</span>
+          <kbd class="blip" style="--c:#57ff9a">R</kbd><span>Respray $150: repair, lose the police</span>
+          <kbd class="blip" style="--c:#3fe0ff">T</kbd><span>Tune-up: stop in the ring, 3 stages</span>
+          <kbd class="blip" style="--c:#ff8a3f">A</kbd><span>Ammo $80: 24 rounds, on foot</span>
+          <kbd class="blip" style="--c:#ff6b78">H</kbd><span>Hospital: you wake up here</span>
+          <kbd class="blip" style="--c:#6fa2ff">P</kbd><span>Police: you are released here</span>
+          <kbd class="blip" style="--c:#ffe14f">&#9733;</kbd><span>Wanted: hide until the stars go out</span>
         </div>
+        <p class="keynote">Keys: W A S D move, mouse look, F in or out of a car, Space jump or handbrake, left click
+          shoot, Q pistol or fists, R radio, H horn, P pause.</p>
       </div>
     </div>
   </div>
