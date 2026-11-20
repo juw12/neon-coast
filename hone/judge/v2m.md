@@ -1,0 +1,58 @@
+# Neon Coast v2m - fact sheet for judging
+
+A browser game in one offline HTML file (about 0.7 MB, three.js inlined). The judges see this sheet and
+screenshots taken from the running game by the test script: title screen, first view after New Game,
+driving, a job in progress, the Sol Wheel at dusk, a police chase, night, pause menu.
+
+## What is in the game
+
+- One island city, 10 x 10 blocks, four districts with their own look: Meridian (downtown towers), Sol Beach
+  (pastel hotels, palms, sand), Rustport (industry), suburbs and parks. Day and night cycle with lit windows,
+  street lamps and neon trim.
+- Landmarks to steer by: the Sol Wheel (a turning Ferris wheel on a pier off Sol Beach, looks only, it
+  cannot be reached), the Meridian Spire on the tallest tower, red-light masts on the other towers,
+  striped smokestacks over Rustport, pitched roofs on the low suburb houses.
+- On foot (walk, sprint, jump, punch, pistol) and seven vehicle types (Tidal, Vanta GT, Ravager, Brawler,
+  Hauler, City Cab, Patrol Cruiser) with arcade handling, handbrake, damage and fire.
+- Traffic that follows lanes, pedestrians that flee from shots, occupied cars can be taken.
+- Police: wanted level 1 to 5, patrol cars chase and ram, officers shoot from 2 stars, an arrest when stopped
+  beside a patrol car, escape by staying out of sight or paying for a respray.
+- Six story jobs from three contacts (delivery against the clock, two checkpoint races, a car theft, a
+  getaway with 3 stars), then endless generated odd jobs. Rewards from $250 to $3,500.
+- Harbor courier shift (release 1.1, from the title screen or G in free roam): three timed stops, $450 plus
+  a time bonus, best time saved; checked by `test/harbor.py`.
+- Money sinks: respray and repair $150, ammo $80, hospital and bail fees of 10% of cash, and the Tune-up
+  shop in three stages ($1,500, $3,000, $6,000; each stage adds 14% acceleration and 7% top speed to the
+  car you drive, kept in the save).
+- Each hidden package pays $100, all 15 pay a $5,000 bonus.
+- Health pickups, a round minimap with markers, district names, a car radio with
+  synth stations made in the browser (no audio files).
+- Title screen with settings (difficulty Easy / Normal / Hard, graphics Fast / Pretty, sound), a controls
+  list, pause with Resume / Restart / Main menu, progress saved in the browser.
+- Own city, names and art. One line on the title screen says it is a fan-made original and is not
+  affiliated with any published game.
+
+## Gate results for this version (from test/gates.py, run in real Chrome)
+
+- PASS G3 core loop: 22 checks pass
+- PASS G10 clear first view: clear
+- PASS G6 mouse look: pointer captured: True, yaw 2.48 -> 2.00, pitch -0.44 -> -0.36
+- PASS G7 frame rate: 144 fps at 1280x720, Pretty, in play: True
+- PASS G4 all jobs: First Wheels ok (+$250 of $250); Hot Delivery ok (+$600 of $600); Midnight Sprint ok (+$900 of $900); Borrowed Time ok (+$1400 of $1400); Heat Wave ok (+$2200 of $2200); Coastline Run ok (+$3500 of $3500)
+- PASS G5 busted: patrol car arrived: True, banner 'BUSTED', back in play at the station: True
+- PASS G8 HUD overlap: no overlaps at 3 sizes
+- PASS G9 own names: own names only
+- PASS G2 clean console: no errors or warnings
+- PASS G1 offline single file: 0 outside requests
+
+Gates passed: 10 of 10
+
+## Changed in this version
+
+- v2 merged with the harbor courier shift (release 1.1); no other change
+
+## Not covered by the tests
+
+- How the driving feels to a person, and how the synth radio sounds.
+- Jobs are passed by script (the car is moved between markers), so their difficulty is not measured.
+- Only tested in Chrome on one Windows laptop; no phone or gamepad controls.

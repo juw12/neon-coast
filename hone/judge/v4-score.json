@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 9.0,
+        "C3": 10.0,
+        "C4": 10.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "'Get into the red car ahead [F]' and road arrows are perfect guidance, but test script took 80-109s, exceeding the 60s anchor for a stranger.",
+        "C2": "'Sol Wheel' and neon style are distinct, but player model is a static block (Screenshot 2) reducing atmospheric immersion.",
+        "C3": "Perks 'tie the side activities together' and money sinks (property, tune-up) create a loop where 'ten minutes feel varied'.",
+        "C4": "Gate G8 passed 'no overlaps', and HUD hides property signs to avoid covering objectives while driving.",
+        "C5": "'Own names only' (Gate G9) and 'Not covered by the tests' admits 'No real players have tried it yet'."
+      },
+      "fixes": [
+        "Shorten the first job ('First Wheels') distance or difficulty to ensure a new player can complete it within the 60-second 'First minute' anchor for a perfect C1 score.",
+        "Add on-screen notifications for Perk progress (e.g., 'Streak Bonus: Tips Doubled') so the player immediately feels how activities 'feed each other' rather than just seeing them in the pause menu.",
+        "Add idle animations or movement sway to the player character model to match the detailed vehicle lighting and city atmosphere, improving the 'mood' for a perfect C2 score."
+      ],
+      "total": 9.5,
+      "seconds": 34.7
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 7.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen lists controls and settings; first view shows clear objective 'Get into the red car ahead [F]' with 'JOB 135 m' and minimap route; walking keys only appear after 3.5s standing still. Slight deduction for text-heavy title screen.",
+        "C2": "Consistent low-poly style with neon trim, lit windows at night, street lamps, day/night cycle, Sol Wheel at dusk. However buildings read as plain boxes with flat colours; atmosphere is functional but not strongly distinctive or memorable from a single screenshot.",
+        "C3": "Six story jobs, four odd-job types (Rush Order, Repo Run, Block Dash, Hot Parcel), cab fares with streak bonuses, four properties with rent, 15 hidden packages, police 1-5 stars with helicopter at 4+, tune-up shop, perks that tie activities together. Rich interlocking systems.",
+        "C4": "Clean HUD layout: money/time/health/ammo top-right, objective top-center, minimap bottom-left, speed/car condition bottom-center, district name bottom-right. G8 passes at three resolutions. Pause menu well-organized with settings, perks progress, and map legend.",
+        "C5": "Own names throughout (Meridian, Sol Beach, Rustport, Tidal, Vanta GT, etc.); G9 passes; title screen states 'fan-made original and is not affiliated'; fact sheet plainly states 'No real players have tried it yet' and lists what tests don't cover."
+      },
+      "fixes": [
+        "Make the city visually more distinctive — current low-poly boxes with neon trim read as generic; add more silhouette variety, signage detail, or district-specific landmarks so the world is recognisable from one screenshot.",
+        "Reduce title-screen text density or stagger the controls/settings reveal so a stranger is not faced with a wall of text before pressing New Game.",
+        "Run a small playtest with real humans (not just scripted key presses) to validate driving feel, job difficulty, and cab-fare pacing — the fact sheet explicitly flags this as untested."
+      ],
+      "total": 8.1,
+      "seconds": 16.4
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "First view leads with 'Get into the red car ahead [F]' plus 'JOB 135 m' and lane chevrons; test/drive.py finishes job 1 'using key presses only... 5 runs of 5 passed'. Held off 10: even scripted runs take 80.5-108.5 s and 'No real players have tried it yet', so the 60-second title-to-job promise is unverified with humans.",
+        "C2": "Dusk and night shots carry real mood: glow pass makes 'neon, lamps, lit windows and tail lights bleed light at night'; Sol Wheel and neon CAFE/PHARMACY signs read well. But the day screenshot is generic pastel low-poly and the neon-dusk formula is a familiar one - not yet a place you'd recognise from any single frame.",
+        "C3": "Six story jobs ($250-$3,500), four odd-job kinds, cab fares with streak bonus, courier shift, property rent, 15 packages, tune-up stages, 5-star police with helicopter; perks 'tie the side activities together'. Short of 10: some pieces don't interact - the Sol Wheel is 'looks only, it cannot be reached', and police heat never touches fares, rent or shops.",
+        "C4": "G8: 'no overlaps at 3 sizes'; 'property sign hides while you stand in its ring so it never covers the objective'; money pops under the balance. Not 10: the stars/$/TIME/HEALTH/'Pistol 48' stack is always on whether or not it matters, and the pause screen crams buttons, settings, a 10-blip map legend and perks onto one 720p page.",
+        "C5": "'fan-made original and is not affiliated with any published game'; G9 own names pass; 'Not covered by the tests' candidly admits no human playtest, Chrome-only, and jobs 'passed by script'. Kept from 10: the loop ends in 'WASTED'/'BUSTED' banners (per G3), GTA's signature wording, and 'fan-made original' is an odd label for a claimed-original world."
+      },
+      "fixes": [
+        "Close the C2 gap (highest-weighted weakness): give daytime the same authored identity as dusk/night - distinctive district silhouettes and one signature frame - so a single screenshot is unmistakably Neon Coast rather than generic low-poly synthwave.",
+        "Get real strangers to playtest and time the opening: the sheet concedes 'No real players have tried it yet' and every job after job 1 is 'passed by script', so onboarding pacing and all later time limits and difficulty are unmeasured.",
+        "Make the HUD earn its place at speed: hide 'Pistol 48' and the clock unless relevant, and thin or split the pause screen, which stacks buttons, settings, a 10-item map legend and perks into one dense 720p view."
+      ],
+      "total": 8.6,
+      "seconds": 133.9
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.6,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 8.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 1.0,
+    "C2": 2.0,
+    "C3": 1.0,
+    "C4": 2.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.1,
+    9.5
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Shorten the first job ('First Wheels') distance or difficulty to ensure a new player can complete it within the 60-second 'First minute' anchor for a perfect C1 score."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Add on-screen notifications for Perk progress (e.g., 'Streak Bonus: Tips Doubled') so the player immediately feels how activities 'feed each other' rather than just seeing them in the pause menu."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Add idle animations or movement sway to the player character model to match the detailed vehicle lighting and city atmosphere, improving the 'mood' for a perfect C2 score."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Make the city visually more distinctive — current low-poly boxes with neon trim read as generic; add more silhouette variety, signage detail, or district-specific landmarks so the world is recognisable from one screenshot."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Reduce title-screen text density or stagger the controls/settings reveal so a stranger is not faced with a wall of text before pressing New Game."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Run a small playtest with real humans (not just scripted key presses) to validate driving feel, job difficulty, and cab-fare pacing — the fact sheet explicitly flags this as untested."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Close the C2 gap (highest-weighted weakness): give daytime the same authored identity as dusk/night - distinctive district silhouettes and one signature frame - so a single screenshot is unmistakably Neon Coast rather than generic low-poly synthwave."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Get real strangers to playtest and time the opening: the sheet concedes 'No real players have tried it yet' and every job after job 1 is 'passed by script', so onboarding pacing and all later time limits and difficulty are unmeasured."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Make the HUD earn its place at speed: hide 'Pistol 48' and the clock unless relevant, and thin or split the pause screen, which stacks buttons, settings, a 10-item map legend and perks into one dense 720p view."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

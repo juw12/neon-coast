@@ -54,13 +54,15 @@ const headingOf = (d) => Math.atan2(DX[d], DZ[d]);
 
 // ---------- save data ----------
 const SAVE_KEY = 'neon-coast-save-v1';
-const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, difficulty: 1, quality: 1, sound: 1 };
+const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, difficulty: 1, quality: 1, sound: 1 };
 const save = Object.assign({}, SAVE_DEFAULTS);
 try {
   Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'));
 } catch (err) {
   // storage blocked: play without saving
 }
+save.packages = (save.packages || []).slice();       // never share the default objects
+save.props = Object.assign({}, save.props);
 function persist() {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -158,7 +160,9 @@ function labelSprite(text, color) {
   g.fillRect(0, 6, 256, 52);
   g.fillStyle = color;
   g.fillRect(0, 6, 256, 4);
-  g.font = 'bold 30px "Segoe UI", Arial, sans-serif';
+  let px = 30;
+  do g.font = 'bold ' + px + 'px "Segoe UI", Arial, sans-serif';
+  while (g.measureText(text).width > 236 && --px > 14);
   g.textAlign = 'center';
   g.textBaseline = 'middle';
   g.fillText(text, 128, 35);
@@ -221,6 +225,47 @@ function groundCanvas() {
   return c;
 }
 
+// sea: moving ripples, sky colour at shallow angles, a glitter path under the sun or moon
+const waterMat = new T.ShaderMaterial({
+  uniforms: {
+    time: { value: 0 },
+    deep: { value: new T.Color('#0d4f6b') },
+    skyC: { value: new T.Color() },
+    sunC: { value: new T.Color() },
+    sunDir: { value: new T.Vector3(0, 1, 0) },
+    fogC: { value: new T.Color() },
+  },
+  vertexShader: `
+    varying vec3 wp;
+    void main() {
+      vec4 world = modelMatrix * vec4(position, 1.0);
+      wp = world.xyz;
+      gl_Position = projectionMatrix * viewMatrix * world;
+    }`,
+  fragmentShader: `
+    uniform float time;
+    uniform vec3 deep;
+    uniform vec3 skyC;
+    uniform vec3 sunC;
+    uniform vec3 sunDir;
+    uniform vec3 fogC;
+    varying vec3 wp;
+    void main() {
+      vec2 p = wp.xz * 0.11;
+      float gx = cos(p.x * 1.3 + time * 0.9) * 1.3 + cos((p.x + p.y) * 0.9 + time * 1.3) * 0.9 + cos((p.x - p.y) * 2.3 - time * 1.1) * 2.3;
+      float gz = cos(p.y * 1.7 - time * 0.7) * 1.7 + cos((p.x + p.y) * 0.9 + time * 1.3) * 0.9 - cos((p.x - p.y) * 2.3 - time * 1.1) * 2.3;
+      vec3 toEye = cameraPosition - wp;
+      float far = length(toEye);
+      vec3 v = toEye / far;
+      vec3 n = normalize(vec3(-gx, 14.0 + far * 0.08, -gz));
+      float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
+      vec3 col = mix(deep, skyC, 0.12 + 0.8 * fres);
+      float glint = pow(max(dot(reflect(-sunDir, n), v), 0.0), 90.0);
+      col += sunC * glint * 0.9;
+      gl_FragColor = vec4(mix(col, fogC, smoothstep(140.0, 1150.0, far)), 1.0);
+    }`,
+});
+
 function buildGround() {
   const tex = new T.CanvasTexture(groundCanvas());
   tex.wrapS = tex.wrapT = T.RepeatWrapping;
@@ -240,10 +285,7 @@ function buildGround() {
   sand.rotation.x = -Math.PI / 2;
   sand.position.y = -0.06;
   sand.receiveShadow = true;
-  const water = new T.Mesh(
-    new T.PlaneGeometry(9000, 9000),
-    new T.MeshLambertMaterial({ color: '#1c7391', emissive: '#0a2a3a' })
-  );
+  const water = new T.Mesh(new T.PlaneGeometry(9000, 9000), waterMat);
   water.rotation.x = -Math.PI / 2;
   water.position.y = -0.7;
   scene.add(sand, water);
@@ -254,6 +296,9 @@ const blocks = [];                // blocks[i][j] = {type, x0, z0, x1, z1, boxes
 const blockAt = (i, j) => (i >= 0 && j >= 0 && i < N && j < N ? blocks[i][j] : null);
 const freeSpots = [];             // hidden-package candidates (alleys, parks, sand)
 const bld = { pos: [], nor: [], uv: [], col: [], idx: [] };
+const shopWalls = { pos: [], nor: [], uv: [], col: [], idx: [] };    // street-level storefronts
+const SHOP_H = 4.4;
+const RT = seeded(31337);         // extra detail; its own stream so the city layout stays the same
 const neonBars = [];
 const trees = [];
 const palms = [];
@@ -275,22 +320,35 @@ function districtOf(i, j) {
   return 'suburb';
 }
 
-function face(a, b, c, d, normal, u, v, col, uo, vo) {
-  const base = bld.pos.length / 3;
-  bld.pos.push(...a, ...b, ...c, ...d);
+function face(a, b, c, d, normal, u, v, col, uo, vo, into) {
+  const buf = into || bld;
+  const base = buf.pos.length / 3;
+  buf.pos.push(...a, ...b, ...c, ...d);
   for (let k = 0; k < 4; k++) {
-    bld.nor.push(...normal);
-    bld.col.push(...col);
+    buf.nor.push(...normal);
+    buf.col.push(...col);
   }
-  bld.uv.push(uo, vo, uo + u, vo, uo + u, vo + v, uo, vo + v);
-  bld.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  buf.uv.push(uo, vo, uo + u, vo, uo + u, vo + v, uo, vo + v);
+  buf.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
 }
 
-function addBox(x0, x1, z0, z1, y0, y1, col) {
+function addBox(x0, x1, z0, z1, y0, y1, col, rng, shops) {
   // the window texture holds 8 x 8 windows; give every wall a whole number of them
   const cells = (len) => Math.max(1, Math.round(len / 3.5)) / 8;
-  const uo = Math.floor(R() * 8) / 8;
-  const vo = Math.floor(R() * 8) / 8;
+  const random = rng || R;
+  const uo = Math.floor(random() * 8) / 8;
+  const vo = Math.floor(random() * 8) / 8;
+  if (shops) {
+    // the ground floor is a row of storefronts (4 different ones in the texture, each 8 m wide)
+    const y2 = y0 + SHOP_H;
+    const tiles = (len) => Math.max(1, Math.round(len / 8)) / 4;
+    const so = Math.floor(RT() * 4) / 4;
+    face([x1, y0, z1], [x1, y0, z0], [x1, y2, z0], [x1, y2, z1], [1, 0, 0], tiles(z1 - z0), 1, col, so, 0, shopWalls);
+    face([x0, y0, z0], [x0, y0, z1], [x0, y2, z1], [x0, y2, z0], [-1, 0, 0], tiles(z1 - z0), 1, col, so + 0.25, 0, shopWalls);
+    face([x0, y0, z1], [x1, y0, z1], [x1, y2, z1], [x0, y2, z1], [0, 0, 1], tiles(x1 - x0), 1, col, so + 0.5, 0, shopWalls);
+    face([x1, y0, z0], [x0, y0, z0], [x0, y2, z0], [x1, y2, z0], [0, 0, -1], tiles(x1 - x0), 1, col, so + 0.75, 0, shopWalls);
+    y0 = y2;
+  }
   const v = cells(y1 - y0);
   face([x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [1, 0, 0], cells(z1 - z0), v, col, uo, vo);
   face([x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0], [-1, 0, 0], cells(z1 - z0), v, col, uo, vo);
@@ -347,7 +405,7 @@ const towerTops = [];
 const RS = seeded(4711);
 const HIP_COLORS = ['#a8553f', '#8f4a3a', '#5d6470', '#b06a45'].map((hex) => new T.Color(hex));
 
-function dressBuilding(block, x0, x1, z0, z1, h) {
+function dressBuilding(block, x0, x1, z0, z1, h, roofInset) {
   const hip = block.type === 'suburb' && h < 15;
   if (hip) {
     hipRoofs.push({
@@ -363,10 +421,11 @@ function dressBuilding(block, x0, x1, z0, z1, h) {
       const sz = 1.6 + RS() * 2.6;
       const sy = 0.9 + RS() * 1.5;
       if (hip || x1 - x0 < sx + 4 || z1 - z0 < sz + 4) continue;
+      const edge = 2 + (roofInset || 0);
       roofBits.push({
-        x: x0 + 2 + sx / 2 + RS() * (x1 - x0 - sx - 4),
+        x: clamp(x0 + 2 + sx / 2 + RS() * (x1 - x0 - sx - 4), x0 + edge + sx / 2, x1 - edge - sx / 2),
         y: h + sy / 2,
-        z: z0 + 2 + sz / 2 + RS() * (z1 - z0 - sz - 4),
+        z: clamp(z0 + 2 + sz / 2 + RS() * (z1 - z0 - sz - 4), z0 + edge + sz / 2, z1 - edge - sz / 2),
         sx, sy, sz,
       });
     }
@@ -449,9 +508,15 @@ function buildBlocks() {
         if (block.type === 'beach') h = 9 + R() * 15;
         if (block.type === 'industrial') h = 7 + R() * 6;
         const col = hexRGB(pickR(PALETTE[block.type]));
-        addBox(bx0, bx1, bz0, bz1, 0, h, col);
+        const shops = block.type === 'downtown' || block.type === 'beach' || (block.type === 'suburb' && h >= 14);
+        // many towers step in above a waist, so the skyline is not all plain boxes
+        const tiered = block.type === 'downtown' && h > 42 && RT() < 0.7;
+        const waist = tiered ? Math.round(h * (0.42 + RT() * 0.28)) : h;
+        const step = tiered ? 2.2 + RT() * 1.6 : 0;
+        addBox(bx0, bx1, bz0, bz1, 0, waist, col, R, shops);
+        if (tiered) addBox(bx0 + step, bx1 - step, bz0 + step, bz1 - step, waist, h, col, RT);
         block.boxes.push({ x0: bx0, x1: bx1, z0: bz0, z1: bz1, h });
-        dressBuilding(block, bx0, bx1, bz0, bz1, h);
+        dressBuilding(block, bx0, bx1, bz0, bz1, h, step);
         let top = h;
         if (h > 55 && R() < 0.6) {
           top = h + 12 + R() * 28;
@@ -459,8 +524,21 @@ function buildBlocks() {
         }
         if (top > 60) towerTops.push({ x: (bx0 + bx1) / 2, z: (bz0 + bz1) / 2, y: top, w: Math.min(bx1 - bx0, bz1 - bz0) });
         const chance = block.type === 'downtown' ? 0.5 : block.type === 'beach' ? 0.75 : block.type === 'suburb' ? 0.12 : 0;
-        if (R() < chance) neonBand(bx0, bx1, bz0, bz1, h - 0.7, pickR(NEON));
-        if (R() < chance) neonBand(bx0, bx1, bz0, bz1, 4.3, pickR(NEON));
+        if (R() < chance) neonBand(bx0, bx1, bz0, bz1, waist - 0.7, pickR(NEON));
+        if (R() < chance) neonBand(bx0, bx1, bz0, bz1, SHOP_H + 0.1, pickR(NEON));
+      }
+      // street trees on the pavement of the inland districts (never mid-block or at the corners)
+      if (block.type === 'suburb' || block.type === 'downtown') {
+        for (let side = 0; side < 4; side++) {
+          for (const part of [0.25, 0.75]) {
+            if (RT() > 0.6) continue;
+            const along = BLOCK * part + (RT() - 0.5) * 6;
+            const tx = side === 0 ? x0 + 1.6 : side === 1 ? x0 + BLOCK - 1.6 : x0 + along;
+            const tz = side === 2 ? z0 + 1.6 : side === 3 ? z0 + BLOCK - 1.6 : z0 + along;
+            trees.push({ x: tx, z: tz, s: 0.5 + RT() * 0.2, color: new T.Color().setHSL(0.27 + RT() * 0.1, 0.5, 0.26 + RT() * 0.1) });
+            block.circles.push({ x: tx, z: tz, r: 0.35 });
+          }
+        }
       }
     }
   }
@@ -475,25 +553,58 @@ function buildBlocks() {
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   scene.add(mesh);
+
+  const shopGeo = new T.BufferGeometry();
+  shopGeo.setAttribute('position', new T.Float32BufferAttribute(shopWalls.pos, 3));
+  shopGeo.setAttribute('normal', new T.Float32BufferAttribute(shopWalls.nor, 3));
+  shopGeo.setAttribute('uv', new T.Float32BufferAttribute(shopWalls.uv, 2));
+  shopGeo.setAttribute('color', new T.Float32BufferAttribute(shopWalls.col, 3));
+  shopGeo.setIndex(shopWalls.idx);
+  const shopMesh = new T.Mesh(shopGeo, shopMat);
+  shopMesh.castShadow = true;
+  shopMesh.receiveShadow = true;
+  scene.add(shopMesh);
 }
 
 function windowTextures() {
-  const wall = mkCanvas(256);
-  const lit = mkCanvas(256);
+  const wall = mkCanvas(512);
+  const lit = mkCanvas(512);
   const gw = wall.getContext('2d');
   const gl = lit.getContext('2d');
   gw.fillStyle = '#ececec';
-  gw.fillRect(0, 0, 256, 256);
+  gw.fillRect(0, 0, 512, 512);
   gl.fillStyle = '#000';
-  gl.fillRect(0, 0, 256, 256);
+  gl.fillRect(0, 0, 512, 512);
+  for (let k = 0; k < 2600; k++) {
+    gw.fillStyle = `rgba(0,0,0,${RT() * 0.05})`;
+    gw.fillRect(RT() * 512, RT() * 512, 3, 2);
+  }
+  for (let cy = 0; cy <= 8; cy++) {
+    gw.fillStyle = 'rgba(0,0,0,0.16)';
+    gw.fillRect(0, cy * 64 - 1, 512, 3);         // floor line
+  }
   for (let cx = 0; cx < 8; cx++) {
     for (let cy = 0; cy < 8; cy++) {
       const on = R() < 0.42;
-      gw.fillStyle = on ? '#5b6672' : '#2c3540';
-      gw.fillRect(cx * 32 + 6, cy * 32 + 7, 20, 19);
+      const x = cx * 64 + 13;
+      const y = cy * 64 + 13;
+      gw.fillStyle = '#fbfbfb';
+      gw.fillRect(x - 3, y - 3, 44, 46);          // frame
+      const glass = gw.createLinearGradient(0, y, 0, y + 40);
+      glass.addColorStop(0, on ? '#6a7886' : '#3a4654');
+      glass.addColorStop(1, on ? '#4c5864' : '#222a34');
+      gw.fillStyle = glass;
+      gw.fillRect(x, y, 38, 40);
+      gw.fillStyle = '#d6d6d6';
+      gw.fillRect(x + 18, y, 2, 40);              // mullion
+      gw.fillStyle = 'rgba(0,0,0,0.3)';
+      gw.fillRect(x - 5, y + 43, 48, 4);          // sill shadow
       if (on) {
         gl.fillStyle = pickR(['#ffd98a', '#ffe9b8', '#9fd6ff', '#ffc46b']);
-        gl.fillRect(cx * 32 + 6, cy * 32 + 7, 20, 19);
+        gl.fillRect(x, y, 38, 40);
+        gl.fillStyle = 'rgba(0,0,0,0.55)';
+        gl.fillRect(x + 18, y, 2, 40);
+        if (RT() < 0.4) gl.fillRect(x, y, 38, 8 + RT() * 18);   // a blind half down
       }
     }
   }
@@ -506,6 +617,69 @@ function windowTextures() {
   return [make(wall), make(lit)];
 }
 const [wallTex, litTex] = windowTextures();
+
+// four storefronts side by side: awning, two panes and a door, lit from inside after dark
+function shopTextures() {
+  const wall = mkCanvas(1024, 128);
+  const lit = mkCanvas(1024, 128);
+  const gw = wall.getContext('2d');
+  const gl = lit.getContext('2d');
+  gw.fillStyle = '#e4e4e4';
+  gw.fillRect(0, 0, 1024, 128);
+  gl.fillStyle = '#000';
+  gl.fillRect(0, 0, 1024, 128);
+  const glow = ['#ffdc9a', '#ffc9e0', '#aee6ff', '#ffe9b8'];
+  for (let k = 0; k < 4; k++) {
+    const x = k * 256;
+    for (let s = 0; s < 8; s++) {
+      gw.fillStyle = s % 2 ? '#ffffff' : '#b9b9b9';
+      gw.fillRect(x + s * 32, 6, 32, 20);        // striped awning
+    }
+    gw.fillStyle = 'rgba(0,0,0,0.3)';
+    gw.fillRect(x, 26, 256, 5);
+    gw.fillStyle = '#6f6f6f';
+    gw.fillRect(x, 112, 256, 16);                // plinth
+    const shut = k === 3;
+    const panes = [[x + 14, 92], [x + 150, 92], [x + 112, 32]];
+    panes.forEach(([px, w], n) => {
+      const top = n === 2 ? 44 : 38;
+      const glass = gw.createLinearGradient(px, top, px + w, 112);
+      glass.addColorStop(0, '#55657a');
+      glass.addColorStop(0.5, '#27323f');
+      glass.addColorStop(1, '#3b4858');
+      gw.fillStyle = shut && n < 2 ? '#8d9299' : glass;
+      gw.fillRect(px, top, w, 112 - top);
+      gw.strokeStyle = '#f4f4f4';
+      gw.lineWidth = 3;
+      gw.strokeRect(px, top, w, 112 - top);
+      if (shut && n < 2) {
+        gw.fillStyle = 'rgba(0,0,0,0.22)';
+        for (let y = top + 6; y < 110; y += 8) gw.fillRect(px + 2, y, w - 4, 2);   // roller shutter
+        return;
+      }
+      const warm = gl.createLinearGradient(0, top, 0, 112);
+      warm.addColorStop(0, glow[k]);
+      warm.addColorStop(1, 'rgba(120,90,60,1)');
+      gl.fillStyle = warm;
+      gl.fillRect(px + 2, top + 2, w - 4, 108 - top);
+    });
+  }
+  const make = (c) => {
+    const tex = new T.CanvasTexture(c);
+    tex.wrapS = T.RepeatWrapping;
+    tex.anisotropy = 4;
+    return tex;
+  };
+  return [make(wall), make(lit)];
+}
+const [shopTex, shopLitTex] = shopTextures();
+const shopMat = new T.MeshLambertMaterial({
+  map: shopTex,
+  emissiveMap: shopLitTex,
+  emissive: 0xffffff,
+  emissiveIntensity: 0,
+  vertexColors: true,
+});
 const buildingMat = new T.MeshLambertMaterial({
   map: wallTex,
   emissiveMap: litTex,
@@ -555,6 +729,17 @@ function buildProps() {
       const off = ROAD / 2 + 1.3;
       lamps.push({ x: roadC(i) + off, z: roadC(j) + off });
       lamps.push({ x: roadC(i) - off, z: roadC(j) - off });
+    }
+  }
+  // and one on each side halfway along every block (not on the palm side of the beach road)
+  for (let i = 0; i <= N; i++) {
+    for (let j = 0; j < N; j++) {
+      const mid = roadC(j) + CELL / 2;
+      const off = ROAD / 2 + 1.3;
+      for (const side of [-1, 1]) {
+        if (!(i === N - 1 && side > 0)) lamps.push({ x: roadC(i) + side * off, z: mid });
+        lamps.push({ x: mid, z: roadC(i) + side * off });
+      }
     }
   }
   instanced(new T.CylinderGeometry(0.1, 0.16, 7, 6), mat('#3a3d46'), lamps, (d, l) => d.position.set(l.x, 3.5, l.z));
@@ -617,7 +802,7 @@ function buildProps() {
   Object.keys(signs).forEach((text, k) => {
     const material = new T.MeshBasicMaterial({ map: signTexture(text, NEON[k % NEON.length]) });
     instanced(signGeo, material, signs[text], (d, s) => {
-      d.position.set(s.x, 3.1, s.z);
+      d.position.set(s.x, 5.6, s.z);
       d.rotation.y = s.rot;
     });
   });
@@ -791,7 +976,7 @@ const sky = new T.Mesh(
       uniform vec3 bot;
       varying float h;
       void main() {
-        gl_FragColor = vec4(mix(bot, top, smoothstep(0.0, 0.5, h)), 1.0);
+        gl_FragColor = vec4(mix(bot, top, smoothstep(0.0, 0.5, h)), 0.0);   // alpha 0: the glow pass leaves the sky alone
       }`,
   })
 );
@@ -820,6 +1005,49 @@ const starMat = new T.PointsMaterial({ color: 0xffffff, size: 2, sizeAttenuation
 const stars = new T.Points(starGeo, starMat);
 stars.frustumCulled = false;
 scene.add(sky, sunDisc, stars);
+
+const moon = new T.Sprite(
+  new T.SpriteMaterial({
+    map: radialTexture('rgba(235,242,255,1)', 'rgba(150,180,255,0)'),
+    blending: T.AdditiveBlending,
+    transparent: true,
+    fog: false,
+    depthWrite: false,
+  })
+);
+moon.scale.set(170, 170, 1);
+scene.add(moon);
+
+// a few flat, soft clouds high over the island; they take the colour of the sky
+const cloudList = [];
+for (let k = 0; k < 34; k++) {
+  cloudList.push({ x: (RT() - 0.5) * 3600, y: 300 + RT() * 130, z: (RT() - 0.5) * 3600, sx: 260 + RT() * 320, sz: 130 + RT() * 150, turn: RT() * 3 });
+}
+function cloudTexture() {
+  const c = mkCanvas(256);
+  const g = c.getContext('2d');
+  for (let k = 0; k < 16; k++) {
+    const x = 64 + RT() * 128;
+    const y = 96 + RT() * 64;
+    const r = 30 + RT() * 44;
+    const grad = g.createRadialGradient(x, y, 0, x, y, r);
+    grad.addColorStop(0, 'rgba(255,255,255,0.5)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 256, 256);
+  }
+  return new T.CanvasTexture(c);
+}
+const cloudMat = new T.MeshBasicMaterial({ map: cloudTexture(), transparent: true, opacity: 0.8, depthWrite: false, fog: false, side: T.DoubleSide });
+const cloudGeo = new T.PlaneGeometry(1, 1);
+cloudGeo.rotateX(-Math.PI / 2);
+const clouds = instanced(cloudGeo, cloudMat, cloudList, (d, c) => {
+  d.position.set(c.x, c.y, c.z);
+  d.rotation.y = c.turn;
+  d.scale.set(c.sx, 1, c.sz);
+});
+clouds.renderOrder = -1;
+let glowAmount = 0;               // 0 at midday, 1 at night; drives the glow pass
 
 const SKY = [
   [0, '#050818', '#141a3a'],
@@ -867,6 +1095,19 @@ function updateSky(dt, fx, fz) {
   hemi.color.copy(skyTop).lerp(tmpColor.set('#ffffff'), 0.45);
 
   buildingMat.emissiveIntensity = nightAmount * 0.95;
+  shopMat.emissiveIntensity = nightAmount * 0.72;
+  glowAmount = 1 - (smooth(6.5, 9, tod) - smooth(16, 19.2, tod));
+  cloudMat.color.copy(skyBot).lerp(tmpColor.set('#ffffff'), 0.12 + 0.6 * day);
+  cloudMat.opacity = 0.45 + 0.4 * day;
+  clouds.position.x = ((performance.now() / 1000) * 2.5) % 600;
+  moon.visible = sy < 0.15;
+  moon.position.set(camera.position.x - sx * 1500, camera.position.y + Math.max(0.3, -sy) * 1500, camera.position.z - 700);
+  const wu = waterMat.uniforms;
+  wu.time.value += dt;
+  wu.skyC.value.copy(skyBot);
+  wu.fogC.value.copy(skyBot);
+  wu.sunC.value.copy(sun.color).multiplyScalar(up ? 0.35 + 0.65 * lift : 0.5);
+  wu.sunDir.value.set(up ? sx : -sx, Math.max(0.2, Math.abs(sy)), up ? 0.36 : -0.45).normalize();
   lampGlowMat.opacity = nightAmount * 0.55;
   starMat.opacity = nightAmount * 0.9;
   sky.position.copy(camera.position);

@@ -1,0 +1,51 @@
+{
+  "mode": "pair",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "judges": {
+    "Pega-Vision": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both versions pass all hard gates, but Version 2 scores higher on soft criteria C2 (Look and atmosphere) and C4 (HUD clarity) due to significant visual upgrades and UI improvements while maintaining the required 60 FPS.",
+        "Version 1 (v3) implements a 'Look pass' with glow effects, detailed building facades, and improved car models that significantly elevate the atmosphere (C2) compared to Version 2, while also refining HUD readability (C4). Both versions pass all hard gates including the 60 FPS requirement, making Version 1 the more polished experience without sacrificing performance compliance."
+      ]
+    },
+    "Pega-Thinking": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both versions pass all 10 hard gates, but VERSION 2 delivers a substantially improved look and atmosphere (C2, w=0.25) with detailed shop fronts, glow pass at night, clouds, moon, and more detailed car models—moving from plain boxes toward a recognizable mood. VERSION 2 also has slightly better HUD (C4) with labels and a non-overlapping hint box. The frame rate drop (144→78 fps) is notable but both clear the 60 fps gate, and content/jobs/police (C3) are identical.",
+        "Both versions pass all 10 hard gates, but VERSION 1 (v3) clearly wins on C2 (look and atmosphere) with shop fronts, framed windows, glow pass, lit shop fronts, mid-block lamps, moon, light pools under cars, drifting clouds, animated water, and more detailed car models — visible in the richer night scene and building detail. VERSION 1 also improves C4 (HUD) with added TIME/HEALTH labels, a wider car-condition bar, and a narrowed hint box. C1, C3, and C5 are equivalent."
+      ]
+    },
+    "GLM-5.3-Flash": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both versions pass all ten gates and offer identical gameplay, so the soft criteria decide it: Version 2's look pass (shop-front ground floors, detailed per-type cars, night glow and light pools, clouds and animated water) clearly raises C2 look/atmosphere and modestly improves C4 HUD labels, while Version 1's only edge (144 vs 78 fps) is irrelevant since both clear the 60 fps gate.",
+        "Both versions pass all ten gates and offer identical jobs, police, and money sinks, so the decision rests on the soft criteria. Version 1's look pass (shop-front ground floors, detailed car bodies, clouds, animated water, night glow and light pools, labeled TIME/HEALTH HUD) gives it a clear edge in C2 look/atmosphere and a small edge in C4 HUD readability, while its 78 fps still clears the 60 fps gate; Version 2's higher frame rate earns nothing extra under the rubric."
+      ]
+    }
+  },
+  "votes": {
+    "A": 0,
+    "B": 3,
+    "tie": 0
+  },
+  "quorum": 3,
+  "b_wins": true,
+  "label": "council-judged (3 judges)"
+}

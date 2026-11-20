@@ -65,3 +65,42 @@ The remaining budget went to merging with the 1.1 harbor release from the parall
 - Next command: in a fresh chat, `/hone neon-coast` with the clone of `juw12/neon-coast`; rubric and log are in
   `hone/`, run `python test/gates.py` and `python test/harbor.py` before judging. Rescore the merged build
   first (8.35 is v2 before the harbor merge).
+
+## Run 2 (2026-11-20, continued on the merged 1.1 build)
+
+Goal beyond the goal: the widest honest open-world sandbox that still fits in one offline HTML file, with
+every system checked by a script and every limit stated.
+
+- Assumed: Juwen's "don't stop until 10/10" means run the loop to its hard stops. The scores below are from
+  three AI judges looking at a fact sheet and screenshots. No score is called perfect and none is invented.
+- Assumed: "be the top repo" cannot be made true by this run. Stars come from real people. Nothing was
+  starred, botted or faked.
+- Assumed: the rescore of the merged 1.1 build (8.35) is the baseline for this run.
+- Assumed: from round 4 the judged set grew by four screenshots (cab fare, whole map, helicopter, property),
+  because the new features cannot be seen in the first eight. The pair vote therefore compares 8 shots with 12.
+- Assumed: the start position was not moved. The first job still takes a scripted driver 80 to 109 s, over the
+  rubric's 60 s anchor; the judges saw that figure.
+- Assumed: `test/drive.py` covers the first job only; jobs 2 to 6 are still passed by script (`G4`).
+- Assumed: round 4 is shipped although its score did not rise (see the row). It holds everything round 3 has
+  plus the 1.2 features, all three judges preferred it in the blind pair in both orders, and the 0.15 gap is
+  inside the judges' spread (8.1 to 9.5 on the same build). Same rule as earlier runs: a unanimous pair win
+  ships a superset. The best score stays 8.75 (round 3); 1.2 is not reported as a score gain.
+
+| round | change | gates | judge score | pairwise win | kept? | note |
+|---|---|---|---|---|---|---|
+| rescore (v2m) | merged 1.1 build, nothing changed | 10/10 | 8.35 (V 8.7, T 7.75, G 8.35) | - | baseline | C1 9, C2 8, C3 8, C4 8, C5 9 |
+| 3 (v3) | look pass: glow at night on Pretty, tiered towers, shop fronts with awnings, car outlines per type, headlight pools, labelled health and clock | 10/10 | 8.75 (V 8.85, T 8.35, G 8.75) | 3-0 vs v2m | kept | +0.40; C3 8 -> 9, C4 8 -> 9. Over the 8.5 bar: loop "done" |
+| 4 (v4, release 1.2 City Lights) | cab fares, four properties with rent, police helicopter at 4+ stars, road arrows and minimap route, whole map on M, four perks, four odd-job kinds, money pop-up, idle-only keys hint, title and pause re-laid for 720p, 34 m walker-free start | 10/10 on the final build | 8.6 (V 9.5, T 8.1, G 8.6) | 3-0 vs v3 | shipped, not a new best | -0.15, inside noise; C4 9 -> 8 (pause screen and always-on HUD stack called dense). Stall 1 by the score rule |
+
+Gate runs on round-4 builds, every one: 10/10; 9/10 (G3: the star count changed during the 7 s wait, passed on
+the next two runs); 9/10 and 9/10 (G7 read 26 and 29 fps while the PC sat near 90% CPU from other work; the
+same build measured alone gave 135 to 139 fps against 144 for the released 1.1, `test/fps_ab.py`); 8/9 (G10: a
+walker reached the first view, fixed by spawning walkers 34 m out instead of 20 m); 10/10 on the final build.
+`test/city.py` 19/19, `test/harbor.py` pass, `test/drive.py` 5 of 5.
+
+stop: done by the bar at round 3 (8.75 against 8.5, gates 10/10), then one extra round on Juwen's request that
+stalled on score and won the pair; session budget ends the run. Best score 8.75 (rubric v1, council of 3).
+
+Open asks from the judges, none done: real people playing the first job and the later jobs; a daytime look as
+recognisable as dusk; thinner pause screen and a HUD that hides the pistol and clock when idle; a perk
+unlock notice in play; a shorter first job; an idle sway on the player model.
