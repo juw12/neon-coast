@@ -1,4 +1,5 @@
-"""City systems check for version 1.2: cab fares, property, perks, helicopter, route, big map, old saves.
+"""City systems check: cab fares, property, perks, helicopter, route, big map, old saves (version 1.2),
+and police heat reaching fares, shops and your own front door, the Sol Wheel ride and the perk card (1.3).
 
 State is set through the game's test handle (window.NEON) so each rule can be
 checked in seconds. It proves the rules work; it does not prove they are fun.
@@ -96,6 +97,15 @@ def run():
         page.wait_for_timeout(300)
         check("T again ends the shift", page.evaluate("() => !NEON.cab.on && !(NEON.mission.active && NEON.mission.def.cab)"))
 
+        # 4b. learning to drive: no wreck before the first job is done, a normal wreck after it
+        learner = page.evaluate("""() => { const n = NEON, c = n.player.car, full = c.hp, done = n.save.mission;
+            n.damageVehicle(c, 5000); const before = c.hp; c.hp = full;
+            n.save.mission = 1; n.damageVehicle(c, 5000); const after = c.hp;
+            n.save.mission = done; c.hp = full;
+            return { done, before, after }; }""")
+        check("your car cannot be wrecked until the first job is done, and can be after",
+              learner["done"] == 0 and learner["before"] > 0 and learner["after"] <= 0, json.dumps(learner))
+
         # 5. helicopter: arrives at four stars, leaves when the stars go
         page.evaluate("() => NEON.setWanted(4)")
         page.wait_for_timeout(9000)
@@ -124,10 +134,85 @@ def run():
         rent = page.evaluate("() => ({ money: NEON.save.money, hp: NEON.player.hp })")
         check("rent builds up and walking back in collects it and heals", 505 <= rent["money"] <= 530 and rent["hp"] == 100, json.dumps(rent))
 
+        # 6b. version 1.3: your own front door hides you from two stars, not from three
+        def step_out_and_in():
+            page.evaluate("() => { NEON.player.x += 12; }")
+            page.wait_for_timeout(350)
+            page.evaluate("() => { const at = NEON.PROPERTIES[0].at; NEON.player.x = at[0]; NEON.player.z = at[1]; }")
+            page.wait_for_timeout(450)
+
+        page.evaluate("() => NEON.setWanted(2)")
+        step_out_and_in()
+        check("your own property hides you from two stars", page.evaluate("() => NEON.wanted.stars") == 0)
+        page.evaluate("() => NEON.setWanted(3)")
+        step_out_and_in()
+        check("three stars are too many to hide at home", page.evaluate("() => NEON.wanted.stars") == 3)
+        page.evaluate("() => NEON.setWanted(0)")
+
+        # 6c. the Sol Wheel: no ride with stars; a ride costs $25, marks three packages, F ends it
+        page.evaluate("""() => { const n = NEON, p = n.player, m = n.markers.find(k => k.kind === 'wheel');
+            n.addMoney(-n.save.money + 100); n.setWanted(1); p.x = m.x; p.z = m.z; }""")
+        page.wait_for_timeout(450)
+        page.keyboard.press("e")
+        page.wait_for_timeout(300)
+        check("no Sol Wheel ride while wanted", page.evaluate("() => NEON.ride.t === 0 && NEON.save.money === 100"))
+        page.evaluate("() => NEON.setWanted(0)")
+        page.wait_for_timeout(200)
+        page.keyboard.press("e")
+        page.wait_for_timeout(700)
+        riding = page.evaluate("""() => ({ t: NEON.ride.t, money: NEON.save.money, spotted: NEON.save.spotted.length,
+            hidden: !NEON.player.mesh.visible })""")
+        check("a ride costs $25 and marks the three nearest packages on the map",
+              riding["t"] > 0 and riding["money"] == 75 and riding["spotted"] == 3 and riding["hidden"], json.dumps(riding))
+        page.evaluate("() => { NEON.player.hp = 55; }")
+        page.keyboard.press("f")
+        page.wait_for_timeout(400)
+        after_ride = page.evaluate("() => ({ t: NEON.ride.t, hp: NEON.player.hp, visible: NEON.player.mesh.visible, car: !!NEON.player.car })")
+        check("F ends the ride, rested and back on foot",
+              after_ride["t"] == 0 and after_ride["hp"] == 100 and after_ride["visible"] and not after_ride["car"], json.dumps(after_ride))
+
+        # 6d. a cab will not pick up while the police are after you; it does once they are gone
+        page.evaluate("""() => { const n = NEON, p = n.player; const cab = n.vehicles.find(v => v.type === 'taxi' && !v.dead);
+            cab.vx = cab.vz = 0; p.x = cab.x + 2.2; p.z = cab.z; n.tryEnterExit(); }""")
+        page.wait_for_timeout(400)
+        page.keyboard.press("t")
+        page.wait_for_timeout(4200)
+        page.evaluate("""() => { const n = NEON, c = n.player.car, at = n.mission.def.steps[0].at;
+            n.setWanted(1); c.x = at[0]; c.z = at[1]; c.vx = c.vz = 0; }""")
+        page.wait_for_timeout(1300)
+        hot = page.evaluate("() => ({ step: NEON.mission.step, text: document.getElementById('objective').textContent })")
+        check("no pickup while wanted", hot["step"] == 0 and "Lose the police first" in hot["text"], json.dumps(hot))
+        page.evaluate("() => { const c = NEON.player.car; NEON.setWanted(0); c.vx = c.vz = 0; }")
+        page.wait_for_timeout(1500)
+        check("the pickup goes ahead once the stars are gone", page.evaluate("() => NEON.mission.step") == 1)
+        page.keyboard.press("t")
+        page.wait_for_timeout(300)
+
+        # 6e. the tune-up shop pulls its shutters down while you are wanted
+        page.evaluate("""() => { const n = NEON, c = n.player.car, at = n.PLACES.tune;
+            n.addMoney(-n.save.money + 3000); n.setWanted(1); c.x = at[0]; c.z = at[1]; c.vx = c.vz = 0; }""")
+        page.wait_for_timeout(1000)
+        check("no tune-up while wanted", page.evaluate("() => NEON.save.tune === 0 && NEON.save.money === 3000"))
+        page.evaluate("() => { const c = NEON.player.car; NEON.setWanted(0); c.vx = c.vz = 0; }")
+        page.wait_for_timeout(900)
+        check("the tune-up sells again once the stars are gone", page.evaluate("() => NEON.save.tune === 1 && NEON.save.money < 3000"))
+        page.evaluate("() => { const n = NEON; n.player.car.vx = n.player.car.vz = 0; n.tryEnterExit(); }")
+        page.wait_for_timeout(300)
+
+        # 6f. the perk card shows progress in play
+        card = page.evaluate("""() => { const n = NEON; n.checkPerks(true); n.save.packages = [0]; n.checkPerks();
+            const el = document.getElementById('perk');
+            const out = { shown: el.classList.contains('show'), title: el.querySelector('b').textContent, bar: el.querySelector('i').style.width };
+            n.save.packages = []; n.checkPerks(true); el.classList.remove('show'); return out; }""")
+        check("finding a package shows how far the next perk is", card["shown"] and "1 / 5" in card["title"] and card["bar"] == "20%", json.dumps(card))
+
         # 7. perks follow the save
         perks = page.evaluate("""() => { const n = NEON; const before = n.PERKS.map(p => n.perk(p.id));
             n.save.packages = [0, 1, 2, 3, 4]; n.save.fares = 10; const after = n.PERKS.map(p => n.perk(p.id)); return { before, after }; }""")
         check("perks unlock from packages and fares", perks["before"] == [False, False, False, False] and perks["after"] == [True, False, True, False], json.dumps(perks))
+        unlocked = page.evaluate("""() => { NEON.checkPerks(); const el = document.getElementById('perk');
+            return { shown: el.classList.contains('show'), got: el.classList.contains('got'), title: el.querySelector('b').textContent }; }""")
+        check("an unlocked perk is announced in play", unlocked["shown"] and unlocked["got"] and "PERK UNLOCKED" in unlocked["title"], json.dumps(unlocked))
 
         # 8. the pause screen lists them and nothing spills off a 720p screen
         page.keyboard.press("p")

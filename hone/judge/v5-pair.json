@@ -1,0 +1,51 @@
+{
+  "mode": "pair",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "judges": {
+    "Pega-Vision": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Version 2 better satisfies the 'First minute' goal by shortening the initial job to under a minute and decluttering the HUD, while significantly enhancing atmosphere with day-time details and adding new activities like the Sol Wheel ride.",
+        "Version 1 explicitly optimizes the first job to finish within 60 seconds, directly meeting the rubric's primary goal of completing a task within a minute, whereas Version 2 takes 80-109 seconds. Additionally, Version 1 offers superior atmospheric detail and deeper system integration."
+      ]
+    },
+    "Pega-Thinking": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both versions pass all 10 hard gates equally, but VERSION 2 improves across every soft criterion: the first job is shorter and ends at a recognizable landmark with a cleaner HUD (C1), the city has painted walls, an airship, sailing boats, and richer palettes giving it more atmosphere (C2), the Sol Wheel ride and police-heat integration add connected activities (C3), and the HUD/pause/title screens are noticeably less cluttered (C4).",
+        "VERSION 1 (v5) improves on VERSION 2 (v4) across all soft criteria: the first job is shorter and ends at a recognizable landmark with a cleaner HUD, the city has substantially more atmosphere (86 painted walls, airship, sailing boats, gulls, parasols, color gradients), the Sol Wheel ride and perk card add more varied activities, and the HUD/menus are less cluttered. Both pass all 10 hard gates."
+      ]
+    },
+    "GLM-5.3-Flash": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both versions pass all 10 gates, but Version 2 (v5) improves every weighted soft criterion: a sub-minute first job ending at a landmark (C1), a far more distinctive day look with painted murals, beach life and the airship (C2), better-interconnected activities via the Sol Wheel ride, wanted-level refusals and the perk card (C3), and a much quieter, at-a-glance HUD and title screen (C4), with honesty equal or better (C5). Its only drawback, a disclosed 1-in-14 failed key-press run, is minor against these gains.",
+        "Both pass all 10 gates, but Version 1 (v5) improves every soft criterion over Version 2 (v4): a shorter first job ending at a landmark with a quieter HUD (C1, C4), a richer day look with painted walls, beach life and the airship (C2), and more interlocking activities (Sol Wheel ride, perk card, police heat affecting other systems) (C3), with equally honest test disclosure."
+      ]
+    }
+  },
+  "votes": {
+    "A": 0,
+    "B": 3,
+    "tie": 0
+  },
+  "quorum": 3,
+  "b_wins": true,
+  "label": "council-judged (3 judges)"
+}

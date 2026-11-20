@@ -152,6 +152,7 @@ with sync_playwright() as pw:
     money_before = snapshot(page)["money"]
     start_at = page.evaluate("() => NEON.MISSIONS[0].at")
     garage = page.evaluate("() => NEON.PLACES.garage")
+    job_end = page.evaluate("() => NEON.MISSIONS[0].steps.filter(s => s.at).pop().at")
     place_car(start_at[0], start_at[1])
     page.wait_for_timeout(700)
     s = snapshot(page)
@@ -162,7 +163,7 @@ with sync_playwright() as pw:
     page.evaluate("() => { NEON.player.car.h = Math.PI; NEON.cam.yaw = Math.PI; NEON.cam.lastMouse = performance.now(); }")
     page.wait_for_timeout(500)
     page.screenshot(path=str(SHOTS / "6a-job-running.png"))
-    place_car(garage[0], garage[1])
+    place_car(job_end[0], job_end[1])
     page.wait_for_timeout(700)
     s = snapshot(page)
     saved_jobs = page.evaluate("() => NEON.save.mission")

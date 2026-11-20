@@ -54,7 +54,7 @@ const headingOf = (d) => Math.atan2(DX[d], DZ[d]);
 
 // ---------- save data ----------
 const SAVE_KEY = 'neon-coast-save-v1';
-const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, difficulty: 1, quality: 1, sound: 1 };
+const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], difficulty: 1, quality: 1, sound: 1 };
 const save = Object.assign({}, SAVE_DEFAULTS);
 try {
   Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'));
@@ -63,6 +63,7 @@ try {
 }
 save.packages = (save.packages || []).slice();       // never share the default objects
 save.props = Object.assign({}, save.props);
+save.spotted = (save.spotted || []).slice();
 function persist() {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -229,7 +230,7 @@ function groundCanvas() {
 const waterMat = new T.ShaderMaterial({
   uniforms: {
     time: { value: 0 },
-    deep: { value: new T.Color('#0d4f6b') },
+    deep: { value: new T.Color('#0d4f6b') },      // set every frame: teal by day, dark by night
     skyC: { value: new T.Color() },
     sunC: { value: new T.Color() },
     sunDir: { value: new T.Vector3(0, 1, 0) },
@@ -281,7 +282,7 @@ function buildGround() {
   city.receiveShadow = true;
   scene.add(city);
 
-  const sand = new T.Mesh(new T.PlaneGeometry(2 * (HALF + SHORE), 2 * (HALF + SHORE)), mat('#d8c391'));
+  const sand = new T.Mesh(new T.PlaneGeometry(2 * (HALF + SHORE), 2 * (HALF + SHORE)), mat('#cdae78'));
   sand.rotation.x = -Math.PI / 2;
   sand.position.y = -0.06;
   sand.receiveShadow = true;
@@ -305,10 +306,10 @@ const palms = [];
 const lamps = [];
 const PARKS = new Set(['5,4', '1,2', '7,7']);
 const PALETTE = {
-  downtown: ['#9fb4c7', '#7f93a8', '#c9d3dc', '#6c7f96', '#b8a99a', '#8fa0b5'],
+  downtown: ['#8fc3d4', '#6f8fb4', '#ece4d2', '#5f86a8', '#f0b79c', '#b3a4dc'],
   beach: ['#ffb3c7', '#ffe0a3', '#a8f0e0', '#ffd1e8', '#b9e3ff', '#fff1d6'],
   suburb: ['#e8d6c0', '#d9c2a7', '#c4d4c0', '#e3c9c9', '#cfd6e3', '#f0e4cc'],
-  industrial: ['#8a8a84', '#9a8f80', '#7b8288', '#a39a8c'],
+  industrial: ['#a9684c', '#9a8f80', '#6c8d94', '#c4a45e'],
 };
 const NEON = ['#ff3fa4', '#3fe0ff', '#b56bff', '#ff8a3f', '#57ff9a', '#ffe14f'];
 
@@ -320,13 +321,13 @@ function districtOf(i, j) {
   return 'suburb';
 }
 
-function face(a, b, c, d, normal, u, v, col, uo, vo, into) {
+function face(a, b, c, d, normal, u, v, col, uo, vo, into, foot) {
   const buf = into || bld;
   const base = buf.pos.length / 3;
   buf.pos.push(...a, ...b, ...c, ...d);
   for (let k = 0; k < 4; k++) {
     buf.nor.push(...normal);
-    buf.col.push(...col);
+    buf.col.push(...(foot && k < 2 ? foot : col));   // a and b are the bottom edge of a wall
   }
   buf.uv.push(uo, vo, uo + u, vo, uo + u, vo + v, uo, vo + v);
   buf.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
@@ -350,10 +351,14 @@ function addBox(x0, x1, z0, z1, y0, y1, col, rng, shops) {
     y0 = y2;
   }
   const v = cells(y1 - y0);
-  face([x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [1, 0, 0], cells(z1 - z0), v, col, uo, vo);
-  face([x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0], [-1, 0, 0], cells(z1 - z0), v, col, uo, vo);
-  face([x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1], [0, 0, 1], cells(x1 - x0), v, col, uo, vo);
-  face([x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0], [0, 0, -1], cells(x1 - x0), v, col, uo, vo);
+  // weathered at the foot, sun-bleached at the top: taller walls fade further
+  const fade = clamp(0.9 - (y1 - y0) * 0.004, 0.62, 0.9);
+  const foot = [col[0] * fade, col[1] * fade, col[2] * (fade + 0.04)];
+  const top = [Math.min(1, col[0] * 1.06), Math.min(1, col[1] * 1.06), Math.min(1, col[2] * 1.06)];
+  face([x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [1, 0, 0], cells(z1 - z0), v, top, uo, vo, null, foot);
+  face([x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0], [-1, 0, 0], cells(z1 - z0), v, top, uo, vo, null, foot);
+  face([x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1], [0, 0, 1], cells(x1 - x0), v, top, uo, vo, null, foot);
+  face([x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0], [0, 0, -1], cells(x1 - x0), v, top, uo, vo, null, foot);
   const roof = [col[0] * 0.42, col[1] * 0.42, col[2] * 0.42];
   face([x0, y1, z0], [x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [0, 1, 0], 0, 0, roof, 0.01, 0.01);
 }
@@ -403,9 +408,13 @@ const roofBits = [];
 const hipRoofs = [];
 const towerTops = [];
 const RS = seeded(4711);
+const RD = seeded(1305);          // day dressing: murals, beach, boats; leaves the older streams alone
+const murals = [];
+const MURAL_KINDS = { beach: [0, 1], downtown: [2, 3], suburb: [4, 5], industrial: [6, 7] };
+const MURAL_CHANCE = { beach: 0.7, downtown: 0.45, suburb: 0.2, industrial: 0.85 };
 const HIP_COLORS = ['#a8553f', '#8f4a3a', '#5d6470', '#b06a45'].map((hex) => new T.Color(hex));
 
-function dressBuilding(block, x0, x1, z0, z1, h, roofInset) {
+function dressBuilding(block, x0, x1, z0, z1, h, roofInset, shops, wallTop) {
   const hip = block.type === 'suburb' && h < 15;
   if (hip) {
     hipRoofs.push({
@@ -435,6 +444,7 @@ function dressBuilding(block, x0, x1, z0, z1, h, roofInset) {
   const near = WALK + 7;        // only walls that face a street get a sign
   const streetFaces = [x0 - block.x0 < near, block.x1 - x1 < near, z0 - block.z0 < near, block.z1 - z1 < near];
   const turn = [-Math.PI / 2, Math.PI / 2, Math.PI, 0];
+  const signed = [false, false, false, false];
   for (let f = 0; f < 4; f++) {
     const along = f < 2 ? z1 - z0 : x1 - x0;
     if (!streetFaces[f] || along < 11 || RS() > SIGN_CHANCE[block.type]) continue;
@@ -443,6 +453,23 @@ function dressBuilding(block, x0, x1, z0, z1, h, roofInset) {
     const x = f === 0 ? x0 - 0.14 : f === 1 ? x1 + 0.14 : (x0 + x1) / 2 + slide;
     const z = f === 2 ? z0 - 0.14 : f === 3 ? z1 + 0.14 : (z0 + z1) / 2 + slide;
     (signs[text] || (signs[text] = [])).push({ x, z, rot: turn[f] });
+    signed[f] = true;
+  }
+  // one painted wall on some buildings: the first street side with room for it
+  if (RD() > MURAL_CHANCE[block.type]) return;
+  const first = Math.floor(RD() * 4);
+  for (let n = 0; n < 4; n++) {
+    const f = (first + n) % 4;
+    const along = f < 2 ? z1 - z0 : x1 - x0;
+    const y0 = signed[f] ? 7.1 : shops ? SHOP_H + 0.7 : 1.1;
+    let tall = Math.min(wallTop - 1.2 - y0, 11);
+    const w = Math.min(along - 3, 18, tall * 1.9);
+    if (w < tall * 1.4) tall = w / 1.4;         // keep the picture close to the 1.6 : 1 it was painted at
+    if (!streetFaces[f] || w < 7 || tall < 4.4) continue;
+    murals.push({ f, w, tall, y0, kind: MURAL_KINDS[block.type][Math.floor(RD() * 2)],
+      x: f === 0 ? x0 - 0.09 : f === 1 ? x1 + 0.09 : (x0 + x1) / 2,
+      z: f === 2 ? z0 - 0.09 : f === 3 ? z1 + 0.09 : (z0 + z1) / 2 });
+    break;
   }
 }
 
@@ -516,7 +543,7 @@ function buildBlocks() {
         addBox(bx0, bx1, bz0, bz1, 0, waist, col, R, shops);
         if (tiered) addBox(bx0 + step, bx1 - step, bz0 + step, bz1 - step, waist, h, col, RT);
         block.boxes.push({ x0: bx0, x1: bx1, z0: bz0, z1: bz1, h });
-        dressBuilding(block, bx0, bx1, bz0, bz1, h, step);
+        dressBuilding(block, bx0, bx1, bz0, bz1, h, step, shops, waist);
         let top = h;
         if (h > 55 && R() < 0.6) {
           top = h + 12 + R() * 28;
@@ -687,6 +714,217 @@ const buildingMat = new T.MeshLambertMaterial({
   emissiveIntensity: 0,
   vertexColors: true,
 });
+
+// ---------- murals: eight painted walls, two per district, on one sheet ----------
+function muralTexture() {
+  const CELL_PX = 512;
+  const c = mkCanvas(CELL_PX * 4, CELL_PX * 2);
+  const g = c.getContext('2d');
+  const disc = (x, y, r, fill) => {
+    g.fillStyle = fill;
+    g.beginPath();
+    g.arc(x, y, r, 0, Math.PI * 2);
+    g.fill();
+  };
+  const poly = (fill, pts) => {
+    g.fillStyle = fill;
+    g.beginPath();
+    pts.forEach((p, k) => (k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])));
+    g.fill();
+  };
+  const words = (text, x, y, px, fill, shadow) => {
+    g.font = '900 ' + px + 'px "Arial Black", "Segoe UI", Arial, sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    if (shadow) {
+      g.fillStyle = shadow;
+      g.fillText(text, x + px * 0.07, y + px * 0.07);
+    }
+    g.fillStyle = fill;
+    g.fillText(text, x, y);
+  };
+  const wave = (y, amp, stroke, width) => {
+    g.strokeStyle = stroke;
+    g.lineWidth = width;
+    g.beginPath();
+    for (let x = -10; x <= 522; x += 8) g.lineTo(x, y + Math.sin(x * 0.045) * amp);
+    g.stroke();
+  };
+  // every picture is drawn on a 512 x 320 board
+  const PAINT = [
+    () => {                         // Sol Beach: the sun going down behind a palm
+      const sky = g.createLinearGradient(0, 0, 0, 320);
+      sky.addColorStop(0, '#ff4f8f');
+      sky.addColorStop(0.6, '#ff9a4f');
+      sky.addColorStop(1, '#ffd36b');
+      g.fillStyle = sky;
+      g.fillRect(0, 0, 512, 320);
+      disc(300, 200, 112, '#fff1a8');
+      g.fillStyle = '#ff8a5a';
+      for (let k = 0; k < 5; k++) g.fillRect(180, 196 + k * 22, 240, 6 + k * 2);
+      g.fillStyle = '#2b2a7a';
+      g.fillRect(0, 262, 512, 58);
+      wave(280, 4, '#6f7ce0', 4);
+      wave(300, 4, '#6f7ce0', 4);
+      g.strokeStyle = '#1b1740';
+      g.lineWidth = 13;
+      g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(86, 320);
+      g.quadraticCurveTo(96, 190, 132, 92);
+      g.stroke();
+      g.lineWidth = 9;
+      for (const [dx, dy] of [[-92, 6], [-70, -44], [-14, -70], [50, -56], [88, -8], [70, 46], [-60, 52]]) {
+        g.beginPath();
+        g.moveTo(132, 92);
+        g.quadraticCurveTo(132 + dx * 0.6, 92 + dy * 0.9 - 26, 132 + dx, 92 + dy);
+        g.stroke();
+      }
+    },
+    () => {                         // Sol Beach: a postcard
+      g.fillStyle = '#14b3ae';
+      g.fillRect(0, 0, 512, 320);
+      disc(430, 70, 46, '#ffe14f');
+      for (let k = 0; k < 4; k++) wave(236 + k * 24, 7, k % 2 ? '#ffffff' : '#8fe7df', 7);
+      words('SOL', 190, 84, 104, '#ffffff', '#ff3fa4');
+      words('BEACH', 256, 170, 104, '#ffffff', '#ff3fa4');
+    },
+    () => {                         // Meridian: hard colour blocks and a white zigzag
+      g.fillStyle = '#1d1a4a';
+      g.fillRect(0, 0, 512, 320);
+      poly('#ff3fa4', [[0, 0], [230, 0], [0, 230]]);
+      poly('#3fe0ff', [[512, 320], [512, 70], [262, 320]]);
+      poly('#ffe14f', [[250, 0], [420, 0], [335, 86]]);
+      poly('#b56bff', [[70, 320], [210, 320], [140, 250]]);
+      disc(256, 160, 58, '#ffffff');
+      disc(256, 160, 38, '#1d1a4a');
+      g.strokeStyle = '#ffffff';
+      g.lineWidth = 12;
+      g.lineJoin = 'miter';
+      g.beginPath();
+      [[40, 290], [130, 200], [190, 250], [330, 110], [390, 160], [480, 40]].forEach((p, k) => (k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])));
+      g.stroke();
+    },
+    () => {                         // Meridian: the skyline under a striped sun
+      const sky = g.createLinearGradient(0, 0, 0, 320);
+      sky.addColorStop(0, '#231a5c');
+      sky.addColorStop(1, '#ff4f8f');
+      g.fillStyle = sky;
+      g.fillRect(0, 0, 512, 320);
+      disc(256, 190, 120, '#ffd36b');
+      g.fillStyle = '#ff4f8f';
+      for (let k = 0; k < 5; k++) g.fillRect(120, 176 + k * 24, 272, 5 + k * 2);
+      g.fillStyle = '#120f33';
+      [[20, 150], [70, 96], [124, 170], [176, 60], [236, 130], [290, 84], [348, 150], [398, 40], [452, 120]].forEach(([x, top]) => g.fillRect(x, top, 46, 320 - top));
+      g.fillStyle = '#3fe0ff';
+      g.fillRect(0, 300, 512, 6);
+      words('MERIDIAN', 256, 276, 40, '#ffffff', '#3fe0ff');
+    },
+    () => {                         // the suburbs: cut citrus on mint
+      g.fillStyle = '#a8efd2';
+      g.fillRect(0, 0, 512, 320);
+      const slice = (x, y, r, rind, flesh) => {
+        disc(x, y, r, rind);
+        disc(x, y, r * 0.86, '#fff8e0');
+        disc(x, y, r * 0.78, flesh);
+        g.strokeStyle = '#fff8e0';
+        g.lineWidth = r * 0.07;
+        for (let k = 0; k < 4; k++) {
+          const a = (k / 4) * Math.PI;
+          g.beginPath();
+          g.moveTo(x - Math.cos(a) * r * 0.8, y - Math.sin(a) * r * 0.8);
+          g.lineTo(x + Math.cos(a) * r * 0.8, y + Math.sin(a) * r * 0.8);
+          g.stroke();
+        }
+      };
+      slice(130, 170, 104, '#ff8a3f', '#ffb15c');
+      slice(330, 118, 84, '#ffd23f', '#ffe98a');
+      slice(420, 248, 62, '#57c45a', '#b6ec7a');
+      poly('#2f8f4f', [[236, 268], [300, 232], [322, 286], [262, 304]]);
+    },
+    () => {                         // the suburbs: one big flower
+      g.fillStyle = '#ffd3e2';
+      g.fillRect(0, 0, 512, 320);
+      poly('#2f8f4f', [[0, 320], [150, 180], [210, 320]]);
+      poly('#3fae62', [[512, 320], [372, 196], [300, 320]]);
+      for (let k = 0; k < 5; k++) {
+        const a = (k / 5) * Math.PI * 2 - Math.PI / 2;
+        disc(256 + Math.cos(a) * 78, 156 + Math.sin(a) * 78, 66, k % 2 ? '#ff5f7a' : '#ff7f8f');
+      }
+      disc(256, 156, 40, '#ffe14f');
+      disc(256, 156, 18, '#ff8a3f');
+    },
+    () => {                         // Rustport: stencil lettering between hazard stripes
+      g.fillStyle = '#22323c';
+      g.fillRect(0, 0, 512, 320);
+      for (const y of [0, 270]) {
+        g.fillStyle = '#ffd23f';
+        g.fillRect(0, y, 512, 50);
+        for (let x = -60; x < 540; x += 56) poly('#16181c', [[x, y + 50], [x + 28, y + 50], [x + 78, y], [x + 50, y]]);
+      }
+      words('RUSTPORT', 256, 136, 84, '#f3ead6');
+      words('DOCK 7', 256, 222, 50, '#ff8a3f');
+    },
+    () => {                         // Rustport: a cog over the water
+      g.fillStyle = '#c4572e';
+      g.fillRect(0, 0, 512, 320);
+      g.save();
+      g.translate(256, 140);
+      g.fillStyle = '#f3e6c8';
+      for (let k = 0; k < 10; k++) {
+        g.rotate(Math.PI / 5);
+        g.fillRect(-20, -122, 40, 50);
+      }
+      g.restore();
+      disc(256, 140, 92, '#f3e6c8');
+      disc(256, 140, 40, '#c4572e');
+      g.fillStyle = '#1f2d4d';
+      g.fillRect(0, 262, 512, 58);
+      wave(266, 6, '#f3e6c8', 6);
+      wave(292, 6, '#5f86a8', 6);
+    },
+  ];
+  PAINT.forEach((paint, k) => {
+    g.save();
+    g.beginPath();
+    g.rect((k % 4) * CELL_PX, Math.floor(k / 4) * CELL_PX, CELL_PX, CELL_PX);
+    g.clip();
+    g.translate((k % 4) * CELL_PX, Math.floor(k / 4) * CELL_PX);
+    g.scale(1, CELL_PX / 320);
+    paint();
+    g.restore();
+  });
+  const texture = new T.CanvasTexture(c);
+  texture.anisotropy = 4;
+  return texture;
+}
+
+function buildMurals() {
+  const pos = [];
+  const nor = [];
+  const uv = [];
+  const idx = [];
+  const turn = [-Math.PI / 2, Math.PI / 2, Math.PI, 0];
+  murals.forEach((m, k) => {
+    const rx = Math.cos(turn[m.f]) * m.w / 2;
+    const rz = -Math.sin(turn[m.f]) * m.w / 2;
+    const u0 = (m.kind % 4) / 4 + 0.003;
+    const v0 = 0.5 - Math.floor(m.kind / 4) * 0.5 + 0.004;
+    pos.push(m.x - rx, m.y0, m.z - rz, m.x + rx, m.y0, m.z + rz, m.x + rx, m.y0 + m.tall, m.z + rz, m.x - rx, m.y0 + m.tall, m.z - rz);
+    for (let n = 0; n < 4; n++) nor.push(Math.sin(turn[m.f]), 0, Math.cos(turn[m.f]));
+    uv.push(u0, v0, u0 + 0.244, v0, u0 + 0.244, v0 + 0.492, u0, v0 + 0.492);
+    idx.push(k * 4, k * 4 + 1, k * 4 + 2, k * 4, k * 4 + 2, k * 4 + 3);
+  });
+  const geo = new T.BufferGeometry();
+  geo.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new T.Float32BufferAttribute(nor, 3));
+  geo.setAttribute('uv', new T.Float32BufferAttribute(uv, 2));
+  geo.setIndex(idx);
+  const mesh = new T.Mesh(geo, new T.MeshLambertMaterial({ map: muralTexture() }));
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+  landmarks.murals = murals;
+}
 
 // ---------- street furniture and plants ----------
 const lampGlowMat = new T.MeshBasicMaterial({
@@ -889,7 +1127,7 @@ function buildLandmarks() {
     d.scale.setScalar(b.s);
   });
 
-  // the Sol Wheel on its pier, out in the water off Sol Beach (looks only, nobody gets there)
+  // the Sol Wheel on its pier, out in the water off Sol Beach (the ride is sold at the foot of the pier)
   const pierX0 = HALF + SHORE - 1;
   const wheelX = HALF + SHORE + 46;
   const wheelZ = roadC(7) + 6;
@@ -951,10 +1189,149 @@ function buildLandmarks() {
   }
   landmarks.wheel = wheel;
   landmarks.wheelAt = { x: wheelX, y: hubY, z: wheelZ };
+
+  // Sol Beach by day: parasols and towels on the sand (clear of the pier), sails out on the water
+  const BRIGHT = ['#ff5f8f', '#ffd23f', '#3fd0e0', '#ff8a3f', '#ffffff', '#7f6bff'].map((hex) => new T.Color(hex));
+  const shades = [];
+  const towels = [];
+  for (let z = -HALF + 20; z < HALF - 20; z += 9 + RD() * 9) {
+    const x = HALF + 9 + RD() * (SHORE - 24);
+    if (Math.abs(z - wheelZ) < 13) continue;
+    const color = BRIGHT[Math.floor(RD() * BRIGHT.length)];
+    shades.push({ x, z, color, tilt: (RD() - 0.5) * 0.3 });
+    towels.push({ x: x + 1.3, z: z + (RD() - 0.5), turn: RD() * 3, color: BRIGHT[Math.floor(RD() * BRIGHT.length)] });
+    if (RD() < 0.5) towels.push({ x: x - 1.2, z: z + 0.8, turn: RD() * 3, color });
+  }
+  const white = new T.MeshLambertMaterial({ color: '#ffffff' });
+  instanced(new T.CylinderGeometry(0.05, 0.05, 2.5, 5), mat('#e9e4d6'), shades, (d, s) => d.position.set(s.x, 1.25, s.z));
+  const shadeMesh = instanced(new T.ConeGeometry(1.9, 0.75, 8), white, shades, (d, s) => {
+    d.position.set(s.x, 2.6, s.z);
+    d.rotation.z = s.tilt;
+  });
+  shadeMesh.castShadow = true;
+  instanced(boxGeo, white, towels, (d, t) => {
+    d.position.set(t.x, 0.02, t.z);
+    d.rotation.y = t.turn;
+    d.scale.set(0.95, 0.05, 1.9);
+  });
+  const boats = [];
+  for (let k = 0; k < 9; k++) {
+    const far = HALF + SHORE + 70 + RD() * 230;
+    const along = (RD() - 0.5) * WORLD;
+    const east = k < 6;
+    boats.push({ x: east ? far : along, z: east ? along : far, turn: RD() * Math.PI * 2, s: 0.9 + RD() * 0.5, color: BRIGHT[Math.floor(RD() * BRIGHT.length)] });
+  }
+  instanced(boxGeo, mat('#f4f1ea'), boats, (d, b) => {
+    d.position.set(b.x, -0.25, b.z);
+    d.rotation.y = b.turn;
+    d.scale.set(7.5 * b.s, 1.1, 2.1 * b.s);
+  });
+  const sailGeo = new T.BufferGeometry();
+  sailGeo.setAttribute('position', new T.Float32BufferAttribute([-0.6, 0.6, 0, -0.6, 10.5, 0, 3.4, 0.6, 0, -1, 0.6, 0, -1, 8.2, 0, -3.3, 0.6, 0], 3));
+  sailGeo.computeVertexNormals();
+  instanced(sailGeo, new T.MeshLambertMaterial({ color: '#ffffff', side: T.DoubleSide }), boats, (d, b) => {
+    d.position.set(b.x, 0, b.z);
+    d.rotation.y = b.turn;
+    d.scale.setScalar(b.s);
+  });
+
+  // gulls over the beach: nine birds in one small mesh, redrawn every frame
+  const gullGeo = new T.BufferGeometry();
+  gullGeo.setAttribute('position', new T.BufferAttribute(new Float32Array(9 * 18), 3));
+  const gullMat = new T.MeshBasicMaterial({ color: '#ffffff', side: T.DoubleSide });
+  const gullMesh = new T.Mesh(gullGeo, gullMat);
+  gullMesh.frustumCulled = false;
+  scene.add(gullMesh);
+  landmarks.gulls = { geo: gullGeo, mat: gullMat, birds: [] };
+  for (let k = 0; k < 9; k++) {
+    landmarks.gulls.birds.push({
+      cx: HALF + 8 + RD() * 36, cz: wheelZ + (RD() - 0.5) * 300, r: 9 + RD() * 16, y: 11 + RD() * 16,
+      a: RD() * 6.28, w: (0.25 + RD() * 0.2) * (RD() < 0.5 ? -1 : 1), flap: RD() * 6,
+    });
+  }
+
+  // the Coastliner: an airship that circles the island with the city's name on its side
+  const ship = new T.Group();
+  const hull = new T.Mesh(new T.SphereGeometry(1, 20, 12), mat('#f4ecdc'));
+  hull.scale.set(27, 7.2, 7.2);
+  const nose = new T.Mesh(new T.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#ff3fa4'));
+  nose.rotation.z = -Math.PI / 2;
+  nose.scale.set(6.3, 9, 6.3);
+  nose.position.x = 18.6;
+  const cabin = new T.Mesh(boxGeo, mat('#2a2f45'));
+  cabin.scale.set(8, 1.9, 2.6);
+  cabin.position.y = -7.7;
+  const lights = new T.Mesh(boxGeo, glowMat('#ffe9a8'));
+  lights.scale.set(6.6, 0.5, 2.7);
+  lights.position.y = -7.5;
+  ship.add(hull, nose, cabin, lights);
+  for (let k = 0; k < 4; k++) {
+    const fin = new T.Mesh(boxGeo, mat(k % 2 ? '#3fe0ff' : '#ff3fa4'));
+    fin.scale.set(7, 5.5, 0.35);
+    fin.position.set(-21.5, Math.cos((k * Math.PI) / 2) * 5.2, Math.sin((k * Math.PI) / 2) * 5.2);
+    fin.rotation.x = (k * Math.PI) / 2;
+    ship.add(fin);
+  }
+  const nameCanvas = mkCanvas(1024, 192);
+  const ng = nameCanvas.getContext('2d');
+  const ink = ng.createLinearGradient(60, 0, 964, 0);
+  ink.addColorStop(0, '#ff3fa4');
+  ink.addColorStop(0.5, '#ff8a3f');
+  ink.addColorStop(1, '#12a9c9');
+  ng.font = 'italic 900 150px "Arial Black", "Segoe UI", Arial, sans-serif';
+  ng.textAlign = 'center';
+  ng.textBaseline = 'middle';
+  ng.fillStyle = ink;
+  ng.fillText('NEON COAST', 512, 102, 960);
+  const nameMat = new T.MeshBasicMaterial({ map: new T.CanvasTexture(nameCanvas), transparent: true, depthWrite: false });
+  for (const side of [1, -1]) {
+    const name = new T.Mesh(new T.PlaneGeometry(30, 5.6), nameMat);
+    name.position.z = side * 7.3;
+    name.rotation.y = side > 0 ? 0 : Math.PI;
+    ship.add(name);
+  }
+  scene.add(ship);
+  landmarks.ship = ship;
+  landmarks.shipT = 40;
 }
 
 function updateLandmarks(dt) {
   if (landmarks.wheel) landmarks.wheel.rotateZ(dt * 0.12);
+  if (!landmarks.ship) return;
+  // one slow lap of the island every five minutes, nose first
+  landmarks.shipT += dt;
+  const lap = landmarks.shipT * 0.021;
+  landmarks.ship.position.set(Math.cos(lap) * 300, 150 + Math.sin(lap * 3) * 6, Math.sin(lap) * 300);
+  landmarks.ship.rotation.y = -lap - Math.PI / 2;
+
+  const flock = landmarks.gulls;
+  const p = flock.geo.attributes.position.array;
+  flock.mat.color.setScalar(1 - nightAmount * 0.72);
+  flock.birds.forEach((b, k) => {
+    b.a += b.w * dt;
+    b.flap += dt * 7;
+    const x = b.cx + Math.cos(b.a) * b.r;
+    const z = b.cz + Math.sin(b.a) * b.r;
+    const y = b.y + Math.sin(b.a * 2) * 1.2;
+    const way = Math.sign(b.w);
+    const fx = -Math.sin(b.a) * way;
+    const fz = Math.cos(b.a) * way;
+    const tip = y + 0.12 + Math.sin(b.flap) * 0.55;
+    const o = k * 18;
+    for (const side of [1, -1]) {
+      const at = o + (side > 0 ? 0 : 9);
+      p[at] = x + fx * 0.45;
+      p[at + 1] = y;
+      p[at + 2] = z + fz * 0.45;
+      p[at + 3] = x - fx * 0.3;
+      p[at + 4] = y;
+      p[at + 5] = z - fz * 0.3;
+      p[at + 6] = x + side * fz * 1.35 - fx * 0.2;
+      p[at + 7] = tip;
+      p[at + 8] = z - side * fx * 1.35 - fz * 0.2;
+    }
+  });
+  flock.geo.attributes.position.needsUpdate = true;
 }
 
 // ---------- sky ----------
@@ -1053,8 +1430,9 @@ const SKY = [
   [0, '#050818', '#141a3a'],
   [5, '#0a1030', '#2a2350'],
   [6.5, '#3b5fa8', '#ff9e6e'],
-  [9, '#3f8fe0', '#bfe3ff'],
-  [16, '#3f8fe0', '#c9e6ff'],
+  [9, '#1f7fdc', '#ffe2c4'],
+  [12.5, '#1787dc', '#d8f2ec'],
+  [16, '#2b7cd3', '#ffd9b3'],
   [18.2, '#5a4a9c', '#ff7f6a'],
   [19.3, '#2a1b5a', '#ff4f8f'],
   [20.5, '#0a0d28', '#3a1d55'],
@@ -1104,7 +1482,8 @@ function updateSky(dt, fx, fz) {
   moon.position.set(camera.position.x - sx * 1500, camera.position.y + Math.max(0.3, -sy) * 1500, camera.position.z - 700);
   const wu = waterMat.uniforms;
   wu.time.value += dt;
-  wu.skyC.value.copy(skyBot);
+  wu.skyC.value.copy(skyBot).lerp(skyTop, 0.4 * day);
+  wu.deep.value.set('#0b3a58').lerp(tmpColor.set('#0aa0a6'), day);
   wu.fogC.value.copy(skyBot);
   wu.sunC.value.copy(sun.color).multiplyScalar(up ? 0.35 + 0.65 * lift : 0.5);
   wu.sunDir.value.set(up ? sx : -sx, Math.max(0.2, Math.abs(sy)), up ? 0.36 : -0.45).normalize();
@@ -1240,4 +1619,5 @@ function zoneName(x, z) {
 buildGround();
 buildBlocks();
 buildProps();
+buildMurals();
 buildLandmarks();

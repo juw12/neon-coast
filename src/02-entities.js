@@ -18,32 +18,38 @@ function buildPerson(shirt, pants, skin, hair, jacket) {
     (parent || group).add(mesh);
     return mesh;
   };
-  const limb = (x, y, w, h, hex) => {
+  const limb = (x, y, w, h, hex, parent) => {
     const pivot = new T.Group();
     pivot.position.set(x, y, 0);
     part(w, h, w + 0.02, hex, 0, -h / 2, 0, pivot);
-    group.add(pivot);
+    (parent || group).add(pivot);
     return pivot;
   };
-  part(0.5, 0.62, 0.28, shirt, 0, 1.13, 0);
-  part(0.56, 0.16, 0.3, shirt, 0, 1.38, 0);                  // shoulders
+  // everything above the belt hangs off one pivot at the hips, so the upper body can lean and breathe
+  const HIP = 0.85;
+  const body = new T.Group();
+  body.position.y = HIP;
+  group.add(body);
+  part(0.5, 0.62, 0.28, shirt, 0, 1.13 - HIP, 0, body);
+  part(0.56, 0.16, 0.3, shirt, 0, 1.38 - HIP, 0, body);       // shoulders
   part(0.51, 0.07, 0.29, '#15151a', 0, 0.85, 0);             // belt
-  part(0.14, 0.08, 0.14, skin, 0, 1.47, 0);                  // neck
-  part(0.3, 0.3, 0.3, skin, 0, 1.63, 0);
-  part(0.32, 0.1, 0.32, hair, 0, 1.81, 0);
-  part(0.32, 0.2, 0.08, hair, 0, 1.7, -0.13);
-  for (const side of [-0.075, 0.075]) part(0.05, 0.04, 0.02, '#15151a', side, 1.66, 0.151);   // eyes
+  part(0.14, 0.08, 0.14, skin, 0, 1.47 - HIP, 0, body);       // neck
+  part(0.3, 0.3, 0.3, skin, 0, 1.63 - HIP, 0, body);
+  part(0.32, 0.1, 0.32, hair, 0, 1.81 - HIP, 0, body);
+  part(0.32, 0.2, 0.08, hair, 0, 1.7 - HIP, -0.13, body);
+  for (const side of [-0.075, 0.075]) part(0.05, 0.04, 0.02, '#15151a', side, 1.66 - HIP, 0.151, body);   // eyes
   if (jacket) {
-    part(0.16, 0.5, 0.02, jacket, 0, 1.14, 0.141);           // open jacket over a light shirt
-    part(0.34, 0.06, 0.34, '#20242e', 0, 1.87, 0.02);        // cap
-    part(0.26, 0.03, 0.14, '#20242e', 0, 1.85, 0.22);
+    part(0.16, 0.5, 0.02, jacket, 0, 1.14 - HIP, 0.141, body);   // open jacket over a light shirt
+    part(0.34, 0.06, 0.34, '#20242e', 0, 1.87 - HIP, 0.02, body);   // cap
+    part(0.26, 0.03, 0.14, '#20242e', 0, 1.85 - HIP, 0.22, body);
   }
   const legs = [limb(-0.13, 0.82, 0.2, 0.82, pants), limb(0.13, 0.82, 0.2, 0.82, pants)];
-  const arms = [limb(-0.35, 1.44, 0.14, 0.6, skin), limb(0.35, 1.44, 0.14, 0.6, skin)];
+  const arms = [limb(-0.35, 1.44 - HIP, 0.14, 0.6, skin, body), limb(0.35, 1.44 - HIP, 0.14, 0.6, skin, body)];
   for (const leg of legs) part(0.22, 0.1, 0.34, '#1a1a1e', 0, -0.77, 0.05, leg);       // shoes
   for (const arm of arms) part(0.17, 0.26, 0.19, shirt, 0, -0.12, 0, arm);            // sleeves
   group.userData.legs = legs;
   group.userData.arms = arms;
+  group.userData.body = body;
   return group;
 }
 
@@ -54,6 +60,28 @@ function animPerson(group, phase, amp) {
   u.legs[1].rotation.x = -swing;
   u.arms[0].rotation.x = -swing * 0.8;
   u.arms[1].rotation.x = swing * 0.8;
+}
+
+// standing still: slow breathing, weight shifting from foot to foot, a glance to each side now and then
+function idlePerson(group, t) {
+  const u = group.userData;
+  const breath = Math.sin(t * 1.7);
+  const shift = Math.sin(t * 0.55);
+  u.body.scale.y = 1 + breath * 0.012;
+  u.body.rotation.z = shift * 0.035;
+  u.body.rotation.y = Math.sin(t * 0.31) * 0.12;
+  u.arms[0].rotation.x = 0.05 + breath * 0.04;
+  u.arms[1].rotation.x = 0.05 - breath * 0.04;
+  u.arms[0].rotation.z = -0.06 - breath * 0.015;
+  u.arms[1].rotation.z = 0.06 + breath * 0.015;
+  u.legs[0].rotation.x = shift * 0.03;
+  u.legs[1].rotation.x = -shift * 0.03;
+}
+function restPerson(group) {
+  const u = group.userData;
+  u.body.scale.y = 1;
+  u.body.rotation.set(0, 0, 0);
+  u.arms[0].rotation.z = u.arms[1].rotation.z = 0;
 }
 
 // ---------- player ----------
@@ -531,9 +559,12 @@ function aiDrive(v, dt) {
   v.input.st = steer;
 }
 
+const LEARNER_HP = 12;            // below 45 a car smokes, at 0 it burns
 function damageVehicle(v, amount) {
   if (v.dead) return;
   v.hp -= amount * (v.driver === 'player' ? diff().dmg : 1);
+  // learning to drive: until the first job is done your car gets battered and smokes, but is never wrecked
+  if (v.driver === 'player' && save.mission === 0 && v.hp < LEARNER_HP) v.hp = LEARNER_HP;
 }
 
 function impact(v, speed) {
@@ -868,6 +899,12 @@ function updatePlayerOnFoot(dt) {
   player.z = clamp(tmpHit.z, -LIMIT, LIMIT);
 
   animPerson(player.mesh, player.phase, player.speed > 5 ? 0.95 : player.speed > 0 ? 0.55 : 0);
+  if (player.speed === 0 && player.y === 0 && player.fireT <= 0 && player.punchT <= 0) {
+    player.idleT = (player.idleT || 0) + dt;
+    idlePerson(player.mesh, player.idleT);
+  } else {
+    restPerson(player.mesh);
+  }
   if (player.fireT > 0 || player.punchT > 0) player.mesh.userData.arms[1].rotation.x = -1.5;
   player.mesh.position.set(player.x, player.y, player.z);
   player.mesh.rotation.set(0, player.h, 0);

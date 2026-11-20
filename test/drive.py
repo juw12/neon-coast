@@ -4,7 +4,7 @@ Nothing is teleported and no game function is called. The script reads the game
 state (position, heading, the route the game itself draws, people and cars close
 by) and answers with the same keys a player has: W A S D and F. It brakes for
 whoever is in its lane. It walks to the red car, gets in, drives
-to the yellow job beam, then to Mo's Respray, and passes when the save file
+to the yellow job beam, then to the Sol Wheel pier, and passes when the save file
 records the job as done.
 
 Traffic is random, so one run is one sample: run it a few times before trusting it.

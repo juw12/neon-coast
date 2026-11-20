@@ -41,19 +41,30 @@ SOFTWARE.
   #hud { position: fixed; inset: 0; pointer-events: none; text-shadow: 0 2px 6px rgba(0,0,0,.85); }
   #tr { position: absolute; top: 22px; right: 26px; text-align: right; }
   #stars { font-size: 30px; letter-spacing: 3px; line-height: 1; }
+  #stars { transition: opacity .4s; }
+  #stars.idle { opacity: 0; }
   #stars i { font-style: normal; color: rgba(255,255,255,.16); }
   #stars i.on { color: var(--gold); text-shadow: 0 0 12px rgba(255,225,79,.8); }
   #stars i.on.dim { color: rgba(255,225,79,.35); text-shadow: none; }
   #money { font-size: 34px; font-weight: 800; color: #7dffa5; margin-top: 4px; font-variant-numeric: tabular-nums; }
-  #clock { font-size: 20px; font-weight: 600; opacity: .9; font-variant-numeric: tabular-nums; }
   .lab small { font-size: 10.5px; font-weight: 700; letter-spacing: 1.6px; opacity: .7; margin-right: 6px; }
   .hpline { display: flex; align-items: center; justify-content: flex-end; margin-top: 8px; }
   .hpline .bar { width: 132px; margin: 0; }
   .bar { width: 190px; height: 9px; margin: 8px 0 0 auto; background: rgba(0,0,0,.5); border-radius: 5px; overflow: hidden;
     border: 1px solid rgba(255,255,255,.25); }
   .bar i { display: block; height: 100%; background: linear-gradient(90deg, #ff4d5e, #ff9aa5); }
-  #weapon { margin-top: 8px; font-size: 15px; font-weight: 600; letter-spacing: .5px; opacity: .9; }
-  #delta { position: absolute; left: 0; top: 84px; font-size: 15px; font-weight: 800; opacity: 0; transition: opacity .5s;
+  #weapon { margin-top: 8px; font-size: 15px; font-weight: 600; letter-spacing: .5px; opacity: 0; transition: opacity .4s; }
+  #weapon.show { opacity: .9; }
+  #perk { width: 232px; margin: 10px 0 0 auto; padding: 9px 12px 10px; border-radius: 10px; text-align: left; text-shadow: none;
+    background: rgba(8,10,24,.74); border: 1px solid rgba(63,224,255,.45); opacity: 0; transition: opacity .4s; }
+  #perk.show { opacity: 1; }
+  #perk.got { border-color: rgba(125,255,165,.8); }
+  #perk b { display: block; font-size: 13px; letter-spacing: .6px; color: var(--cyan); }
+  #perk.got b { color: #7dffa5; }
+  #perk span { display: block; font-size: 13px; opacity: .85; margin-top: 2px; }
+  #perk .bar { width: 100%; height: 5px; margin: 7px 0 0; }
+  #perk .bar i { background: linear-gradient(90deg, var(--cyan), #7dffa5); }
+  #delta { position: absolute; left: 0; top: 62px; font-size: 15px; font-weight: 800; opacity: 0; transition: opacity .5s;
     font-variant-numeric: tabular-nums; }
   #delta.show { opacity: 1; transition: none; }
   #delta.up { color: #7dffa5; }
@@ -62,7 +73,10 @@ SOFTWARE.
     background: rgba(8,10,24,.86); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 18px 60px rgba(0,0,0,.6);
     text-shadow: none; display: none; }
   #bigmap.show { display: block; }
+  #bigmap .maprow { display: flex; gap: 16px; align-items: center; }
   #bigmap canvas { display: block; width: min(600px, 74vh); height: min(600px, 74vh); border-radius: 10px; }
+  #bigmap .legend { width: 232px; font-size: 13px; gap: 9px 10px; }
+  @media (max-width: 900px) { #bigmap .legend { display: none; } }
   #bigmap p { margin: 9px 2px 0; font-size: 13.5px; opacity: .85; text-align: center; white-space: nowrap; }
 
   #bl { position: absolute; left: 26px; bottom: 24px; display: flex; align-items: flex-end; gap: 16px; }
@@ -153,13 +167,20 @@ SOFTWARE.
   #progress { margin: 0 0 18px; font-size: 15px; opacity: .85; white-space: pre-wrap; line-height: 1.6; }
   .stack { display: flex; flex-direction: column; gap: 14px; }
   .cols.menu { grid-template-columns: 1fr 1.55fr; gap: 20px; }
+  .cols.even { grid-template-columns: 1fr 1.25fr; gap: 20px; }
   .keys.pairs { grid-template-columns: auto 1fr auto 1fr; gap: 7px 12px; font-size: 13.5px; }
   @media (max-width: 760px) { .cols.menu { grid-template-columns: 1fr; } .keys.pairs { grid-template-columns: auto 1fr; } }
   #perks { display: grid; grid-template-columns: 1fr; gap: 1px; font-size: 13px; }
+  #perks em { display: block; height: 4px; margin-top: 4px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
+  #perks em::after { content: ''; display: block; height: 100%; width: var(--part); background: linear-gradient(90deg, var(--cyan), #7dffa5); }
   #perks b { font-weight: 700; opacity: .75; margin-top: 6px; }
   #perks b:first-child { margin-top: 0; }
   #perks b.got { color: #7dffa5; opacity: 1; }
   #perks span { opacity: .75; }
+  details.more { margin-top: 10px; font-size: 13px; }
+  details.more summary { cursor: pointer; opacity: .8; }
+  details.more .keys { margin-top: 9px; }
+  .pausenote { margin: 14px 2px 0; font-size: 13px; opacity: .7; }
   details.news { margin-top: 18px; font-size: 13px; }
   details.news summary { cursor: pointer; opacity: .8; }
   details.news summary strong { color: var(--cyan); }
@@ -177,10 +198,10 @@ SOFTWARE.
   <div id="tr">
     <div id="stars"><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i></div>
     <div id="money">$0</div>
-    <div class="lab"><small>TIME</small> <span id="clock">17:24</span></div>
     <div class="lab hpline"><small>HEALTH</small><div class="bar"><i id="hp"></i></div></div>
     <div id="weapon">Pistol</div>
     <div id="delta"></div>
+    <div id="perk"><b></b><span></span><div class="bar"><i></i></div></div>
   </div>
   <div id="bl">
     <canvas id="map" width="196" height="196"></canvas>
@@ -200,7 +221,23 @@ SOFTWARE.
     <div id="zone" class="toast"></div>
   </div>
   <div id="cross"></div>
-  <div id="bigmap"><canvas id="bigmap-canvas" width="600" height="600"></canvas><p id="bigmap-note"></p></div>
+  <div id="bigmap">
+    <div class="maprow">
+      <canvas id="bigmap-canvas" width="600" height="600"></canvas>
+      <div class="keys legend">
+        <kbd class="blip" style="--c:#ffe14f">J</kbd><span>Job: enter the yellow beam</span>
+        <kbd class="blip" style="--c:#57ff9a">R</kbd><span>Respray: repairs the car, loses the police</span>
+        <kbd class="blip" style="--c:#3fe0ff">T</kbd><span>Tune-up: stop in the ring, 3 stages</span>
+        <kbd class="blip" style="--c:#ff8a3f">A</kbd><span>Ammo $80: 24 rounds, on foot</span>
+        <kbd class="blip" style="--c:#ff6b78">H</kbd><span>Hospital: you wake up here</span>
+        <kbd class="blip" style="--c:#6fa2ff">P</kbd><span>Police: you are released here</span>
+        <kbd class="blip" style="--c:#d6dbe6">$</kbd><span>Property: E buys, rent and a place to lie low</span>
+        <kbd class="blip" style="--c:#ff8fd0">W</kbd><span>Sol Wheel: a ride spots hidden packages</span>
+        <kbd class="blip" style="--c:#c58bff">?</kbd><span>A package spotted from the wheel</span>
+      </div>
+    </div>
+    <p id="bigmap-note"></p>
+  </div>
   <div id="banner"><b></b><span></span></div>
   <div id="flash"></div>
   <div id="lockhint">Click the game to capture the mouse</div>
@@ -209,7 +246,7 @@ SOFTWARE.
 <div id="title" class="screen">
   <div class="panel">
     <h1>NEON COAST</h1>
-    <p class="tag">An original open-world crime-and-cruise sandbox. Six story jobs, cab fares, property to buy, fifteen hidden packages, and a ferry that won’t wait.</p>
+    <p class="tag">An original open-city sandbox in one file. Take a car, run jobs, drive a cab, buy property, lose the police.</p>
     <div class="buttons">
       <button id="btn-continue" class="big primary">Continue</button>
       <button id="btn-new" class="big">New Game</button>
@@ -221,34 +258,40 @@ SOFTWARE.
         <div class="settings"></div>
       </div>
       <div class="card">
-        <h2>CONTROLS</h2>
+        <h2>HOW TO PLAY</h2>
         <div class="keys pairs">
           <kbd>W A S D</kbd><span>Walk / drive</span>
           <kbd>Mouse</kbd><span>Look and aim</span>
           <kbd>F</kbd><span>In or out of any car</span>
-          <kbd>Left click</kbd><span>Shoot or punch</span>
-          <kbd>Shift</kbd><span>Sprint</span>
-          <kbd>Q</kbd><span>Pistol / fists</span>
           <kbd>Space</kbd><span>Jump / handbrake</span>
-          <kbd>H</kbd><span>Horn</span>
-          <kbd>R</kbd><span>Radio station</span>
           <kbd>M</kbd><span>The whole map</span>
-          <kbd>T</kbd><span>Cab fares, in a City Cab</span>
-          <kbd>E</kbd><span>Buy property, on foot</span>
-          <kbd>G</kbd><span>Harbor courier shift</span>
           <kbd>P</kbd><span>Pause (or Esc)</span>
         </div>
+        <details class="more">
+          <summary>The other eight keys</summary>
+          <div class="keys pairs">
+            <kbd>Shift</kbd><span>Sprint</span>
+            <kbd>Left click</kbd><span>Shoot or punch</span>
+            <kbd>Q</kbd><span>Pistol / fists</span>
+            <kbd>H</kbd><span>Horn</span>
+            <kbd>R</kbd><span>Radio station</span>
+            <kbd>E</kbd><span>Buy or use, on foot</span>
+            <kbd>T</kbd><span>Cab fares, in a City Cab</span>
+            <kbd>G</kbd><span>Harbor courier shift</span>
+          </div>
+        </details>
       </div>
     </div>
     <details class="news">
-      <summary><strong>Version 1.2 · City Lights</strong> — cab fares, property, a police helicopter, road arrows to every target, a night that glows. What changed, release by release</summary>
+      <summary><strong>Version 1.3 · Clear Day</strong> — a first job that ends at the Sol Wheel, a wheel you can ride, a lighter screen, a city with its own look by day. What changed, release by release</summary>
       <ul>
+        <li><strong>1.3 · Clear Day</strong> — The first job is a short run down the beach road to the Sol Wheel. Ride the wheel for $25: it rests you and marks hidden packages on the map. Stars, pistol and clock leave the screen when they do not matter; perks report their progress as you play. Police heat now shuts the tune-up shop and keeps cab fares out of the car, and a property you own hides you from two stars. By day: murals, an airship, gulls, a warmer sky and sea.</li>
         <li><strong>1.2 · City Lights</strong> — Cab fares in any City Cab (T). Four properties to buy that pay rent. A police helicopter at four stars. Arrows on the road and a line on the map to every target, and the whole map on M. Four perks earned by packages, fares and story jobs. Four kinds of odd job after the story. New look: shop fronts, stepped towers, street trees, detailed cars, moving water, clouds, and glow at night. Existing saves carry over.</li>
         <li><strong>1.1 · Harbor shift</strong> — Three courier stops, a ferry deadline and a saved personal best. Landmarks to steer by, the Tune-up shop.</li>
         <li><strong>1.0</strong> — The island, six story jobs, police with five wanted levels, fifteen hidden packages.</li>
       </ul>
     </details>
-    <p class="fine">Original fan-made game. Not affiliated with Rockstar Games or Grand Theft Auto. Rendering by three.js (MIT).</p>
+    <p class="fine">An original game with its own city, names and art. Not affiliated with Rockstar Games or Grand Theft Auto. Rendering by three.js (MIT).</p>
   </div>
 </div>
 
@@ -262,33 +305,17 @@ SOFTWARE.
       <button id="btn-restart" class="big">Restart at Sol Beach</button>
       <button id="btn-quit" class="big">Main Menu</button>
     </div>
-    <div class="cols">
-      <div class="stack">
-        <div class="card">
-          <h2>SETTINGS</h2>
-          <div class="settings"></div>
-        </div>
-        <div class="card">
-          <h2>PERKS</h2>
-          <div id="perks"></div>
-        </div>
+    <div class="cols even">
+      <div class="card">
+        <h2>SETTINGS</h2>
+        <div class="settings"></div>
       </div>
       <div class="card">
-        <h2>ON THE MAP</h2>
-        <div class="keys">
-          <kbd class="blip" style="--c:#ffe14f">J</kbd><span>Job: enter the yellow beam</span>
-          <kbd class="blip" style="--c:#57ff9a">R</kbd><span>Respray: repairs the car, loses the police</span>
-          <kbd class="blip" style="--c:#3fe0ff">T</kbd><span>Tune-up: stop in the ring, 3 stages</span>
-          <kbd class="blip" style="--c:#ff8a3f">A</kbd><span>Ammo $80: 24 rounds, on foot</span>
-          <kbd class="blip" style="--c:#ff6b78">H</kbd><span>Hospital: you wake up here</span>
-          <kbd class="blip" style="--c:#6fa2ff">P</kbd><span>Police: you are released here</span>
-          <kbd class="blip" style="--c:#d6dbe6">$</kbd><span>Property: on foot, E buys, come back for rent</span>
-          <kbd class="blip" style="--c:#ffe14f">&#9733;</kbd><span>Wanted: hide until the stars go out</span>
-        </div>
-        <p class="keynote">Keys: W A S D move, mouse look, F in or out of a car, Space jump or handbrake, left click
-          shoot, Q pistol or fists, R radio, H horn, G harbor shift, T cab fares, E buy, M map, P pause.</p>
+        <h2>PERKS</h2>
+        <div id="perks"></div>
       </div>
     </div>
+    <p class="pausenote">M opens the map and what its marks mean. Every key is on the main menu.</p>
   </div>
 </div>
 
@@ -358,7 +385,7 @@ const headingOf = (d) => Math.atan2(DX[d], DZ[d]);
 
 // ---------- save data ----------
 const SAVE_KEY = 'neon-coast-save-v1';
-const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, difficulty: 1, quality: 1, sound: 1 };
+const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], difficulty: 1, quality: 1, sound: 1 };
 const save = Object.assign({}, SAVE_DEFAULTS);
 try {
   Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'));
@@ -367,6 +394,7 @@ try {
 }
 save.packages = (save.packages || []).slice();       // never share the default objects
 save.props = Object.assign({}, save.props);
+save.spotted = (save.spotted || []).slice();
 function persist() {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -533,7 +561,7 @@ function groundCanvas() {
 const waterMat = new T.ShaderMaterial({
   uniforms: {
     time: { value: 0 },
-    deep: { value: new T.Color('#0d4f6b') },
+    deep: { value: new T.Color('#0d4f6b') },      // set every frame: teal by day, dark by night
     skyC: { value: new T.Color() },
     sunC: { value: new T.Color() },
     sunDir: { value: new T.Vector3(0, 1, 0) },
@@ -585,7 +613,7 @@ function buildGround() {
   city.receiveShadow = true;
   scene.add(city);
 
-  const sand = new T.Mesh(new T.PlaneGeometry(2 * (HALF + SHORE), 2 * (HALF + SHORE)), mat('#d8c391'));
+  const sand = new T.Mesh(new T.PlaneGeometry(2 * (HALF + SHORE), 2 * (HALF + SHORE)), mat('#cdae78'));
   sand.rotation.x = -Math.PI / 2;
   sand.position.y = -0.06;
   sand.receiveShadow = true;
@@ -609,10 +637,10 @@ const palms = [];
 const lamps = [];
 const PARKS = new Set(['5,4', '1,2', '7,7']);
 const PALETTE = {
-  downtown: ['#9fb4c7', '#7f93a8', '#c9d3dc', '#6c7f96', '#b8a99a', '#8fa0b5'],
+  downtown: ['#8fc3d4', '#6f8fb4', '#ece4d2', '#5f86a8', '#f0b79c', '#b3a4dc'],
   beach: ['#ffb3c7', '#ffe0a3', '#a8f0e0', '#ffd1e8', '#b9e3ff', '#fff1d6'],
   suburb: ['#e8d6c0', '#d9c2a7', '#c4d4c0', '#e3c9c9', '#cfd6e3', '#f0e4cc'],
-  industrial: ['#8a8a84', '#9a8f80', '#7b8288', '#a39a8c'],
+  industrial: ['#a9684c', '#9a8f80', '#6c8d94', '#c4a45e'],
 };
 const NEON = ['#ff3fa4', '#3fe0ff', '#b56bff', '#ff8a3f', '#57ff9a', '#ffe14f'];
 
@@ -624,13 +652,13 @@ function districtOf(i, j) {
   return 'suburb';
 }
 
-function face(a, b, c, d, normal, u, v, col, uo, vo, into) {
+function face(a, b, c, d, normal, u, v, col, uo, vo, into, foot) {
   const buf = into || bld;
   const base = buf.pos.length / 3;
   buf.pos.push(...a, ...b, ...c, ...d);
   for (let k = 0; k < 4; k++) {
     buf.nor.push(...normal);
-    buf.col.push(...col);
+    buf.col.push(...(foot && k < 2 ? foot : col));   // a and b are the bottom edge of a wall
   }
   buf.uv.push(uo, vo, uo + u, vo, uo + u, vo + v, uo, vo + v);
   buf.idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
@@ -654,10 +682,14 @@ function addBox(x0, x1, z0, z1, y0, y1, col, rng, shops) {
     y0 = y2;
   }
   const v = cells(y1 - y0);
-  face([x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [1, 0, 0], cells(z1 - z0), v, col, uo, vo);
-  face([x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0], [-1, 0, 0], cells(z1 - z0), v, col, uo, vo);
-  face([x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1], [0, 0, 1], cells(x1 - x0), v, col, uo, vo);
-  face([x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0], [0, 0, -1], cells(x1 - x0), v, col, uo, vo);
+  // weathered at the foot, sun-bleached at the top: taller walls fade further
+  const fade = clamp(0.9 - (y1 - y0) * 0.004, 0.62, 0.9);
+  const foot = [col[0] * fade, col[1] * fade, col[2] * (fade + 0.04)];
+  const top = [Math.min(1, col[0] * 1.06), Math.min(1, col[1] * 1.06), Math.min(1, col[2] * 1.06)];
+  face([x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [1, 0, 0], cells(z1 - z0), v, top, uo, vo, null, foot);
+  face([x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0], [-1, 0, 0], cells(z1 - z0), v, top, uo, vo, null, foot);
+  face([x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1], [0, 0, 1], cells(x1 - x0), v, top, uo, vo, null, foot);
+  face([x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0], [0, 0, -1], cells(x1 - x0), v, top, uo, vo, null, foot);
   const roof = [col[0] * 0.42, col[1] * 0.42, col[2] * 0.42];
   face([x0, y1, z0], [x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [0, 1, 0], 0, 0, roof, 0.01, 0.01);
 }
@@ -707,9 +739,13 @@ const roofBits = [];
 const hipRoofs = [];
 const towerTops = [];
 const RS = seeded(4711);
+const RD = seeded(1305);          // day dressing: murals, beach, boats; leaves the older streams alone
+const murals = [];
+const MURAL_KINDS = { beach: [0, 1], downtown: [2, 3], suburb: [4, 5], industrial: [6, 7] };
+const MURAL_CHANCE = { beach: 0.7, downtown: 0.45, suburb: 0.2, industrial: 0.85 };
 const HIP_COLORS = ['#a8553f', '#8f4a3a', '#5d6470', '#b06a45'].map((hex) => new T.Color(hex));
 
-function dressBuilding(block, x0, x1, z0, z1, h, roofInset) {
+function dressBuilding(block, x0, x1, z0, z1, h, roofInset, shops, wallTop) {
   const hip = block.type === 'suburb' && h < 15;
   if (hip) {
     hipRoofs.push({
@@ -739,6 +775,7 @@ function dressBuilding(block, x0, x1, z0, z1, h, roofInset) {
   const near = WALK + 7;        // only walls that face a street get a sign
   const streetFaces = [x0 - block.x0 < near, block.x1 - x1 < near, z0 - block.z0 < near, block.z1 - z1 < near];
   const turn = [-Math.PI / 2, Math.PI / 2, Math.PI, 0];
+  const signed = [false, false, false, false];
   for (let f = 0; f < 4; f++) {
     const along = f < 2 ? z1 - z0 : x1 - x0;
     if (!streetFaces[f] || along < 11 || RS() > SIGN_CHANCE[block.type]) continue;
@@ -747,6 +784,23 @@ function dressBuilding(block, x0, x1, z0, z1, h, roofInset) {
     const x = f === 0 ? x0 - 0.14 : f === 1 ? x1 + 0.14 : (x0 + x1) / 2 + slide;
     const z = f === 2 ? z0 - 0.14 : f === 3 ? z1 + 0.14 : (z0 + z1) / 2 + slide;
     (signs[text] || (signs[text] = [])).push({ x, z, rot: turn[f] });
+    signed[f] = true;
+  }
+  // one painted wall on some buildings: the first street side with room for it
+  if (RD() > MURAL_CHANCE[block.type]) return;
+  const first = Math.floor(RD() * 4);
+  for (let n = 0; n < 4; n++) {
+    const f = (first + n) % 4;
+    const along = f < 2 ? z1 - z0 : x1 - x0;
+    const y0 = signed[f] ? 7.1 : shops ? SHOP_H + 0.7 : 1.1;
+    let tall = Math.min(wallTop - 1.2 - y0, 11);
+    const w = Math.min(along - 3, 18, tall * 1.9);
+    if (w < tall * 1.4) tall = w / 1.4;         // keep the picture close to the 1.6 : 1 it was painted at
+    if (!streetFaces[f] || w < 7 || tall < 4.4) continue;
+    murals.push({ f, w, tall, y0, kind: MURAL_KINDS[block.type][Math.floor(RD() * 2)],
+      x: f === 0 ? x0 - 0.09 : f === 1 ? x1 + 0.09 : (x0 + x1) / 2,
+      z: f === 2 ? z0 - 0.09 : f === 3 ? z1 + 0.09 : (z0 + z1) / 2 });
+    break;
   }
 }
 
@@ -820,7 +874,7 @@ function buildBlocks() {
         addBox(bx0, bx1, bz0, bz1, 0, waist, col, R, shops);
         if (tiered) addBox(bx0 + step, bx1 - step, bz0 + step, bz1 - step, waist, h, col, RT);
         block.boxes.push({ x0: bx0, x1: bx1, z0: bz0, z1: bz1, h });
-        dressBuilding(block, bx0, bx1, bz0, bz1, h, step);
+        dressBuilding(block, bx0, bx1, bz0, bz1, h, step, shops, waist);
         let top = h;
         if (h > 55 && R() < 0.6) {
           top = h + 12 + R() * 28;
@@ -991,6 +1045,217 @@ const buildingMat = new T.MeshLambertMaterial({
   emissiveIntensity: 0,
   vertexColors: true,
 });
+
+// ---------- murals: eight painted walls, two per district, on one sheet ----------
+function muralTexture() {
+  const CELL_PX = 512;
+  const c = mkCanvas(CELL_PX * 4, CELL_PX * 2);
+  const g = c.getContext('2d');
+  const disc = (x, y, r, fill) => {
+    g.fillStyle = fill;
+    g.beginPath();
+    g.arc(x, y, r, 0, Math.PI * 2);
+    g.fill();
+  };
+  const poly = (fill, pts) => {
+    g.fillStyle = fill;
+    g.beginPath();
+    pts.forEach((p, k) => (k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])));
+    g.fill();
+  };
+  const words = (text, x, y, px, fill, shadow) => {
+    g.font = '900 ' + px + 'px "Arial Black", "Segoe UI", Arial, sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    if (shadow) {
+      g.fillStyle = shadow;
+      g.fillText(text, x + px * 0.07, y + px * 0.07);
+    }
+    g.fillStyle = fill;
+    g.fillText(text, x, y);
+  };
+  const wave = (y, amp, stroke, width) => {
+    g.strokeStyle = stroke;
+    g.lineWidth = width;
+    g.beginPath();
+    for (let x = -10; x <= 522; x += 8) g.lineTo(x, y + Math.sin(x * 0.045) * amp);
+    g.stroke();
+  };
+  // every picture is drawn on a 512 x 320 board
+  const PAINT = [
+    () => {                         // Sol Beach: the sun going down behind a palm
+      const sky = g.createLinearGradient(0, 0, 0, 320);
+      sky.addColorStop(0, '#ff4f8f');
+      sky.addColorStop(0.6, '#ff9a4f');
+      sky.addColorStop(1, '#ffd36b');
+      g.fillStyle = sky;
+      g.fillRect(0, 0, 512, 320);
+      disc(300, 200, 112, '#fff1a8');
+      g.fillStyle = '#ff8a5a';
+      for (let k = 0; k < 5; k++) g.fillRect(180, 196 + k * 22, 240, 6 + k * 2);
+      g.fillStyle = '#2b2a7a';
+      g.fillRect(0, 262, 512, 58);
+      wave(280, 4, '#6f7ce0', 4);
+      wave(300, 4, '#6f7ce0', 4);
+      g.strokeStyle = '#1b1740';
+      g.lineWidth = 13;
+      g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(86, 320);
+      g.quadraticCurveTo(96, 190, 132, 92);
+      g.stroke();
+      g.lineWidth = 9;
+      for (const [dx, dy] of [[-92, 6], [-70, -44], [-14, -70], [50, -56], [88, -8], [70, 46], [-60, 52]]) {
+        g.beginPath();
+        g.moveTo(132, 92);
+        g.quadraticCurveTo(132 + dx * 0.6, 92 + dy * 0.9 - 26, 132 + dx, 92 + dy);
+        g.stroke();
+      }
+    },
+    () => {                         // Sol Beach: a postcard
+      g.fillStyle = '#14b3ae';
+      g.fillRect(0, 0, 512, 320);
+      disc(430, 70, 46, '#ffe14f');
+      for (let k = 0; k < 4; k++) wave(236 + k * 24, 7, k % 2 ? '#ffffff' : '#8fe7df', 7);
+      words('SOL', 190, 84, 104, '#ffffff', '#ff3fa4');
+      words('BEACH', 256, 170, 104, '#ffffff', '#ff3fa4');
+    },
+    () => {                         // Meridian: hard colour blocks and a white zigzag
+      g.fillStyle = '#1d1a4a';
+      g.fillRect(0, 0, 512, 320);
+      poly('#ff3fa4', [[0, 0], [230, 0], [0, 230]]);
+      poly('#3fe0ff', [[512, 320], [512, 70], [262, 320]]);
+      poly('#ffe14f', [[250, 0], [420, 0], [335, 86]]);
+      poly('#b56bff', [[70, 320], [210, 320], [140, 250]]);
+      disc(256, 160, 58, '#ffffff');
+      disc(256, 160, 38, '#1d1a4a');
+      g.strokeStyle = '#ffffff';
+      g.lineWidth = 12;
+      g.lineJoin = 'miter';
+      g.beginPath();
+      [[40, 290], [130, 200], [190, 250], [330, 110], [390, 160], [480, 40]].forEach((p, k) => (k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])));
+      g.stroke();
+    },
+    () => {                         // Meridian: the skyline under a striped sun
+      const sky = g.createLinearGradient(0, 0, 0, 320);
+      sky.addColorStop(0, '#231a5c');
+      sky.addColorStop(1, '#ff4f8f');
+      g.fillStyle = sky;
+      g.fillRect(0, 0, 512, 320);
+      disc(256, 190, 120, '#ffd36b');
+      g.fillStyle = '#ff4f8f';
+      for (let k = 0; k < 5; k++) g.fillRect(120, 176 + k * 24, 272, 5 + k * 2);
+      g.fillStyle = '#120f33';
+      [[20, 150], [70, 96], [124, 170], [176, 60], [236, 130], [290, 84], [348, 150], [398, 40], [452, 120]].forEach(([x, top]) => g.fillRect(x, top, 46, 320 - top));
+      g.fillStyle = '#3fe0ff';
+      g.fillRect(0, 300, 512, 6);
+      words('MERIDIAN', 256, 276, 40, '#ffffff', '#3fe0ff');
+    },
+    () => {                         // the suburbs: cut citrus on mint
+      g.fillStyle = '#a8efd2';
+      g.fillRect(0, 0, 512, 320);
+      const slice = (x, y, r, rind, flesh) => {
+        disc(x, y, r, rind);
+        disc(x, y, r * 0.86, '#fff8e0');
+        disc(x, y, r * 0.78, flesh);
+        g.strokeStyle = '#fff8e0';
+        g.lineWidth = r * 0.07;
+        for (let k = 0; k < 4; k++) {
+          const a = (k / 4) * Math.PI;
+          g.beginPath();
+          g.moveTo(x - Math.cos(a) * r * 0.8, y - Math.sin(a) * r * 0.8);
+          g.lineTo(x + Math.cos(a) * r * 0.8, y + Math.sin(a) * r * 0.8);
+          g.stroke();
+        }
+      };
+      slice(130, 170, 104, '#ff8a3f', '#ffb15c');
+      slice(330, 118, 84, '#ffd23f', '#ffe98a');
+      slice(420, 248, 62, '#57c45a', '#b6ec7a');
+      poly('#2f8f4f', [[236, 268], [300, 232], [322, 286], [262, 304]]);
+    },
+    () => {                         // the suburbs: one big flower
+      g.fillStyle = '#ffd3e2';
+      g.fillRect(0, 0, 512, 320);
+      poly('#2f8f4f', [[0, 320], [150, 180], [210, 320]]);
+      poly('#3fae62', [[512, 320], [372, 196], [300, 320]]);
+      for (let k = 0; k < 5; k++) {
+        const a = (k / 5) * Math.PI * 2 - Math.PI / 2;
+        disc(256 + Math.cos(a) * 78, 156 + Math.sin(a) * 78, 66, k % 2 ? '#ff5f7a' : '#ff7f8f');
+      }
+      disc(256, 156, 40, '#ffe14f');
+      disc(256, 156, 18, '#ff8a3f');
+    },
+    () => {                         // Rustport: stencil lettering between hazard stripes
+      g.fillStyle = '#22323c';
+      g.fillRect(0, 0, 512, 320);
+      for (const y of [0, 270]) {
+        g.fillStyle = '#ffd23f';
+        g.fillRect(0, y, 512, 50);
+        for (let x = -60; x < 540; x += 56) poly('#16181c', [[x, y + 50], [x + 28, y + 50], [x + 78, y], [x + 50, y]]);
+      }
+      words('RUSTPORT', 256, 136, 84, '#f3ead6');
+      words('DOCK 7', 256, 222, 50, '#ff8a3f');
+    },
+    () => {                         // Rustport: a cog over the water
+      g.fillStyle = '#c4572e';
+      g.fillRect(0, 0, 512, 320);
+      g.save();
+      g.translate(256, 140);
+      g.fillStyle = '#f3e6c8';
+      for (let k = 0; k < 10; k++) {
+        g.rotate(Math.PI / 5);
+        g.fillRect(-20, -122, 40, 50);
+      }
+      g.restore();
+      disc(256, 140, 92, '#f3e6c8');
+      disc(256, 140, 40, '#c4572e');
+      g.fillStyle = '#1f2d4d';
+      g.fillRect(0, 262, 512, 58);
+      wave(266, 6, '#f3e6c8', 6);
+      wave(292, 6, '#5f86a8', 6);
+    },
+  ];
+  PAINT.forEach((paint, k) => {
+    g.save();
+    g.beginPath();
+    g.rect((k % 4) * CELL_PX, Math.floor(k / 4) * CELL_PX, CELL_PX, CELL_PX);
+    g.clip();
+    g.translate((k % 4) * CELL_PX, Math.floor(k / 4) * CELL_PX);
+    g.scale(1, CELL_PX / 320);
+    paint();
+    g.restore();
+  });
+  const texture = new T.CanvasTexture(c);
+  texture.anisotropy = 4;
+  return texture;
+}
+
+function buildMurals() {
+  const pos = [];
+  const nor = [];
+  const uv = [];
+  const idx = [];
+  const turn = [-Math.PI / 2, Math.PI / 2, Math.PI, 0];
+  murals.forEach((m, k) => {
+    const rx = Math.cos(turn[m.f]) * m.w / 2;
+    const rz = -Math.sin(turn[m.f]) * m.w / 2;
+    const u0 = (m.kind % 4) / 4 + 0.003;
+    const v0 = 0.5 - Math.floor(m.kind / 4) * 0.5 + 0.004;
+    pos.push(m.x - rx, m.y0, m.z - rz, m.x + rx, m.y0, m.z + rz, m.x + rx, m.y0 + m.tall, m.z + rz, m.x - rx, m.y0 + m.tall, m.z - rz);
+    for (let n = 0; n < 4; n++) nor.push(Math.sin(turn[m.f]), 0, Math.cos(turn[m.f]));
+    uv.push(u0, v0, u0 + 0.244, v0, u0 + 0.244, v0 + 0.492, u0, v0 + 0.492);
+    idx.push(k * 4, k * 4 + 1, k * 4 + 2, k * 4, k * 4 + 2, k * 4 + 3);
+  });
+  const geo = new T.BufferGeometry();
+  geo.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new T.Float32BufferAttribute(nor, 3));
+  geo.setAttribute('uv', new T.Float32BufferAttribute(uv, 2));
+  geo.setIndex(idx);
+  const mesh = new T.Mesh(geo, new T.MeshLambertMaterial({ map: muralTexture() }));
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+  landmarks.murals = murals;
+}
 
 // ---------- street furniture and plants ----------
 const lampGlowMat = new T.MeshBasicMaterial({
@@ -1193,7 +1458,7 @@ function buildLandmarks() {
     d.scale.setScalar(b.s);
   });
 
-  // the Sol Wheel on its pier, out in the water off Sol Beach (looks only, nobody gets there)
+  // the Sol Wheel on its pier, out in the water off Sol Beach (the ride is sold at the foot of the pier)
   const pierX0 = HALF + SHORE - 1;
   const wheelX = HALF + SHORE + 46;
   const wheelZ = roadC(7) + 6;
@@ -1255,10 +1520,149 @@ function buildLandmarks() {
   }
   landmarks.wheel = wheel;
   landmarks.wheelAt = { x: wheelX, y: hubY, z: wheelZ };
+
+  // Sol Beach by day: parasols and towels on the sand (clear of the pier), sails out on the water
+  const BRIGHT = ['#ff5f8f', '#ffd23f', '#3fd0e0', '#ff8a3f', '#ffffff', '#7f6bff'].map((hex) => new T.Color(hex));
+  const shades = [];
+  const towels = [];
+  for (let z = -HALF + 20; z < HALF - 20; z += 9 + RD() * 9) {
+    const x = HALF + 9 + RD() * (SHORE - 24);
+    if (Math.abs(z - wheelZ) < 13) continue;
+    const color = BRIGHT[Math.floor(RD() * BRIGHT.length)];
+    shades.push({ x, z, color, tilt: (RD() - 0.5) * 0.3 });
+    towels.push({ x: x + 1.3, z: z + (RD() - 0.5), turn: RD() * 3, color: BRIGHT[Math.floor(RD() * BRIGHT.length)] });
+    if (RD() < 0.5) towels.push({ x: x - 1.2, z: z + 0.8, turn: RD() * 3, color });
+  }
+  const white = new T.MeshLambertMaterial({ color: '#ffffff' });
+  instanced(new T.CylinderGeometry(0.05, 0.05, 2.5, 5), mat('#e9e4d6'), shades, (d, s) => d.position.set(s.x, 1.25, s.z));
+  const shadeMesh = instanced(new T.ConeGeometry(1.9, 0.75, 8), white, shades, (d, s) => {
+    d.position.set(s.x, 2.6, s.z);
+    d.rotation.z = s.tilt;
+  });
+  shadeMesh.castShadow = true;
+  instanced(boxGeo, white, towels, (d, t) => {
+    d.position.set(t.x, 0.02, t.z);
+    d.rotation.y = t.turn;
+    d.scale.set(0.95, 0.05, 1.9);
+  });
+  const boats = [];
+  for (let k = 0; k < 9; k++) {
+    const far = HALF + SHORE + 70 + RD() * 230;
+    const along = (RD() - 0.5) * WORLD;
+    const east = k < 6;
+    boats.push({ x: east ? far : along, z: east ? along : far, turn: RD() * Math.PI * 2, s: 0.9 + RD() * 0.5, color: BRIGHT[Math.floor(RD() * BRIGHT.length)] });
+  }
+  instanced(boxGeo, mat('#f4f1ea'), boats, (d, b) => {
+    d.position.set(b.x, -0.25, b.z);
+    d.rotation.y = b.turn;
+    d.scale.set(7.5 * b.s, 1.1, 2.1 * b.s);
+  });
+  const sailGeo = new T.BufferGeometry();
+  sailGeo.setAttribute('position', new T.Float32BufferAttribute([-0.6, 0.6, 0, -0.6, 10.5, 0, 3.4, 0.6, 0, -1, 0.6, 0, -1, 8.2, 0, -3.3, 0.6, 0], 3));
+  sailGeo.computeVertexNormals();
+  instanced(sailGeo, new T.MeshLambertMaterial({ color: '#ffffff', side: T.DoubleSide }), boats, (d, b) => {
+    d.position.set(b.x, 0, b.z);
+    d.rotation.y = b.turn;
+    d.scale.setScalar(b.s);
+  });
+
+  // gulls over the beach: nine birds in one small mesh, redrawn every frame
+  const gullGeo = new T.BufferGeometry();
+  gullGeo.setAttribute('position', new T.BufferAttribute(new Float32Array(9 * 18), 3));
+  const gullMat = new T.MeshBasicMaterial({ color: '#ffffff', side: T.DoubleSide });
+  const gullMesh = new T.Mesh(gullGeo, gullMat);
+  gullMesh.frustumCulled = false;
+  scene.add(gullMesh);
+  landmarks.gulls = { geo: gullGeo, mat: gullMat, birds: [] };
+  for (let k = 0; k < 9; k++) {
+    landmarks.gulls.birds.push({
+      cx: HALF + 8 + RD() * 36, cz: wheelZ + (RD() - 0.5) * 300, r: 9 + RD() * 16, y: 11 + RD() * 16,
+      a: RD() * 6.28, w: (0.25 + RD() * 0.2) * (RD() < 0.5 ? -1 : 1), flap: RD() * 6,
+    });
+  }
+
+  // the Coastliner: an airship that circles the island with the city's name on its side
+  const ship = new T.Group();
+  const hull = new T.Mesh(new T.SphereGeometry(1, 20, 12), mat('#f4ecdc'));
+  hull.scale.set(27, 7.2, 7.2);
+  const nose = new T.Mesh(new T.SphereGeometry(1, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat('#ff3fa4'));
+  nose.rotation.z = -Math.PI / 2;
+  nose.scale.set(6.3, 9, 6.3);
+  nose.position.x = 18.6;
+  const cabin = new T.Mesh(boxGeo, mat('#2a2f45'));
+  cabin.scale.set(8, 1.9, 2.6);
+  cabin.position.y = -7.7;
+  const lights = new T.Mesh(boxGeo, glowMat('#ffe9a8'));
+  lights.scale.set(6.6, 0.5, 2.7);
+  lights.position.y = -7.5;
+  ship.add(hull, nose, cabin, lights);
+  for (let k = 0; k < 4; k++) {
+    const fin = new T.Mesh(boxGeo, mat(k % 2 ? '#3fe0ff' : '#ff3fa4'));
+    fin.scale.set(7, 5.5, 0.35);
+    fin.position.set(-21.5, Math.cos((k * Math.PI) / 2) * 5.2, Math.sin((k * Math.PI) / 2) * 5.2);
+    fin.rotation.x = (k * Math.PI) / 2;
+    ship.add(fin);
+  }
+  const nameCanvas = mkCanvas(1024, 192);
+  const ng = nameCanvas.getContext('2d');
+  const ink = ng.createLinearGradient(60, 0, 964, 0);
+  ink.addColorStop(0, '#ff3fa4');
+  ink.addColorStop(0.5, '#ff8a3f');
+  ink.addColorStop(1, '#12a9c9');
+  ng.font = 'italic 900 150px "Arial Black", "Segoe UI", Arial, sans-serif';
+  ng.textAlign = 'center';
+  ng.textBaseline = 'middle';
+  ng.fillStyle = ink;
+  ng.fillText('NEON COAST', 512, 102, 960);
+  const nameMat = new T.MeshBasicMaterial({ map: new T.CanvasTexture(nameCanvas), transparent: true, depthWrite: false });
+  for (const side of [1, -1]) {
+    const name = new T.Mesh(new T.PlaneGeometry(30, 5.6), nameMat);
+    name.position.z = side * 7.3;
+    name.rotation.y = side > 0 ? 0 : Math.PI;
+    ship.add(name);
+  }
+  scene.add(ship);
+  landmarks.ship = ship;
+  landmarks.shipT = 40;
 }
 
 function updateLandmarks(dt) {
   if (landmarks.wheel) landmarks.wheel.rotateZ(dt * 0.12);
+  if (!landmarks.ship) return;
+  // one slow lap of the island every five minutes, nose first
+  landmarks.shipT += dt;
+  const lap = landmarks.shipT * 0.021;
+  landmarks.ship.position.set(Math.cos(lap) * 300, 150 + Math.sin(lap * 3) * 6, Math.sin(lap) * 300);
+  landmarks.ship.rotation.y = -lap - Math.PI / 2;
+
+  const flock = landmarks.gulls;
+  const p = flock.geo.attributes.position.array;
+  flock.mat.color.setScalar(1 - nightAmount * 0.72);
+  flock.birds.forEach((b, k) => {
+    b.a += b.w * dt;
+    b.flap += dt * 7;
+    const x = b.cx + Math.cos(b.a) * b.r;
+    const z = b.cz + Math.sin(b.a) * b.r;
+    const y = b.y + Math.sin(b.a * 2) * 1.2;
+    const way = Math.sign(b.w);
+    const fx = -Math.sin(b.a) * way;
+    const fz = Math.cos(b.a) * way;
+    const tip = y + 0.12 + Math.sin(b.flap) * 0.55;
+    const o = k * 18;
+    for (const side of [1, -1]) {
+      const at = o + (side > 0 ? 0 : 9);
+      p[at] = x + fx * 0.45;
+      p[at + 1] = y;
+      p[at + 2] = z + fz * 0.45;
+      p[at + 3] = x - fx * 0.3;
+      p[at + 4] = y;
+      p[at + 5] = z - fz * 0.3;
+      p[at + 6] = x + side * fz * 1.35 - fx * 0.2;
+      p[at + 7] = tip;
+      p[at + 8] = z - side * fx * 1.35 - fz * 0.2;
+    }
+  });
+  flock.geo.attributes.position.needsUpdate = true;
 }
 
 // ---------- sky ----------
@@ -1357,8 +1761,9 @@ const SKY = [
   [0, '#050818', '#141a3a'],
   [5, '#0a1030', '#2a2350'],
   [6.5, '#3b5fa8', '#ff9e6e'],
-  [9, '#3f8fe0', '#bfe3ff'],
-  [16, '#3f8fe0', '#c9e6ff'],
+  [9, '#1f7fdc', '#ffe2c4'],
+  [12.5, '#1787dc', '#d8f2ec'],
+  [16, '#2b7cd3', '#ffd9b3'],
   [18.2, '#5a4a9c', '#ff7f6a'],
   [19.3, '#2a1b5a', '#ff4f8f'],
   [20.5, '#0a0d28', '#3a1d55'],
@@ -1408,7 +1813,8 @@ function updateSky(dt, fx, fz) {
   moon.position.set(camera.position.x - sx * 1500, camera.position.y + Math.max(0.3, -sy) * 1500, camera.position.z - 700);
   const wu = waterMat.uniforms;
   wu.time.value += dt;
-  wu.skyC.value.copy(skyBot);
+  wu.skyC.value.copy(skyBot).lerp(skyTop, 0.4 * day);
+  wu.deep.value.set('#0b3a58').lerp(tmpColor.set('#0aa0a6'), day);
   wu.fogC.value.copy(skyBot);
   wu.sunC.value.copy(sun.color).multiplyScalar(up ? 0.35 + 0.65 * lift : 0.5);
   wu.sunDir.value.set(up ? sx : -sx, Math.max(0.2, Math.abs(sy)), up ? 0.36 : -0.45).normalize();
@@ -1544,6 +1950,7 @@ function zoneName(x, z) {
 buildGround();
 buildBlocks();
 buildProps();
+buildMurals();
 buildLandmarks();
 
 // =====================================================================
@@ -1566,32 +1973,38 @@ function buildPerson(shirt, pants, skin, hair, jacket) {
     (parent || group).add(mesh);
     return mesh;
   };
-  const limb = (x, y, w, h, hex) => {
+  const limb = (x, y, w, h, hex, parent) => {
     const pivot = new T.Group();
     pivot.position.set(x, y, 0);
     part(w, h, w + 0.02, hex, 0, -h / 2, 0, pivot);
-    group.add(pivot);
+    (parent || group).add(pivot);
     return pivot;
   };
-  part(0.5, 0.62, 0.28, shirt, 0, 1.13, 0);
-  part(0.56, 0.16, 0.3, shirt, 0, 1.38, 0);                  // shoulders
+  // everything above the belt hangs off one pivot at the hips, so the upper body can lean and breathe
+  const HIP = 0.85;
+  const body = new T.Group();
+  body.position.y = HIP;
+  group.add(body);
+  part(0.5, 0.62, 0.28, shirt, 0, 1.13 - HIP, 0, body);
+  part(0.56, 0.16, 0.3, shirt, 0, 1.38 - HIP, 0, body);       // shoulders
   part(0.51, 0.07, 0.29, '#15151a', 0, 0.85, 0);             // belt
-  part(0.14, 0.08, 0.14, skin, 0, 1.47, 0);                  // neck
-  part(0.3, 0.3, 0.3, skin, 0, 1.63, 0);
-  part(0.32, 0.1, 0.32, hair, 0, 1.81, 0);
-  part(0.32, 0.2, 0.08, hair, 0, 1.7, -0.13);
-  for (const side of [-0.075, 0.075]) part(0.05, 0.04, 0.02, '#15151a', side, 1.66, 0.151);   // eyes
+  part(0.14, 0.08, 0.14, skin, 0, 1.47 - HIP, 0, body);       // neck
+  part(0.3, 0.3, 0.3, skin, 0, 1.63 - HIP, 0, body);
+  part(0.32, 0.1, 0.32, hair, 0, 1.81 - HIP, 0, body);
+  part(0.32, 0.2, 0.08, hair, 0, 1.7 - HIP, -0.13, body);
+  for (const side of [-0.075, 0.075]) part(0.05, 0.04, 0.02, '#15151a', side, 1.66 - HIP, 0.151, body);   // eyes
   if (jacket) {
-    part(0.16, 0.5, 0.02, jacket, 0, 1.14, 0.141);           // open jacket over a light shirt
-    part(0.34, 0.06, 0.34, '#20242e', 0, 1.87, 0.02);        // cap
-    part(0.26, 0.03, 0.14, '#20242e', 0, 1.85, 0.22);
+    part(0.16, 0.5, 0.02, jacket, 0, 1.14 - HIP, 0.141, body);   // open jacket over a light shirt
+    part(0.34, 0.06, 0.34, '#20242e', 0, 1.87 - HIP, 0.02, body);   // cap
+    part(0.26, 0.03, 0.14, '#20242e', 0, 1.85 - HIP, 0.22, body);
   }
   const legs = [limb(-0.13, 0.82, 0.2, 0.82, pants), limb(0.13, 0.82, 0.2, 0.82, pants)];
-  const arms = [limb(-0.35, 1.44, 0.14, 0.6, skin), limb(0.35, 1.44, 0.14, 0.6, skin)];
+  const arms = [limb(-0.35, 1.44 - HIP, 0.14, 0.6, skin, body), limb(0.35, 1.44 - HIP, 0.14, 0.6, skin, body)];
   for (const leg of legs) part(0.22, 0.1, 0.34, '#1a1a1e', 0, -0.77, 0.05, leg);       // shoes
   for (const arm of arms) part(0.17, 0.26, 0.19, shirt, 0, -0.12, 0, arm);            // sleeves
   group.userData.legs = legs;
   group.userData.arms = arms;
+  group.userData.body = body;
   return group;
 }
 
@@ -1602,6 +2015,28 @@ function animPerson(group, phase, amp) {
   u.legs[1].rotation.x = -swing;
   u.arms[0].rotation.x = -swing * 0.8;
   u.arms[1].rotation.x = swing * 0.8;
+}
+
+// standing still: slow breathing, weight shifting from foot to foot, a glance to each side now and then
+function idlePerson(group, t) {
+  const u = group.userData;
+  const breath = Math.sin(t * 1.7);
+  const shift = Math.sin(t * 0.55);
+  u.body.scale.y = 1 + breath * 0.012;
+  u.body.rotation.z = shift * 0.035;
+  u.body.rotation.y = Math.sin(t * 0.31) * 0.12;
+  u.arms[0].rotation.x = 0.05 + breath * 0.04;
+  u.arms[1].rotation.x = 0.05 - breath * 0.04;
+  u.arms[0].rotation.z = -0.06 - breath * 0.015;
+  u.arms[1].rotation.z = 0.06 + breath * 0.015;
+  u.legs[0].rotation.x = shift * 0.03;
+  u.legs[1].rotation.x = -shift * 0.03;
+}
+function restPerson(group) {
+  const u = group.userData;
+  u.body.scale.y = 1;
+  u.body.rotation.set(0, 0, 0);
+  u.arms[0].rotation.z = u.arms[1].rotation.z = 0;
 }
 
 // ---------- player ----------
@@ -2079,9 +2514,12 @@ function aiDrive(v, dt) {
   v.input.st = steer;
 }
 
+const LEARNER_HP = 12;            // below 45 a car smokes, at 0 it burns
 function damageVehicle(v, amount) {
   if (v.dead) return;
   v.hp -= amount * (v.driver === 'player' ? diff().dmg : 1);
+  // learning to drive: until the first job is done your car gets battered and smokes, but is never wrecked
+  if (v.driver === 'player' && save.mission === 0 && v.hp < LEARNER_HP) v.hp = LEARNER_HP;
 }
 
 function impact(v, speed) {
@@ -2416,6 +2854,12 @@ function updatePlayerOnFoot(dt) {
   player.z = clamp(tmpHit.z, -LIMIT, LIMIT);
 
   animPerson(player.mesh, player.phase, player.speed > 5 ? 0.95 : player.speed > 0 ? 0.55 : 0);
+  if (player.speed === 0 && player.y === 0 && player.fireT <= 0 && player.punchT <= 0) {
+    player.idleT = (player.idleT || 0) + dt;
+    idlePerson(player.mesh, player.idleT);
+  } else {
+    restPerson(player.mesh);
+  }
   if (player.fireT > 0 || player.punchT > 0) player.mesh.userData.arms[1].rotation.x = -1.5;
   player.mesh.position.set(player.x, player.y, player.z);
   player.mesh.rotation.set(0, player.h, 0);
@@ -2743,15 +3187,38 @@ const PERKS = [
 const perkHeld = (p) => p.count()[0] >= p.count()[1];
 const perk = (id) => perkHeld(PERKS.find((p) => p.id === id));
 let perksSeen = [];
+let perkCounts = null;
+// a small card under the cash: which perk just moved, how far along it is, what it gives
+function perkNote(title, body, part, got) {
+  const el = $('perk');
+  el.querySelector('b').textContent = title;
+  el.querySelector('span').textContent = body;
+  el.querySelector('i').style.width = Math.round(clamp(part, 0, 1) * 100) + '%';
+  el.classList.toggle('got', !!got);
+  el.classList.add('show');
+  clearTimeout(toastTimers.perk);
+  toastTimers.perk = setTimeout(() => el.classList.remove('show'), got ? 8000 : 5000);
+}
 function checkPerks(quiet) {
+  const counts = PERKS.map((p) => p.count()[0]);
   const held = PERKS.filter(perkHeld);
-  for (const p of held) {
-    if (!quiet && !perksSeen.includes(p.id)) {
-      hint('Perk unlocked: ' + p.name + '. ' + p.what + '.', 8);
+  if (!quiet) {
+    let unlocked = false;
+    for (const p of held) {
+      if (perksSeen.includes(p.id)) continue;
+      perkNote('PERK UNLOCKED  \u00b7  ' + p.name, p.what, 1, true);
+      unlocked = true;
       if (p.id === 'discount') placeGarage();
+    }
+    // nothing unlocked: say how far the nearest perk on this track has come
+    const moved = PERKS.find((p, k) => perkCounts && counts[k] > perkCounts[k] && !perkHeld(p));
+    if (!unlocked && moved) {
+      const [now, need] = moved.count();
+      perkNote(moved.name + '  \u00b7  ' + now + ' / ' + need, moved.what, now / need, false);
     }
   }
   perksSeen = held.map((p) => p.id);
+  perkCounts = counts;
 }
 
 // ---------- wanted level ----------
@@ -3144,6 +3611,8 @@ const PLACES = {
   hospital: kerb(7, 2),
   police: kerb(2, 4),
   bank: kerb(4, 4),
+  pier: [roadC(10), roadC(7)],                 // where the beach road meets the Sol Wheel pier
+  wheel: [HALF + SHORE - 9, roadC(7) + 6],     // the foot of the pier, on the sand
 };
 freeSpots.push([HALF + 30, -210], [-HALF - 28, 150], [120, HALF + 30], [-260, -HALF - 26]);
 const packageSpots = freeSpots
@@ -3262,17 +3731,25 @@ function buyProperty(p) {
   hint('Yours. Walk back into the ring any time: it holds up to ' + RENT_HOURS + ' hours of rent and patches you up.', 7);
 }
 
+const SAFE_STARS = 2;             // your own front door hides you from this much heat
 function collectRent(p) {
   const rent = Math.floor(save.props[p.id]);
   player.hp = 100;
+  let lay = '';
+  if (wanted.stars > SAFE_STARS) {
+    lay = ' Too much heat to hide here: get under ' + (SAFE_STARS + 1) + ' stars first.';
+  } else if (wanted.stars > 0) {
+    setWanted(0);
+    lay = ' You lie low and the police lose you.';
+  }
   if (rent < 1) {
-    hint(p.name + ': the till is empty. You are patched up.', 4);
+    hint(p.name + ': the till is empty. You are patched up.' + lay, lay ? 6 : 4);
     return;
   }
   save.props[p.id] -= rent;
   addMoney(rent);
   sfx.cash();
-  hint(p.name + ': ' + dollars(rent) + ' rent collected, health restored.', 5);
+  hint(p.name + ': ' + dollars(rent) + ' rent collected, health restored.' + lay, lay ? 6 : 5);
 }
 
 let rentSaveT = 0;
@@ -3290,8 +3767,40 @@ function updateRent(dt) {
   }
 }
 
-// E: buy the property you are standing at
+// ---------- the Sol Wheel: a paid ride, a rest, and a look at where the packages are ----------
+const RIDE_PRICE = 25;
+const RIDE_SECS = 16;
+const ride = { t: 0 };
+const wheelGate = addMarker('wheel', PLACES.wheel[0], PLACES.wheel[1], 2.4, '#ff8fd0', 'SOL WHEEL  $' + RIDE_PRICE);
+function startRide() {
+  if (wanted.stars > 0) return hint('Sol Wheel: no rides while the police are after you.', 4);
+  if (mission.active) return hint('Sol Wheel: finish your job first.', 4);
+  if (save.money < RIDE_PRICE) return hint('A ride on the Sol Wheel costs $' + RIDE_PRICE + '.', 4);
+  addMoney(-RIDE_PRICE);
+  ride.t = RIDE_SECS;
+  player.mesh.visible = false;
+  // from the top you can see what is lying around: the three nearest packages go on the map
+  const fresh = packageSpots
+    .map((spot, id) => ({ id, d: dist2(spot[0], spot[1], player.x, player.z) }))
+    .filter((s) => !save.packages.includes(s.id) && !save.spotted.includes(s.id))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, 3);
+  for (const s of fresh) save.spotted.push(s.id);
+  persist();
+  sfx.cash();
+  hint(fresh.length ? 'From up here you spot ' + fresh.length + ' hidden package' + (fresh.length > 1 ? 's' : '') + '. They are marked ? on your map.  F gets off.' : 'Nothing left to spot from up here.  F gets off.', 9);
+}
+function endRide() {
+  if (ride.t <= 0) return;
+  ride.t = 0;
+  player.hp = 100;
+  player.mesh.visible = !player.car;
+  hint('Back on the sand, rested.', 3);
+}
+
+// E: ride the wheel, or buy the property you are standing at
 function interact() {
+  if (wheelGate.inside && !player.car) return startRide();
   for (const p of PROPERTIES) {
     if (!p.marker.inside) continue;
     if (player.car) hint('Get out of the car to visit ' + p.name + '.');
@@ -3314,7 +3823,9 @@ function updateMarkers(dt) {
     if (m.kind === 'tune') {
       // you have to stop in the ring, so driving past never buys anything
       if (!inside) m.armed = true;
-      else if (player.car) {
+      else if (wanted.stars > 0) {
+        if (entered) hint('Tune-up: shutters down while the police are after you.', 4);
+      } else if (player.car) {
         if (entered && save.tune < TUNE_PRICES.length) hint('Stop here for tune-up stage ' + (save.tune + 1) + ': $' + TUNE_PRICES[save.tune], 4);
         if (m.armed && Math.hypot(player.car.vx, player.car.vz) < 1.5) {
           m.armed = false;
@@ -3324,6 +3835,10 @@ function updateMarkers(dt) {
       continue;
     }
     if (!entered) continue;
+    if (m.kind === 'wheel') {
+      hint(player.car ? 'Sol Wheel: leave the car and walk up.' : 'Sol Wheel: $' + RIDE_PRICE + ' a ride.  Press E.', 6);
+      continue;
+    }
     if (m.kind === 'prop') {
       const p = m.prop;
       if (player.car) hint(p.name + ': get out of the car to visit.', 4);
@@ -3370,7 +3885,7 @@ const MISSIONS = [
     name: 'First Wheels', by: 'Mo', at: corner(9, 4), reward: 250,
     steps: [
       { t: 'car', text: 'Get into any vehicle  [F]' },
-      { t: 'goto', at: PLACES.garage, car: true, text: "Drive to Mo's Respray in Rustport" },
+      { t: 'goto', at: PLACES.pier, car: true, label: 'SOL WHEEL', text: 'Follow the beach road to the Sol Wheel pier' },
     ],
   },
   {
@@ -3715,10 +4230,12 @@ function updateMission(dt) {
     if (step.target && player.car !== mission.car) done = false;
     if (step.stop) {
       const distance = Math.round(Math.hypot(step.at[0] - px, step.at[1] - pz));
-      const stopped = done && Math.hypot(player.car.vx, player.car.vz) < 1.5;
+      // nobody gets into a cab with the police on its tail
+      const hot = !!mission.def.cab && mission.step === 0 && wanted.stars > 0;
+      const stopped = done && !hot && Math.hypot(player.car.vx, player.car.vz) < 1.5;
       mission.handoff = stopped ? mission.handoff + dt : 0;
       const busy = !mission.def.cab ? 'Loading…' : mission.step === 0 ? 'Getting in…' : 'Paying…';
-      const action = !player.car ? 'Get a vehicle [F]' : distance > 12 ? `${distance} m` : stopped ? busy : 'Stop inside ring [Space]';
+      const action = !player.car ? 'Get a vehicle [F]' : hot ? 'Lose the police first' : distance > 12 ? `${distance} m` : stopped ? busy : 'Stop inside ring [Space]';
       setText('objective', `${step.text}  |  ${action}`);
       done = mission.handoff >= .65;
     }
@@ -3923,6 +4440,7 @@ function drawMap() {
   blip(PLACES.hospital[0], PLACES.hospital[1], '#ff6b78', 'H');
   blip(PLACES.police[0], PLACES.police[1], '#6fa2ff', 'P');
   for (const p of PROPERTIES) blip(p.at[0], p.at[1], owned(p) ? '#7dffa5' : '#d6dbe6', '$');
+  for (const id of save.spotted) if (!save.packages.includes(id)) blip(packageSpots[id][0], packageSpots[id][1], '#c58bff', '?');
   if (heli.on) blip(heli.x, heli.z, Math.floor(performance.now() / 200) % 2 ? '#ffffff' : '#3f7bff', '', true);
   for (const v of vehicles) {
     if (v.siren && !v.dead) blip(v.x, v.z, Math.floor(performance.now() / 200) % 2 ? '#ff3344' : '#3f7bff');
@@ -4053,6 +4571,8 @@ function drawBigMap() {
   dot(PLACES.hospital[0], PLACES.hospital[1], '#ff6b78', 'H');
   dot(PLACES.police[0], PLACES.police[1], '#6fa2ff', 'P');
   for (const p of PROPERTIES) dot(p.at[0], p.at[1], owned(p) ? '#7dffa5' : '#d6dbe6', '$');
+  dot(PLACES.wheel[0], PLACES.wheel[1], '#ff8fd0', 'W');
+  for (const id of save.spotted) if (!save.packages.includes(id)) dot(packageSpots[id][0], packageSpots[id][1], '#c58bff', '?', 8);
   for (const v of vehicles) {
     if (v.siren && !v.dead) dot(v.x, v.z, '#ff3344', '', 4);
   }
@@ -4077,7 +4597,7 @@ function drawBigMap() {
   g.restore();
 
   const have = PROPERTIES.filter(owned).length;
-  setText('bigmap-note', 'You are the white arrow in ' + zoneName(px, pz) + '  ·  Packages ' + save.packages.length + ' / ' + packageSpots.length + '  ·  Property ' + have + ' / ' + PROPERTIES.length + '  ·  M closes the map');
+  setText('bigmap-note', clockText() + '  ·  You are the white arrow in ' + zoneName(px, pz) + '  ·  Packages ' + save.packages.length + ' / ' + packageSpots.length + '  ·  Property ' + have + ' / ' + PROPERTIES.length + '  ·  M closes the map');
 }
 
 function toggleBigMap(open) {
@@ -4088,13 +4608,25 @@ function toggleBigMap(open) {
 
 // ---------- HUD refresh ----------
 let lastZone = '';
-function updateHud() {
-  setText('money', '$' + save.money.toLocaleString('en-US'));
+const weaponShown = { text: 'Pistol  48', until: 0 };
+function clockText() {
   const hours = Math.floor(tod);
   const minutes = Math.floor((tod - hours) * 60);
-  setText('clock', String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0'));
+  return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
+}
+function updateHud() {
+  setText('money', '$' + save.money.toLocaleString('en-US'));
   $('hp').style.width = clamp(player.hp, 0, 100) + '%';
-  setText('weapon', player.gun && player.ammo > 0 ? 'Pistol  ' + player.ammo : 'Fists');
+  // the weapon line shows for a few seconds after it changes (drawn, fired, bought), and when ammo runs low
+  const weaponText = player.gun && player.ammo > 0 ? 'Pistol  ' + player.ammo : 'Fists';
+  if (weaponText !== weaponShown.text) {
+    weaponShown.text = weaponText;
+    weaponShown.until = performance.now() + 5000;
+  }
+  setText('weapon', weaponText);
+  const lowAmmo = player.gun && player.ammo > 0 && player.ammo <= 12;
+  $('weapon').classList.toggle('show', !player.car && (performance.now() < weaponShown.until || lowAmmo));
+  $('stars').classList.toggle('idle', wanted.stars === 0);
   if (bigMap.open && (bigMap.t -= 1) <= 0) {
     bigMap.t = 12;                // redraw a few times a second
     drawBigMap();
@@ -4208,6 +4740,7 @@ function resetSession() {
   wanted.pts = 0;
   hideHeli();
   cab.on = false;
+  ride.t = 0;
   clearPassenger();
   toggleBigMap(false);
   PROPERTIES.forEach(placeProperty);
@@ -4276,6 +4809,18 @@ function updateCamera(dt) {
     camera.lookAt(cx, 12, player.z);
     return;
   }
+  if (ride.t > 0) {
+    // once round the Sol Wheel, from the bottom, looking back over the beach at the city
+    const w = landmarks.wheelAt;
+    const a = -Math.PI / 2 + (1 - ride.t / RIDE_SECS) * Math.PI * 2;
+    camera.position.set(w.x - 3.2, w.y + Math.sin(a) * 25 + 1.2, w.z + Math.cos(a) * 25);
+    camera.lookAt(w.x - 420, 16, w.z - 60);
+    if (Math.abs(camera.fov - 62) > 0.05) {
+      camera.fov = 62;
+      camera.updateProjectionMatrix();
+    }
+    return;
+  }
   const car = player.car;
   const tx = car ? car.x : player.x;
   const tz = car ? car.z : player.z;
@@ -4324,8 +4869,16 @@ function update(dt, realDt) {
   if (state === 'play') {
     player.fireT = Math.max(0, player.fireT - dt);
     player.punchT = Math.max(0, player.punchT - dt);
-    if (!player.car) updatePlayerOnFoot(dt);
-    if (firing) playerAttack();
+    if (ride.t > 0) {
+      ride.t -= dt;
+      if (ride.t <= 0) {
+        ride.t = 0.001;
+        endRide();
+      }
+    } else {
+      if (!player.car) updatePlayerOnFoot(dt);
+      if (firing) playerAttack();
+    }
   }
   for (let k = 0; k < vehicles.length; k++) updateVehicle(vehicles[k], dt);
   collideVehicles();
@@ -4497,7 +5050,7 @@ function renderSettings() {
   $('btn-end-shift').hidden = !(mission.active && mission.def === FERRY);
   const jobs = Math.min(save.mission, MISSIONS.length) + ' / ' + MISSIONS.length;
   const have = PROPERTIES.filter(owned).length;
-  $('progress').textContent = 'Jobs ' + jobs + '     Packages ' + save.packages.length + ' / ' + packageSpots.length + '     Cash $' + save.money + (save.ferryRuns ? `     Ferry shifts ${save.ferryRuns} · best ${save.ferryBest}s` : '')
+  $('progress').textContent = 'Time ' + clockText() + '     Jobs ' + jobs + '     Packages ' + save.packages.length + ' / ' + packageSpots.length + '     Cash $' + save.money + (save.ferryRuns ? `     Ferry shifts ${save.ferryRuns} · best ${save.ferryBest}s` : '')
     + (save.fares ? `     Cab fares ${save.fares} · best run ${save.fareBest}` : '') + (have ? `     Property ${have} / ${PROPERTIES.length}` : '');
   const perkBox = $('perks');
   perkBox.innerHTML = '';
@@ -4508,7 +5061,9 @@ function renderSettings() {
     if (perkHeld(p)) name.className = 'got';
     const text = document.createElement('span');
     text.textContent = perkHeld(p) ? p.what : p.how + ': ' + p.what.toLowerCase();
-    perkBox.append(name, text);
+    const bar = document.createElement('em');
+    bar.style.setProperty('--part', Math.round(clamp(now / need, 0, 1) * 100) + '%');
+    perkBox.append(name, text, bar);
   }
   const hasSave = save.mission > 0 || save.packages.length > 0 || save.tune > 0 || save.fares > 0 || have > 0 || save.money !== SAVE_DEFAULTS.money;
   $('btn-continue').style.display = hasSave ? '' : 'none';
@@ -4552,7 +5107,7 @@ function updateIntro(dt) {
 
 function startGame(fresh) {
   if (fresh) {
-    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {} });
+    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [] });
     persist();
   }
   initAudio();
@@ -4628,6 +5183,11 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (state !== 'play') return;
+  if (ride.t > 0) {
+    if (e.code === 'KeyF' || e.code === 'KeyE' || e.code === 'Enter') endRide();
+    else if (e.code === 'KeyP' || e.code === 'Escape') pause();
+    return;
+  }
   if (e.code === 'KeyF' || e.code === 'Enter') tryEnterExit();
   if (e.code === 'KeyG') dispatch();
   if (e.code === 'KeyT') cabDuty();
@@ -4704,6 +5264,7 @@ window.NEON = {
   },
   startGame, pause, resume, setWanted, tryEnterExit, playerAttack, crime, hurt, landmarks,
   route, cab, heli, bigMap, PROPERTIES, PERKS, perk, cabDuty, interact, toggleBigMap, addMoney, persist,
+  ride, checkPerks, packageSpots, damageVehicle,
   setTime(hours) {
     tod = hours;
   },

@@ -55,6 +55,7 @@ function resetSession() {
   wanted.pts = 0;
   hideHeli();
   cab.on = false;
+  ride.t = 0;
   clearPassenger();
   toggleBigMap(false);
   PROPERTIES.forEach(placeProperty);
@@ -123,6 +124,18 @@ function updateCamera(dt) {
     camera.lookAt(cx, 12, player.z);
     return;
   }
+  if (ride.t > 0) {
+    // once round the Sol Wheel, from the bottom, looking back over the beach at the city
+    const w = landmarks.wheelAt;
+    const a = -Math.PI / 2 + (1 - ride.t / RIDE_SECS) * Math.PI * 2;
+    camera.position.set(w.x - 3.2, w.y + Math.sin(a) * 25 + 1.2, w.z + Math.cos(a) * 25);
+    camera.lookAt(w.x - 420, 16, w.z - 60);
+    if (Math.abs(camera.fov - 62) > 0.05) {
+      camera.fov = 62;
+      camera.updateProjectionMatrix();
+    }
+    return;
+  }
   const car = player.car;
   const tx = car ? car.x : player.x;
   const tz = car ? car.z : player.z;
@@ -171,8 +184,16 @@ function update(dt, realDt) {
   if (state === 'play') {
     player.fireT = Math.max(0, player.fireT - dt);
     player.punchT = Math.max(0, player.punchT - dt);
-    if (!player.car) updatePlayerOnFoot(dt);
-    if (firing) playerAttack();
+    if (ride.t > 0) {
+      ride.t -= dt;
+      if (ride.t <= 0) {
+        ride.t = 0.001;
+        endRide();
+      }
+    } else {
+      if (!player.car) updatePlayerOnFoot(dt);
+      if (firing) playerAttack();
+    }
   }
   for (let k = 0; k < vehicles.length; k++) updateVehicle(vehicles[k], dt);
   collideVehicles();
@@ -344,7 +365,7 @@ function renderSettings() {
   $('btn-end-shift').hidden = !(mission.active && mission.def === FERRY);
   const jobs = Math.min(save.mission, MISSIONS.length) + ' / ' + MISSIONS.length;
   const have = PROPERTIES.filter(owned).length;
-  $('progress').textContent = 'Jobs ' + jobs + '     Packages ' + save.packages.length + ' / ' + packageSpots.length + '     Cash $' + save.money + (save.ferryRuns ? `     Ferry shifts ${save.ferryRuns} · best ${save.ferryBest}s` : '')
+  $('progress').textContent = 'Time ' + clockText() + '     Jobs ' + jobs + '     Packages ' + save.packages.length + ' / ' + packageSpots.length + '     Cash $' + save.money + (save.ferryRuns ? `     Ferry shifts ${save.ferryRuns} · best ${save.ferryBest}s` : '')
     + (save.fares ? `     Cab fares ${save.fares} · best run ${save.fareBest}` : '') + (have ? `     Property ${have} / ${PROPERTIES.length}` : '');
   const perkBox = $('perks');
   perkBox.innerHTML = '';
@@ -355,7 +376,9 @@ function renderSettings() {
     if (perkHeld(p)) name.className = 'got';
     const text = document.createElement('span');
     text.textContent = perkHeld(p) ? p.what : p.how + ': ' + p.what.toLowerCase();
-    perkBox.append(name, text);
+    const bar = document.createElement('em');
+    bar.style.setProperty('--part', Math.round(clamp(now / need, 0, 1) * 100) + '%');
+    perkBox.append(name, text, bar);
   }
   const hasSave = save.mission > 0 || save.packages.length > 0 || save.tune > 0 || save.fares > 0 || have > 0 || save.money !== SAVE_DEFAULTS.money;
   $('btn-continue').style.display = hasSave ? '' : 'none';
@@ -399,7 +422,7 @@ function updateIntro(dt) {
 
 function startGame(fresh) {
   if (fresh) {
-    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {} });
+    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [] });
     persist();
   }
   initAudio();
@@ -475,6 +498,11 @@ window.addEventListener('keydown', (e) => {
     return;
   }
   if (state !== 'play') return;
+  if (ride.t > 0) {
+    if (e.code === 'KeyF' || e.code === 'KeyE' || e.code === 'Enter') endRide();
+    else if (e.code === 'KeyP' || e.code === 'Escape') pause();
+    return;
+  }
   if (e.code === 'KeyF' || e.code === 'Enter') tryEnterExit();
   if (e.code === 'KeyG') dispatch();
   if (e.code === 'KeyT') cabDuty();
@@ -551,6 +579,7 @@ window.NEON = {
   },
   startGame, pause, resume, setWanted, tryEnterExit, playerAttack, crime, hurt, landmarks,
   route, cab, heli, bigMap, PROPERTIES, PERKS, perk, cabDuty, interact, toggleBigMap, addMoney, persist,
+  ride, checkPerks, packageSpots, damageVehicle,
   setTime(hours) {
     tod = hours;
   },

@@ -41,19 +41,30 @@ SOFTWARE.
   #hud { position: fixed; inset: 0; pointer-events: none; text-shadow: 0 2px 6px rgba(0,0,0,.85); }
   #tr { position: absolute; top: 22px; right: 26px; text-align: right; }
   #stars { font-size: 30px; letter-spacing: 3px; line-height: 1; }
+  #stars { transition: opacity .4s; }
+  #stars.idle { opacity: 0; }
   #stars i { font-style: normal; color: rgba(255,255,255,.16); }
   #stars i.on { color: var(--gold); text-shadow: 0 0 12px rgba(255,225,79,.8); }
   #stars i.on.dim { color: rgba(255,225,79,.35); text-shadow: none; }
   #money { font-size: 34px; font-weight: 800; color: #7dffa5; margin-top: 4px; font-variant-numeric: tabular-nums; }
-  #clock { font-size: 20px; font-weight: 600; opacity: .9; font-variant-numeric: tabular-nums; }
   .lab small { font-size: 10.5px; font-weight: 700; letter-spacing: 1.6px; opacity: .7; margin-right: 6px; }
   .hpline { display: flex; align-items: center; justify-content: flex-end; margin-top: 8px; }
   .hpline .bar { width: 132px; margin: 0; }
   .bar { width: 190px; height: 9px; margin: 8px 0 0 auto; background: rgba(0,0,0,.5); border-radius: 5px; overflow: hidden;
     border: 1px solid rgba(255,255,255,.25); }
   .bar i { display: block; height: 100%; background: linear-gradient(90deg, #ff4d5e, #ff9aa5); }
-  #weapon { margin-top: 8px; font-size: 15px; font-weight: 600; letter-spacing: .5px; opacity: .9; }
-  #delta { position: absolute; left: 0; top: 84px; font-size: 15px; font-weight: 800; opacity: 0; transition: opacity .5s;
+  #weapon { margin-top: 8px; font-size: 15px; font-weight: 600; letter-spacing: .5px; opacity: 0; transition: opacity .4s; }
+  #weapon.show { opacity: .9; }
+  #perk { width: 232px; margin: 10px 0 0 auto; padding: 9px 12px 10px; border-radius: 10px; text-align: left; text-shadow: none;
+    background: rgba(8,10,24,.74); border: 1px solid rgba(63,224,255,.45); opacity: 0; transition: opacity .4s; }
+  #perk.show { opacity: 1; }
+  #perk.got { border-color: rgba(125,255,165,.8); }
+  #perk b { display: block; font-size: 13px; letter-spacing: .6px; color: var(--cyan); }
+  #perk.got b { color: #7dffa5; }
+  #perk span { display: block; font-size: 13px; opacity: .85; margin-top: 2px; }
+  #perk .bar { width: 100%; height: 5px; margin: 7px 0 0; }
+  #perk .bar i { background: linear-gradient(90deg, var(--cyan), #7dffa5); }
+  #delta { position: absolute; left: 0; top: 62px; font-size: 15px; font-weight: 800; opacity: 0; transition: opacity .5s;
     font-variant-numeric: tabular-nums; }
   #delta.show { opacity: 1; transition: none; }
   #delta.up { color: #7dffa5; }
@@ -62,7 +73,10 @@ SOFTWARE.
     background: rgba(8,10,24,.86); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 18px 60px rgba(0,0,0,.6);
     text-shadow: none; display: none; }
   #bigmap.show { display: block; }
+  #bigmap .maprow { display: flex; gap: 16px; align-items: center; }
   #bigmap canvas { display: block; width: min(600px, 74vh); height: min(600px, 74vh); border-radius: 10px; }
+  #bigmap .legend { width: 232px; font-size: 13px; gap: 9px 10px; }
+  @media (max-width: 900px) { #bigmap .legend { display: none; } }
   #bigmap p { margin: 9px 2px 0; font-size: 13.5px; opacity: .85; text-align: center; white-space: nowrap; }
 
   #bl { position: absolute; left: 26px; bottom: 24px; display: flex; align-items: flex-end; gap: 16px; }
@@ -153,13 +167,20 @@ SOFTWARE.
   #progress { margin: 0 0 18px; font-size: 15px; opacity: .85; white-space: pre-wrap; line-height: 1.6; }
   .stack { display: flex; flex-direction: column; gap: 14px; }
   .cols.menu { grid-template-columns: 1fr 1.55fr; gap: 20px; }
+  .cols.even { grid-template-columns: 1fr 1.25fr; gap: 20px; }
   .keys.pairs { grid-template-columns: auto 1fr auto 1fr; gap: 7px 12px; font-size: 13.5px; }
   @media (max-width: 760px) { .cols.menu { grid-template-columns: 1fr; } .keys.pairs { grid-template-columns: auto 1fr; } }
   #perks { display: grid; grid-template-columns: 1fr; gap: 1px; font-size: 13px; }
+  #perks em { display: block; height: 4px; margin-top: 4px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
+  #perks em::after { content: ''; display: block; height: 100%; width: var(--part); background: linear-gradient(90deg, var(--cyan), #7dffa5); }
   #perks b { font-weight: 700; opacity: .75; margin-top: 6px; }
   #perks b:first-child { margin-top: 0; }
   #perks b.got { color: #7dffa5; opacity: 1; }
   #perks span { opacity: .75; }
+  details.more { margin-top: 10px; font-size: 13px; }
+  details.more summary { cursor: pointer; opacity: .8; }
+  details.more .keys { margin-top: 9px; }
+  .pausenote { margin: 14px 2px 0; font-size: 13px; opacity: .7; }
   details.news { margin-top: 18px; font-size: 13px; }
   details.news summary { cursor: pointer; opacity: .8; }
   details.news summary strong { color: var(--cyan); }
@@ -177,10 +198,10 @@ SOFTWARE.
   <div id="tr">
     <div id="stars"><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i></div>
     <div id="money">$0</div>
-    <div class="lab"><small>TIME</small> <span id="clock">17:24</span></div>
     <div class="lab hpline"><small>HEALTH</small><div class="bar"><i id="hp"></i></div></div>
     <div id="weapon">Pistol</div>
     <div id="delta"></div>
+    <div id="perk"><b></b><span></span><div class="bar"><i></i></div></div>
   </div>
   <div id="bl">
     <canvas id="map" width="196" height="196"></canvas>
@@ -200,7 +221,23 @@ SOFTWARE.
     <div id="zone" class="toast"></div>
   </div>
   <div id="cross"></div>
-  <div id="bigmap"><canvas id="bigmap-canvas" width="600" height="600"></canvas><p id="bigmap-note"></p></div>
+  <div id="bigmap">
+    <div class="maprow">
+      <canvas id="bigmap-canvas" width="600" height="600"></canvas>
+      <div class="keys legend">
+        <kbd class="blip" style="--c:#ffe14f">J</kbd><span>Job: enter the yellow beam</span>
+        <kbd class="blip" style="--c:#57ff9a">R</kbd><span>Respray: repairs the car, loses the police</span>
+        <kbd class="blip" style="--c:#3fe0ff">T</kbd><span>Tune-up: stop in the ring, 3 stages</span>
+        <kbd class="blip" style="--c:#ff8a3f">A</kbd><span>Ammo $80: 24 rounds, on foot</span>
+        <kbd class="blip" style="--c:#ff6b78">H</kbd><span>Hospital: you wake up here</span>
+        <kbd class="blip" style="--c:#6fa2ff">P</kbd><span>Police: you are released here</span>
+        <kbd class="blip" style="--c:#d6dbe6">$</kbd><span>Property: E buys, rent and a place to lie low</span>
+        <kbd class="blip" style="--c:#ff8fd0">W</kbd><span>Sol Wheel: a ride spots hidden packages</span>
+        <kbd class="blip" style="--c:#c58bff">?</kbd><span>A package spotted from the wheel</span>
+      </div>
+    </div>
+    <p id="bigmap-note"></p>
+  </div>
   <div id="banner"><b></b><span></span></div>
   <div id="flash"></div>
   <div id="lockhint">Click the game to capture the mouse</div>
@@ -209,7 +246,7 @@ SOFTWARE.
 <div id="title" class="screen">
   <div class="panel">
     <h1>NEON COAST</h1>
-    <p class="tag">An original open-world crime-and-cruise sandbox. Six story jobs, cab fares, property to buy, fifteen hidden packages, and a ferry that won’t wait.</p>
+    <p class="tag">An original open-city sandbox in one file. Take a car, run jobs, drive a cab, buy property, lose the police.</p>
     <div class="buttons">
       <button id="btn-continue" class="big primary">Continue</button>
       <button id="btn-new" class="big">New Game</button>
@@ -221,34 +258,40 @@ SOFTWARE.
         <div class="settings"></div>
       </div>
       <div class="card">
-        <h2>CONTROLS</h2>
+        <h2>HOW TO PLAY</h2>
         <div class="keys pairs">
           <kbd>W A S D</kbd><span>Walk / drive</span>
           <kbd>Mouse</kbd><span>Look and aim</span>
           <kbd>F</kbd><span>In or out of any car</span>
-          <kbd>Left click</kbd><span>Shoot or punch</span>
-          <kbd>Shift</kbd><span>Sprint</span>
-          <kbd>Q</kbd><span>Pistol / fists</span>
           <kbd>Space</kbd><span>Jump / handbrake</span>
-          <kbd>H</kbd><span>Horn</span>
-          <kbd>R</kbd><span>Radio station</span>
           <kbd>M</kbd><span>The whole map</span>
-          <kbd>T</kbd><span>Cab fares, in a City Cab</span>
-          <kbd>E</kbd><span>Buy property, on foot</span>
-          <kbd>G</kbd><span>Harbor courier shift</span>
           <kbd>P</kbd><span>Pause (or Esc)</span>
         </div>
+        <details class="more">
+          <summary>The other eight keys</summary>
+          <div class="keys pairs">
+            <kbd>Shift</kbd><span>Sprint</span>
+            <kbd>Left click</kbd><span>Shoot or punch</span>
+            <kbd>Q</kbd><span>Pistol / fists</span>
+            <kbd>H</kbd><span>Horn</span>
+            <kbd>R</kbd><span>Radio station</span>
+            <kbd>E</kbd><span>Buy or use, on foot</span>
+            <kbd>T</kbd><span>Cab fares, in a City Cab</span>
+            <kbd>G</kbd><span>Harbor courier shift</span>
+          </div>
+        </details>
       </div>
     </div>
     <details class="news">
-      <summary><strong>Version 1.2 · City Lights</strong> — cab fares, property, a police helicopter, road arrows to every target, a night that glows. What changed, release by release</summary>
+      <summary><strong>Version 1.3 · Clear Day</strong> — a first job that ends at the Sol Wheel, a wheel you can ride, a lighter screen, a city with its own look by day. What changed, release by release</summary>
       <ul>
+        <li><strong>1.3 · Clear Day</strong> — The first job is a short run down the beach road to the Sol Wheel. Ride the wheel for $25: it rests you and marks hidden packages on the map. Stars, pistol and clock leave the screen when they do not matter; perks report their progress as you play. Police heat now shuts the tune-up shop and keeps cab fares out of the car, and a property you own hides you from two stars. By day: murals, an airship, gulls, a warmer sky and sea.</li>
         <li><strong>1.2 · City Lights</strong> — Cab fares in any City Cab (T). Four properties to buy that pay rent. A police helicopter at four stars. Arrows on the road and a line on the map to every target, and the whole map on M. Four perks earned by packages, fares and story jobs. Four kinds of odd job after the story. New look: shop fronts, stepped towers, street trees, detailed cars, moving water, clouds, and glow at night. Existing saves carry over.</li>
         <li><strong>1.1 · Harbor shift</strong> — Three courier stops, a ferry deadline and a saved personal best. Landmarks to steer by, the Tune-up shop.</li>
         <li><strong>1.0</strong> — The island, six story jobs, police with five wanted levels, fifteen hidden packages.</li>
       </ul>
     </details>
-    <p class="fine">Original fan-made game. Not affiliated with Rockstar Games or Grand Theft Auto. Rendering by three.js (MIT).</p>
+    <p class="fine">An original game with its own city, names and art. Not affiliated with Rockstar Games or Grand Theft Auto. Rendering by three.js (MIT).</p>
   </div>
 </div>
 
@@ -262,33 +305,17 @@ SOFTWARE.
       <button id="btn-restart" class="big">Restart at Sol Beach</button>
       <button id="btn-quit" class="big">Main Menu</button>
     </div>
-    <div class="cols">
-      <div class="stack">
-        <div class="card">
-          <h2>SETTINGS</h2>
-          <div class="settings"></div>
-        </div>
-        <div class="card">
-          <h2>PERKS</h2>
-          <div id="perks"></div>
-        </div>
+    <div class="cols even">
+      <div class="card">
+        <h2>SETTINGS</h2>
+        <div class="settings"></div>
       </div>
       <div class="card">
-        <h2>ON THE MAP</h2>
-        <div class="keys">
-          <kbd class="blip" style="--c:#ffe14f">J</kbd><span>Job: enter the yellow beam</span>
-          <kbd class="blip" style="--c:#57ff9a">R</kbd><span>Respray: repairs the car, loses the police</span>
-          <kbd class="blip" style="--c:#3fe0ff">T</kbd><span>Tune-up: stop in the ring, 3 stages</span>
-          <kbd class="blip" style="--c:#ff8a3f">A</kbd><span>Ammo $80: 24 rounds, on foot</span>
-          <kbd class="blip" style="--c:#ff6b78">H</kbd><span>Hospital: you wake up here</span>
-          <kbd class="blip" style="--c:#6fa2ff">P</kbd><span>Police: you are released here</span>
-          <kbd class="blip" style="--c:#d6dbe6">$</kbd><span>Property: on foot, E buys, come back for rent</span>
-          <kbd class="blip" style="--c:#ffe14f">&#9733;</kbd><span>Wanted: hide until the stars go out</span>
-        </div>
-        <p class="keynote">Keys: W A S D move, mouse look, F in or out of a car, Space jump or handbrake, left click
-          shoot, Q pistol or fists, R radio, H horn, G harbor shift, T cab fares, E buy, M map, P pause.</p>
+        <h2>PERKS</h2>
+        <div id="perks"></div>
       </div>
     </div>
+    <p class="pausenote">M opens the map and what its marks mean. Every key is on the main menu.</p>
   </div>
 </div>
 

@@ -113,3 +113,58 @@ unlock notice in play; a shorter first job; an idle sway on the player model.
 - Portfolio: catalog `juw12/projects` `63f9b72`, card sync run passed, card text live at https://juwenlie.pages.dev/.
 - Landing page: `juw12/juw12.github.io` `b4e0b47`, https://juw12.github.io/p/neon-coast/ returns 200 with the 1.2 text.
 - Obsidian: `GitHub/neon-coast.md` and `Update Log/2026-11-20 1728 neon-coast hone.md`, vault commit `d7b6724`.
+
+## Run 3 (2026-11-20, `/hone neon-coast` again, from the shipped 1.2 build)
+
+Goal beyond the goal, unchanged: a stranger opens one link, knows what to do within a minute and has something
+worth doing for ten. Score to beat: 8.75 (round 3). A round is kept at 9.05 or more with a pair win.
+
+### Run queue (run 3)
+
+- [x] R3-1 First job inside a minute: shorter route that ends at the Sol Wheel (judge ask, C1)
+- [x] R3-2 Title screen: six keys up front, the rest folded away (judge ask, C1)
+- [x] R3-3 HUD: stars, pistol and clock only when they matter (judge ask, C4)
+- [x] R3-4 Pause screen: buttons, settings, perks only; the map legend moves to the map on M (judge ask, C4)
+- [x] R3-5 Perk progress and unlock notices in play (judge ask, C3)
+- [x] R3-6 Police heat touches fares, shops and property; the Sol Wheel can be ridden (judge ask, C3)
+- [x] R3-7 Daytime look with its own identity; idle movement on the player (judge ask, C2)
+- [x] R3-8 Gates, city, harbor, drive tests; council score and blind pair; keep or drop
+- [ ] R3-9 Ship by PR and release if kept or preferred; Sync (repo, profile, portfolio, landing, Obsidian)
+- [ ] R3-10 A real person plays it: cannot be produced by the agent, reported as `needs you` (still open)
+
+### Assumptions (run 3)
+
+- Assumed: `/hone neon-coast` means Loop mode on the game again, starting from the shipped 1.2 build.
+- Assumed: the frozen rubric v1 stays; proposed changes go in the final message only.
+- Assumed: the first job may end somewhere new. It now ends at the Sol Wheel pier, because the rubric's
+  first-minute anchor could not be met with the old route across town.
+- Assumed: a mural, airship and beach props are "own city" art (drawn in code, own names), so G9 still holds.
+- Assumed: rounds 5 and 6 are shipped as release 1.3 although neither is a new best by the rule (9.05 needed).
+  Each holds everything the build before it has, and each won its blind pair 3-0 in both orders. Same rule
+  as runs 1 and 2: a unanimous pair win ships a superset. 1.3 is not reported as a score gain.
+- Assumed: the learner-car rule (no wreck before the first job is done) is a design change, not a test fix.
+  `test/drive.py` was not changed in what it measures; the one arrest in ten runs is reported as a failed run.
+
+| round | change | gates | judge score | pairwise win | kept? | note |
+|---|---|---|---|---|---|---|
+| 5 (v5) | first job ends at the Sol Wheel pier; Sol Wheel ride; police heat stops fares, tune-ups and rides, own property clears 1-2 stars; perk card in play; HUD down to cash and health; thinner pause and title; day look (86 murals, wall gradient, palettes, beach props, boats, gulls, airship, teal sea); idle sway | 10/10 (three runs) | 8.85 (V 9.5, T 8.35, G 8.85) | 3-0 vs v4 | preferred, not a new best | +0.10 over 8.75, inside noise. C1 9, C2 8, C3 9, C4 9, C5 10. Stall 1 by the score rule |
+| 6 (v6, release 1.3 Clear Day) | learner car: no wreck until the first job is done (two judges asked for it after a scripted run wrecked the car) | 10/10 | 8.75 (V 9.5, T 8.75, G 8.25) | 3-0 vs v5 | shipped, not a new best | 0.00 against 8.75. C5 10 -> 9. Stall 2: plateau, loop stops |
+
+Test runs on run-3 builds, every one. v5: gates 10/10 three times; `test/city.py` 29/30 (the older check
+"helicopter leaves when the stars go" failed once, a fixed 8.5 s wait while the PC was busy), then 30/30;
+`test/harbor.py` pass; `test/fps_ab.py` 144 fps against 144 for release 1.2 (display cap);
+`test/drive.py` 4 of 5 (47.8, 50.0, 111.3, 45.2 s; one run wrecked the car in traffic at 105.6 s), a
+logging copy 4 of 4 (39.5 to 51.2 s), then 5 of 5 (38.9 to 47.5 s): 13 of 14 in all. v6: gates 10/10,
+`test/city.py` 31/31, `test/harbor.py` pass, `test/drive.py` 5 of 5 (38.6 to 43.2 s) and 4 of 5 (39.6 to
+47.3 s; the fifth hit a pedestrian 25 m short of the job beam, got one star and was arrested): 9 of 10.
+The first job took the same scripted driver 80.5 to 108.5 s on release 1.2.
+
+stop: plateau. Two rounds in a row gained less than 0.3 (8.85, then 8.75, against a best of 8.75), so the
+loop ends by its own rule with rounds left. Both rounds won their blind pairs 3-0 and are shipped as release
+1.3. Best score stays 8.75 (rubric v1, council of 3 AI judges; their spread on one build is 8.25 to 9.5).
+A 10 is not claimed and cannot be reached this way: the judges read a fact sheet and screenshots, nobody has
+played it.
+
+Open asks from the judges, none done: real people playing the first job and the later jobs; key-press tests
+for the other five jobs, the fares and the courier shift; no stars or arrests before the first job is done;
+more varied building outlines per district; anti-aliasing on Pretty; a judged pass on the radio.
