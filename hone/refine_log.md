@@ -194,7 +194,7 @@ this session (council scores drift about 0.6 between sessions), plus 0.3, with a
 - [x] R4-6 Key-press tests for more than the first job: `test/drive.py` takes a job name (asked by two judges)
 - [x] R4-7 Radio: a measured check of what the stations put out (asked by one judge; judges cannot hear)
 - [x] R4-8 Gates, city, harbor, drive tests; re-score 1.3, council score and blind pair; keep or drop
-- [ ] R4-9 Ship by PR and release if kept or preferred; Sync (repo, profile, portfolio, landing, Obsidian)
+- [x] R4-9 Ship by PR and release if kept or preferred; Sync (repo, profile, portfolio, landing, Obsidian)
 - [ ] R4-10 A real person plays it: cannot be produced by the agent, reported as `needs you`
 
 ### Assumptions (run 4)
@@ -238,3 +238,18 @@ Open asks from the run-4 judges, none done: real people playing it (first minute
 radio is pleasant); job 4 fails one key-press run in three, and the races and the three-star getaway are
 still unmeasured; the five odd jobs are all timed marker runs; ground detail on the Rustport quay; say "on
 foot" more loudly when a Paper Round is offered; a shorter way to the first job beam.
+
+## Sync (run 4, 2026-11-20)
+
+- GitHub repo: [PR 7](https://github.com/juw12/neon-coast/pull/7) squash-merged, main `fde4675`; release
+  [v1.4.0](https://github.com/juw12/neon-coast/releases/tag/v1.4.0) with `NeonCoast.html`.
+- Live check: https://juw12.github.io/neon-coast/NeonCoast.html has the same bytes as the local build (837,248).
+  Played at the public URL in Chrome: title shows 1.4, outlines 780 boxes / 52 wedges / 42 drums, a crime before
+  the first job brings no stars, J names the next job during the story and deals five kinds after it, no console
+  problems (`live_check_14.py`, kept outside the repo).
+- Profile README: `juw12/juw12` `b8f6a49`.
+- Portfolio: catalog `juw12/projects` `f9c3c79` (3 lines), card sync run 44745291295 passed, card text live
+  at https://juwenlie.pages.dev/.
+- Landing page: `juw12/juw12.github.io` `24fcef5` (text) and `1482de1` (picture, the Meridian
+  crowns shot), https://juw12.github.io/p/neon-coast/ shows the 1.4 text and the new picture.
+- Obsidian: `GitHub/neon-coast.md` and `Update Log/2026-11-20 2034 neon-coast hone.md`, vault commit `81554415`.
