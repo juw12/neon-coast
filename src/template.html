@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<!--
+MIT License
+
+Copyright (c) Neon Coast contributors (game code and generated artwork)
+Copyright 2010-2023 Three.js Authors (bundled Three.js library)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neon Coast</title>
+<style>
+  :root { --pink: #ff3fa4; --cyan: #3fe0ff; --gold: #ffe14f; --ink: #080a18; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--ink); color: #fff;
+    font-family: "Segoe UI", system-ui, Arial, sans-serif; user-select: none; }
+  #view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .hidden { display: none !important; }
+
+  /* ---------- HUD ---------- */
+  #hud { position: fixed; inset: 0; pointer-events: none; text-shadow: 0 2px 6px rgba(0,0,0,.85); }
+  #tr { position: absolute; top: 22px; right: 26px; text-align: right; }
+  #stars { font-size: 30px; letter-spacing: 3px; line-height: 1; }
+  #stars i { font-style: normal; color: rgba(255,255,255,.16); }
+  #stars i.on { color: var(--gold); text-shadow: 0 0 12px rgba(255,225,79,.8); }
+  #stars i.on.dim { color: rgba(255,225,79,.35); text-shadow: none; }
+  #money { font-size: 34px; font-weight: 800; color: #7dffa5; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  #clock { font-size: 20px; font-weight: 600; opacity: .9; font-variant-numeric: tabular-nums; }
+  .bar { width: 190px; height: 9px; margin: 8px 0 0 auto; background: rgba(0,0,0,.5); border-radius: 5px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,.25); }
+  .bar i { display: block; height: 100%; background: linear-gradient(90deg, #ff4d5e, #ff9aa5); }
+  #weapon { margin-top: 8px; font-size: 15px; font-weight: 600; letter-spacing: .5px; opacity: .9; }
+
+  #bl { position: absolute; left: 26px; bottom: 24px; display: flex; align-items: flex-end; gap: 16px; }
+  #map { width: 196px; height: 196px; border-radius: 50%; border: 3px solid rgba(255,255,255,.75);
+    box-shadow: 0 0 0 3px rgba(8,10,24,.7), 0 8px 24px rgba(0,0,0,.6); }
+  #drive { opacity: 0; transition: opacity .3s; padding-bottom: 8px; }
+  #drive.show { opacity: 1; }
+  #speed { font-size: 30px; font-weight: 800; font-style: italic; font-variant-numeric: tabular-nums; }
+  #drive .bar { margin: 4px 0 0 0; width: 130px; }
+  #drive .bar i { background: linear-gradient(90deg, var(--cyan), #a6f3ff); }
+  #drive small { display: block; font-size: 11px; letter-spacing: 1.5px; opacity: .7; margin-top: 6px; }
+
+  #objective { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); max-width: 60vw;
+    padding: 9px 20px; border-radius: 999px; background: rgba(8,10,24,.72); border: 1px solid rgba(255,63,164,.6);
+    font-size: 17px; font-weight: 600; opacity: 0; transition: opacity .3s; text-shadow: none; white-space: nowrap; }
+  #objective.show { opacity: 1; }
+  #timer { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); font-size: 34px; font-weight: 800;
+    font-variant-numeric: tabular-nums; opacity: 0; }
+  #timer.show { opacity: 1; }
+  #timer.low { color: #ff4d5e; }
+
+  .toast { opacity: 0; transition: opacity .4s; }
+  .toast.show { opacity: 1; }
+  #hint { position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); max-width: 40vw; text-align: center;
+    padding: 9px 18px; border-radius: 10px; background: rgba(8,10,24,.72); font-size: 16px; text-shadow: none; }
+  @media (max-width: 1150px) { #hint { bottom: 240px; max-width: 80vw; } }
+  #br { position: absolute; right: 28px; bottom: 26px; text-align: right; }
+  #zone { font-size: 30px; font-weight: 800; font-style: italic; color: var(--cyan); }
+  #veh { font-size: 22px; font-weight: 700; font-style: italic; color: var(--gold); }
+  #radio { font-size: 15px; font-weight: 600; letter-spacing: 1px; color: var(--pink); }
+
+  #cross { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 0 2px rgba(0,0,0,.5); opacity: 0; }
+  #cross.show { opacity: .85; }
+  #banner { position: absolute; left: 0; right: 0; top: 30%; text-align: center; opacity: 0; transition: opacity .5s; }
+  #banner.show { opacity: 1; }
+  #banner b { display: block; font-size: 64px; font-weight: 900; font-style: italic; letter-spacing: 3px; }
+  #banner span { display: block; font-size: 24px; font-weight: 600; margin-top: 2px; }
+  #banner.pass b { color: var(--gold); }
+  #banner.fail b { color: #ff4d5e; }
+  #banner.busted b { color: #6fa2ff; }
+  #banner.title b { background: linear-gradient(90deg, var(--pink), var(--cyan)); -webkit-background-clip: text;
+    background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 3px 8px rgba(0,0,0,.8)); }
+  #flash { position: absolute; inset: 0; opacity: 0; transition: opacity .15s;
+    background: radial-gradient(ellipse at center, rgba(255,0,40,0) 45%, rgba(255,0,40,.55) 100%); }
+  #flash.show { opacity: 1; }
+  #lockhint { position: absolute; left: 50%; top: 58%; transform: translateX(-50%); padding: 8px 16px; border-radius: 8px;
+    background: rgba(8,10,24,.8); font-size: 15px; opacity: 0; text-shadow: none; }
+  #lockhint.show { opacity: 1; }
+
+  /* ---------- menus ---------- */
+  .screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(120deg, rgba(8,10,24,.9) 0%, rgba(8,10,24,.62) 48%, rgba(8,10,24,.15) 100%); }
+  .panel { width: min(880px, 92vw); max-height: 94vh; overflow: auto; padding: 8px 4px; }
+  h1 { margin: 0; font-size: clamp(54px, 9vw, 104px); font-weight: 900; font-style: italic; letter-spacing: 2px; line-height: .95;
+    background: linear-gradient(90deg, var(--pink), #ff9a5c 45%, var(--cyan)); -webkit-background-clip: text;
+    background-clip: text; color: transparent; filter: drop-shadow(0 6px 18px rgba(255,63,164,.35)); }
+  .tag { margin: 10px 0 26px; font-size: 18px; opacity: .85; }
+  .buttons { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 22px; }
+  button { font: inherit; color: #fff; cursor: pointer; border: 1px solid rgba(255,255,255,.3);
+    background: rgba(255,255,255,.07); border-radius: 10px; }
+  button:hover { background: rgba(255,255,255,.16); }
+  .big { padding: 14px 30px; font-size: 19px; font-weight: 700; }
+  .big.primary { background: linear-gradient(90deg, var(--pink), #ff7a5c); border-color: transparent; }
+  .big.primary:hover { filter: brightness(1.12); }
+  .cols { display: grid; grid-template-columns: 1fr 1.25fr; gap: 26px; }
+  @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+  .card { padding: 16px 18px; border-radius: 14px; background: rgba(8,10,24,.66); border: 1px solid rgba(255,255,255,.12); }
+  .card h2 { margin: 0 0 10px; font-size: 13px; letter-spacing: 2.5px; color: var(--cyan); font-weight: 700; }
+  .row { display: flex; align-items: center; gap: 6px; margin: 7px 0; }
+  .row span { width: 96px; font-size: 15px; opacity: .85; }
+  .seg { padding: 7px 14px; font-size: 14px; }
+  .seg.on { background: var(--cyan); color: var(--ink); border-color: transparent; font-weight: 700; }
+  .keys { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 14px; align-items: center; }
+  kbd { padding: 2px 8px; border-radius: 6px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25);
+    font: 600 12px "Segoe UI", Arial; white-space: nowrap; }
+  #progress { margin: 0 0 18px; font-size: 15px; opacity: .85; white-space: pre; }
+  .fine { margin-top: 18px; font-size: 12px; opacity: .55; }
+  h3 { margin: 0 0 14px; font-size: 52px; font-weight: 900; font-style: italic; letter-spacing: 2px; }
+  #objective { white-space: normal; text-align: center; }
+  @media(max-width:850px) { #objective { top:8px; left:10px; transform:none; max-width:53vw; font-size:14px; } #timer { top:73px; left:36px; } }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="tr">
+    <div id="stars"><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i></div>
+    <div id="money">$0</div>
+    <div id="clock">17:24</div>
+    <div class="bar"><i id="hp"></i></div>
+    <div id="weapon">Pistol</div>
+  </div>
+  <div id="bl">
+    <canvas id="map" width="196" height="196"></canvas>
+    <div id="drive">
+      <div id="speed">0 km/h</div>
+      <div class="bar"><i id="carhp"></i></div>
+      <small>CAR CONDITION</small>
+    </div>
+  </div>
+  <div id="objective"></div>
+  <div id="timer"></div>
+  <div id="hint" class="toast"></div>
+  <div id="br">
+    <div id="radio" class="toast"></div>
+    <div id="veh" class="toast"></div>
+    <div id="zone" class="toast"></div>
+  </div>
+  <div id="cross"></div>
+  <div id="banner"><b></b><span></span></div>
+  <div id="flash"></div>
+  <div id="lockhint">Click the game to capture the mouse</div>
+</div>
+
+<div id="title" class="screen">
+  <div class="panel">
+    <h1>NEON COAST</h1>
+    <p class="tag">An original open-world crime-and-cruise sandbox. Six story jobs, fifteen hidden packages, and a ferry that won’t wait.</p>
+    <div class="buttons">
+      <button id="btn-continue" class="big primary">Continue</button>
+      <button id="btn-new" class="big">New Game</button>
+      <button id="btn-ferry" class="big">Harbor courier shift ↗</button>
+    </div>
+    <div class="cols">
+      <div class="card">
+        <h2>SETTINGS</h2>
+        <div class="settings"></div>
+      </div>
+      <div class="card">
+        <h2>CONTROLS</h2>
+        <div class="keys">
+          <kbd>W A S D</kbd><span>Walk / drive</span>
+          <kbd>Mouse</kbd><span>Look and aim</span>
+          <kbd>F</kbd><span>Get in or out of a vehicle (occupied ones too)</span>
+          <kbd>Shift</kbd><span>Sprint</span>
+          <kbd>Space</kbd><span>Jump on foot, handbrake in a car</span>
+          <kbd>Left click</kbd><span>Shoot or punch (works from a car)</span>
+          <kbd>Q</kbd><span>Pistol / fists</span>
+          <kbd>R</kbd> <span>Change radio station</span>
+          <kbd>H</kbd><span>Horn</span>
+          <kbd>G</kbd><span>Take a harbor courier shift during free roam</span>
+          <kbd>P</kbd> <span>Pause (Esc also works)</span>
+        </div>
+      </div>
+    </div>
+    <p class="fine"><strong>Version 1.1 · Harbor shift</strong> — Three courier stops, a ferry deadline, and a saved personal best. The six original story jobs and existing saves are unchanged.</p>
+    <p class="fine">Original fan-made game. Not affiliated with Rockstar Games or Grand Theft Auto. Rendering by three.js (MIT).</p>
+  </div>
+</div>
+
+<div id="pause" class="screen hidden">
+  <div class="panel">
+    <h3>PAUSED</h3>
+    <p id="progress"></p>
+    <div class="buttons">
+      <button id="btn-end-shift" class="big" hidden>End ferry shift</button>
+      <button id="btn-resume" class="big primary">Resume</button>
+      <button id="btn-restart" class="big">Restart at Sol Beach</button>
+      <button id="btn-quit" class="big">Main Menu</button>
+    </div>
+    <div class="cols">
+      <div class="card">
+        <h2>SETTINGS</h2>
+        <div class="settings"></div>
+      </div>
+      <div class="card">
+        <h2>HOW IT WORKS</h2>
+        <div class="keys">
+          <kbd>J</kbd><span>Yellow marker: start the next job</span>
+          <kbd>R</kbd><span>Respray: $150 repairs the car and clears your wanted level</span>
+          <kbd>A</kbd><span>Ammo: $80 for 24 rounds (walk in)</span>
+          <kbd>&#9733;</kbd><span>Stay out of police sight until the stars blink out</span>
+          <kbd>F</kbd><span>Get in or out of a vehicle</span>
+          <kbd>Q</kbd><span>Pistol / fists</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>/*__THREE__*/</script>
+<script>
+(function () {
+'use strict';
+/*__GAME__*/
+})();
+</script>
+</body>
+</html>
