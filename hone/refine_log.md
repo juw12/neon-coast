@@ -104,3 +104,12 @@ stalled on score and won the pair; session budget ends the run. Best score 8.75 
 Open asks from the judges, none done: real people playing the first job and the later jobs; a daytime look as
 recognisable as dusk; thinner pause screen and a HUD that hides the pistol and clock when idle; a perk
 unlock notice in play; a shorter first job; an idle sway on the player model.
+
+## Sync (run 2, 2026-11-20)
+
+- Repo: [PR 4](https://github.com/juw12/neon-coast/pull/4) `0229be1`, favicon fix [PR 5](https://github.com/juw12/neon-coast/pull/5) `b9c6396`, release [v1.2.0](https://github.com/juw12/neon-coast/releases/tag/v1.2.0) with `NeonCoast.html`; description and 10 topics updated.
+- Live game: https://juw12.github.io/neon-coast/ serves the same bytes as the local build; play test passed (title shows 1.2, cab fare, big map, helicopter at 4 stars).
+- Profile: `juw12/juw12` `94174dd`.
+- Portfolio: catalog `juw12/projects` `63f9b72`, card sync run passed, card text live at https://juwenlie.pages.dev/.
+- Landing page: `juw12/juw12.github.io` `b4e0b47`, https://juw12.github.io/p/neon-coast/ returns 200 with the 1.2 text.
+- Obsidian: `GitHub/neon-coast.md` and `Update Log/2026-11-20 1728 neon-coast hone.md`, vault commit `d7b6724`.
