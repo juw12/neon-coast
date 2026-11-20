@@ -129,7 +129,7 @@ worth doing for ten. Score to beat: 8.75 (round 3). A round is kept at 9.05 or m
 - [x] R3-6 Police heat touches fares, shops and property; the Sol Wheel can be ridden (judge ask, C3)
 - [x] R3-7 Daytime look with its own identity; idle movement on the player (judge ask, C2)
 - [x] R3-8 Gates, city, harbor, drive tests; council score and blind pair; keep or drop
-- [ ] R3-9 Ship by PR and release if kept or preferred; Sync (repo, profile, portfolio, landing, Obsidian)
+- [x] R3-9 Ship by PR and release if kept or preferred; Sync (repo, profile, portfolio, landing, Obsidian)
 - [ ] R3-10 A real person plays it: cannot be produced by the agent, reported as `needs you` (still open)
 
 ### Assumptions (run 3)
@@ -168,3 +168,12 @@ played it.
 Open asks from the judges, none done: real people playing the first job and the later jobs; key-press tests
 for the other five jobs, the fares and the courier shift; no stars or arrests before the first job is done;
 more varied building outlines per district; anti-aliasing on Pretty; a judged pass on the radio.
+
+## Sync (run 3, 2026-11-20)
+
+- Repo: [PR 6](https://github.com/juw12/neon-coast/pull/6) `5fef5c1`, release [v1.3.0](https://github.com/juw12/neon-coast/releases/tag/v1.3.0) with `NeonCoast.html`.
+- Live game: https://juw12.github.io/neon-coast/ serves the same bytes as the local build; play check passed (title shows 1.3, first job ends at the pier, 86 murals, airship, wheel ride takes $25 and marks 3 packages, no console problems).
+- Profile: `juw12/juw12` `b6b0df0`.
+- Portfolio: catalog `juw12/projects` `cd83281`, card sync run passed, card text live at https://juwenlie.pages.dev/.
+- Landing page: `juw12/juw12.github.io` `5b3ada6` (text) and `1373651` (picture), https://juw12.github.io/p/neon-coast/ shows the 1.3 text.
+- Obsidian: `GitHub/neon-coast.md` and a new note in `Update Log/`.
