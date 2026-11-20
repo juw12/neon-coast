@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "Objective 'Get into the red car ahead [F]' is explicit, but the control hint 'Mouse looks...' is a small toast that might be missed or fade.",
+        "C2": "Strong neon/dusk mood in screenshots 5 and 7, but the blocky player character (screenshot 2) feels less polished than the environment.",
+        "C3": "Fact sheet confirms jobs, police, money sinks (tune-up, respray), and secrets feed each other; 'endless generated odd jobs' adds variety.",
+        "C4": "HUD is clean (G8 passed), but the 'Car Condition' bar (screenshot 3) is thin and low-contrast, risking readability at speed.",
+        "C5": "Fact sheet explicitly lists 'Not covered by the tests' and title screen states 'not affiliated with any published game'."
+      },
+      "fixes": [
+        "Make the control tutorial hint ('Mouse looks...') persistent or interactive until the player actually moves the camera, ensuring the 'first minute' requires no re-reading.",
+        "Improve the player character model fidelity (lighting/shadows) to match the atmospheric quality of the city and vehicles.",
+        "Increase the size or contrast of the 'Car Condition' HUD bar to ensure it is readable at a glance during high-speed driving."
+      ],
+      "total": 8.7,
+      "seconds": 38.0
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 7.0,
+        "C3": 8.0,
+        "C4": 8.0,
+        "C5": 8.0
+      },
+      "evidence": {
+        "C1": "Title screen shows clear 'New Game' button, settings, and full controls list; first view shows 'Get into the red car ahead [F]' with 'JOB 135 m' marker and 'Mouse looks, W A S D moves, P pauses' hint; district name 'Sol Beach' visible; G10 clear first view passed.",
+        "C2": "Consistent low-poly style with neon trim, day/night cycle, lit windows at night, recognizable Sol Wheel landmark, neon signs (KITE & SURF, PHARMACY, TIDE HOTEL); but buildings are very boxy/plain boxes with flat colors and minimal architectural detail.",
+        "C3": "Six story jobs from three contacts, harbor courier shift, 15 hidden packages with $5,000 bonus, police with 1-5 wanted levels, seven vehicle types, on-foot combat, multiple money sinks (respray, repair, ammo, hospital, bail, tune-up shop in three stages), endless generated odd jobs.",
+        "C4": "Clean HUD layout: minimap bottom-left, cash/wanted/ammo top-right, objective with distance top-center, district name bottom-right, car condition bar; G8 no overlaps at 3 sizes passed; pause menu well-organized with settings, map legend, and controls.",
+        "C5": "Own names throughout (Neon Coast, Meridian, Sol Beach, Rustport, vehicle names Tidal/Vanta GT/Ravager); title screen states 'fan-made original and is not affiliated with any published game'; fact sheet plainly states limits ('How the driving feels to a person' not covered, 'Only tested in Chrome on one Windows laptop')."
+      },
+      "fixes": [
+        "Add architectural variety and detail to buildings — they are currently very plain boxes with flat colors; varied rooflines, setbacks, balconies, and facade details would significantly strengthen atmosphere and recognizability.",
+        "Improve vehicle models — the cars in screenshots are extremely simple boxes with minimal detail; adding body contours, windows, wheels with depth, and color variation would make driving feel more grounded.",
+        "Improve the player character model — the on-foot avatar is a blocky pink rectangle with no facial features or clothing detail; even simple additions (head, arms, varied clothing) would make the third-person view less jarring."
+      ],
+      "total": 7.75,
+      "seconds": 19.8
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 8.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "First view shows 'Get into the red car ahead [F]', 'JOB 135 m' marker and hint 'Mouse looks, W A S D moves, P pauses.'; title has a primary 'New Game' button. Only gap: the 630 m leg 'Drive to Mo's Respray in Rustport' relies on minimap/triangle reading rather than in-world guidance.",
+        "C2": "Consistent low-poly style with neon ('KITE & SURF', 'PHARMACY'), 'lit windows, street lamps and neon trim' at night, and a recognisable dusk Sol Wheel shot. Night city and building masses stay generic repeated boxes; mood leans on sky gradients.",
+        "C3": "'Six story jobs... then endless generated odd jobs', 'Tune-up shop in three stages ($1,500, $3,000, $6,000)', 'all 15 pay a $5,000 bonus', police/respray interlock. But sheet admits 'Jobs are passed by script... difficulty is not measured', and the Sol Wheel 'cannot be reached' - secrets are cash-only.",
+        "C4": "G8: 'no overlaps at 3 sizes'; pause menu adds an 'ON THE MAP' legend. Top-right stacks five small rows (stars, $200, 17:25, health bar, 'Pistol 48'), with 'Pistol 48' tiny and low-contrast over bright walls.",
+        "C5": "'Own city, names and art' plus 'a fan-made original and is not affiliated with any published game'; 'Not covered by the tests' states limits plainly. Deduction: conventions (wanted stars, BUSTED, respray, hidden packages) are borrowed genre template, and the limits disclosure lives only in the judge packet, not anywhere a player sees."
+      },
+      "fixes": [
+        "Add in-world route guidance (3D waypoint arrow or beacon line) for cross-town objectives like 'Drive to Mo's Respray in Rustport - 630 m' so the first job completes without map-reading, closing the C1 gap to the 10-anchor.",
+        "Give night its own identity and vary district geometry (distinct rooflines, signage density, ground-level detail in Rustport vs Meridian after dark) so any single screenshot - not just the dusk Sol Wheel - is recognisable (C2).",
+        "Deepen the interlock: make hidden packages and landmarks unlock things rather than only pay cash (pier access, package-milestone tune-up discounts), and differentiate generated odd jobs so ten minutes feel varied (C3)."
+      ],
+      "total": 8.35,
+      "seconds": 112.9
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.35,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 8.0,
+    "C4": 8.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 1.0,
+    "C2": 1.0,
+    "C3": 1.0,
+    "C4": 0.0,
+    "C5": 2.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    7.75,
+    8.7
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Make the control tutorial hint ('Mouse looks...') persistent or interactive until the player actually moves the camera, ensuring the 'first minute' requires no re-reading."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Improve the player character model fidelity (lighting/shadows) to match the atmospheric quality of the city and vehicles."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Increase the size or contrast of the 'Car Condition' HUD bar to ensure it is readable at a glance during high-speed driving."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Add architectural variety and detail to buildings — they are currently very plain boxes with flat colors; varied rooflines, setbacks, balconies, and facade details would significantly strengthen atmosphere and recognizability."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Improve vehicle models — the cars in screenshots are extremely simple boxes with minimal detail; adding body contours, windows, wheels with depth, and color variation would make driving feel more grounded."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Improve the player character model — the on-foot avatar is a blocky pink rectangle with no facial features or clothing detail; even simple additions (head, arms, varied clothing) would make the third-person view less jarring."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Add in-world route guidance (3D waypoint arrow or beacon line) for cross-town objectives like 'Drive to Mo's Respray in Rustport - 630 m' so the first job completes without map-reading, closing the C1 gap to the 10-anchor."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Give night its own identity and vary district geometry (distinct rooflines, signage density, ground-level detail in Rustport vs Meridian after dark) so any single screenshot - not just the dusk Sol Wheel - is recognisable (C2)."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Deepen the interlock: make hidden packages and landmarks unlock things rather than only pay cash (pier access, package-milestone tune-up discounts), and differentiate generated odd jobs so ten minutes feel varied (C3)."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

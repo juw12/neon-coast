@@ -113,7 +113,7 @@ with sync_playwright() as pw:
     page.evaluate("() => NEON.setWanted(3)")
     page.wait_for_timeout(7000)
     s = snapshot(page)
-    check("three stars bring police", s["stars"] == 3 and s["cops"] >= 2, f"{s['cops']} patrol cars")
+    check("three stars bring police", s["stars"] == 3 and s["cops"] >= 2, f"{s['cops']} patrol cars, {s['stars']} stars")
     page.evaluate(
         """() => {
             const c = NEON.player.car || NEON.player;

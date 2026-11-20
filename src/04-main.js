@@ -53,6 +53,13 @@ function resetSession() {
   $('objective').classList.remove('show');
   setWanted(0);
   wanted.pts = 0;
+  hideHeli();
+  cab.on = false;
+  clearPassenger();
+  toggleBigMap(false);
+  PROPERTIES.forEach(placeProperty);
+  placeGarage();
+  checkPerks(true);
 
   Object.assign(player, { x: START.x, z: START.z, y: 0, vy: 0, h: START.yaw, hp: 100, car: null, lastCar: null, ammo: 48, gun: true, fireT: 0, punchT: 0 });
   player.mesh.visible = true;
@@ -73,7 +80,7 @@ function resetSession() {
   }
   offerMission();
   for (let k = 0; k < 60; k++) spawnTraffic(22, 250, k % 3 === 0);
-  for (let k = 0; k < 80; k++) spawnWalker(20, 150);   // nobody in the player's face at the start
+  for (let k = 0; k < 80; k++) spawnWalker(34, 150);   // nobody in the player's face for the first seconds
 }
 
 function die(kind) {
@@ -178,10 +185,12 @@ function update(dt, realDt) {
   updatePopulation(dt);
   if (state === 'play') {
     updateWanted(dt);
-    updateMarkers();
+    updateMarkers(dt);
     updatePickups(dt);
     updateMission(dt);
+    updateIntro(dt);
   }
+  updateRoute();
   if (state === 'dead') {
     deadT -= realDt;
     if (deadT <= 0) respawn();
@@ -216,10 +225,88 @@ const SETTINGS = [
   ['Sound', 'sound', ['Off', 'On']],
 ];
 
+// ---------- glow pass (Pretty graphics): bright things bleed light, a soft vignette frames the view ----------
+const post = { on: false, scene: new T.Scene(), cam: new T.OrthographicCamera(-1, 1, 1, -1, 0, 1), full: null, a: null, b: null };
+const POST_VS = 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+const postMat = (uniforms, fragmentShader) => new T.ShaderMaterial({ uniforms, vertexShader: POST_VS, fragmentShader, depthTest: false, depthWrite: false });
+const brightMat = postMat({ map: { value: null }, cut: { value: 0.8 } }, `
+  uniform sampler2D map;
+  uniform float cut;
+  varying vec2 vUv;
+  void main() {
+    vec4 c = texture2D(map, vUv);
+    float peak = max(c.r, max(c.g, c.b));
+    gl_FragColor = vec4(c.rgb * smoothstep(cut, cut + 0.3, peak) * c.a, 1.0);
+  }`);
+const blurMat = postMat({ map: { value: null }, dir: { value: new T.Vector2() } }, `
+  uniform sampler2D map;
+  uniform vec2 dir;
+  varying vec2 vUv;
+  void main() {
+    vec3 c = texture2D(map, vUv).rgb * 0.227;
+    c += (texture2D(map, vUv + dir * 1.385).rgb + texture2D(map, vUv - dir * 1.385).rgb) * 0.316;
+    c += (texture2D(map, vUv + dir * 3.231).rgb + texture2D(map, vUv - dir * 3.231).rgb) * 0.070;
+    gl_FragColor = vec4(c, 1.0);
+  }`);
+const mixMat = postMat({ map: { value: null }, glow: { value: null }, strength: { value: 0.5 } }, `
+  uniform sampler2D map;
+  uniform sampler2D glow;
+  uniform float strength;
+  varying vec2 vUv;
+  void main() {
+    vec3 c = texture2D(map, vUv).rgb + texture2D(glow, vUv).rgb * strength;
+    vec2 q = vUv - 0.5;
+    gl_FragColor = vec4(c * (1.0 - dot(q, q) * 0.5), 1.0);
+  }`);
+const postQuad = new T.Mesh(new T.PlaneGeometry(2, 2), mixMat);
+postQuad.frustumCulled = false;
+post.scene.add(postQuad);
+
+function postPass(material, source, target) {
+  material.uniforms.map.value = source.texture;
+  postQuad.material = material;
+  renderer.setRenderTarget(target);
+  renderer.render(post.scene, post.cam);
+}
+
+function renderFrame() {
+  if (!post.on || !post.full) {
+    renderer.render(scene, camera);
+    return;
+  }
+  renderer.setRenderTarget(post.full);
+  renderer.render(scene, camera);
+  brightMat.uniforms.cut.value = lerp(0.93, 0.5, glowAmount);
+  postPass(brightMat, post.full, post.a);
+  for (const spread of [1, 2.2]) {
+    blurMat.uniforms.dir.value.set(spread / post.a.width, 0);
+    postPass(blurMat, post.a, post.b);
+    blurMat.uniforms.dir.value.set(0, spread / post.a.height);
+    postPass(blurMat, post.b, post.a);
+  }
+  mixMat.uniforms.glow.value = post.a.texture;
+  mixMat.uniforms.strength.value = lerp(0.3, 0.95, glowAmount);
+  postPass(mixMat, post.full, null);
+}
+
 function resize() {
   renderer.setSize(window.innerWidth, window.innerHeight, false);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
+  post.on = !!save.quality;
+  if (!post.on) return;
+  const size = renderer.getDrawingBufferSize(new T.Vector2());
+  const w = Math.max(4, Math.ceil(size.x / 4));
+  const h = Math.max(4, Math.ceil(size.y / 4));
+  if (!post.full) {
+    post.full = new T.WebGLRenderTarget(size.x, size.y, { samples: 4 });
+    post.a = new T.WebGLRenderTarget(w, h, { depthBuffer: false });
+    post.b = new T.WebGLRenderTarget(w, h, { depthBuffer: false });
+  } else {
+    post.full.setSize(size.x, size.y);
+    post.a.setSize(w, h);
+    post.b.setSize(w, h);
+  }
 }
 
 function applySettings() {
@@ -256,8 +343,21 @@ function renderSettings() {
   }
   $('btn-end-shift').hidden = !(mission.active && mission.def === FERRY);
   const jobs = Math.min(save.mission, MISSIONS.length) + ' / ' + MISSIONS.length;
-  $('progress').textContent = 'Jobs ' + jobs + '     Packages ' + save.packages.length + ' / ' + packageSpots.length + '     Cash $' + save.money + (save.ferryRuns ? `     Ferry shifts ${save.ferryRuns} · best ${save.ferryBest}s` : '');
-  const hasSave = save.mission > 0 || save.packages.length > 0 || save.tune > 0 || save.money !== SAVE_DEFAULTS.money;
+  const have = PROPERTIES.filter(owned).length;
+  $('progress').textContent = 'Jobs ' + jobs + '     Packages ' + save.packages.length + ' / ' + packageSpots.length + '     Cash $' + save.money + (save.ferryRuns ? `     Ferry shifts ${save.ferryRuns} · best ${save.ferryBest}s` : '')
+    + (save.fares ? `     Cab fares ${save.fares} · best run ${save.fareBest}` : '') + (have ? `     Property ${have} / ${PROPERTIES.length}` : '');
+  const perkBox = $('perks');
+  perkBox.innerHTML = '';
+  for (const p of PERKS) {
+    const [now, need] = p.count();
+    const name = document.createElement('b');
+    name.textContent = perkHeld(p) ? '\u2713 ' + p.name : p.name + '  \u00b7  ' + now + ' / ' + need;
+    if (perkHeld(p)) name.className = 'got';
+    const text = document.createElement('span');
+    text.textContent = perkHeld(p) ? p.what : p.how + ': ' + p.what.toLowerCase();
+    perkBox.append(name, text);
+  }
+  const hasSave = save.mission > 0 || save.packages.length > 0 || save.tune > 0 || save.fares > 0 || have > 0 || save.money !== SAVE_DEFAULTS.money;
   $('btn-continue').style.display = hasSave ? '' : 'none';
 }
 
@@ -280,9 +380,26 @@ function lockPointer() {
   }
 }
 
+// a first-timer who does not move gets the keys again; anyone who sets off never sees them
+const intro = { on: false, idle: 0 };
+function updateIntro(dt) {
+  if (!intro.on) return;
+  if (player.car || dist2(player.x, player.z, START.x, START.z) > 9) {
+    intro.on = false;
+    if (intro.shown && player.car) $('hint').classList.remove('show');
+    else if (intro.shown) hint('The red car is yours: stand beside it and press F.', 4);
+    return;
+  }
+  intro.idle += dt;
+  if (intro.idle > 3.5 && !intro.shown) {
+    intro.shown = true;
+    hint('W A S D to walk, mouse to look around.', 600);
+  }
+}
+
 function startGame(fresh) {
   if (fresh) {
-    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0 });
+    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {} });
     persist();
   }
   initAudio();
@@ -291,7 +408,8 @@ function startGame(fresh) {
   state = 'play';
   showScreen(null);
   lockPointer();
-  hint('Mouse looks, W A S D moves, P pauses.', 6);
+  Object.assign(intro, { on: save.mission === 0, idle: 0, shown: false });
+  if (!intro.on) hint('Welcome back. M shows the whole map.', 5);
 }
 
 function pause() {
@@ -299,6 +417,8 @@ function pause() {
   state = 'paused';
   firing = false;
   for (const code in keys) keys[code] = false;
+  toggleBigMap(false);
+  persist();
   renderSettings();
   showScreen('pause');
   if (audio.ctx) audio.ctx.suspend();
@@ -345,7 +465,7 @@ $('btn-quit').onclick = () => {
 };
 
 // ---------- input ----------
-const GAME_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyF', 'KeyQ', 'KeyR', 'KeyH', 'Tab']);
+const GAME_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyF', 'KeyQ', 'KeyR', 'KeyH', 'KeyT', 'KeyE', 'KeyM', 'Tab']);
 window.addEventListener('keydown', (e) => {
   if (state === 'play' && GAME_KEYS.has(e.code)) e.preventDefault();
   if (e.repeat) return;
@@ -357,6 +477,9 @@ window.addEventListener('keydown', (e) => {
   if (state !== 'play') return;
   if (e.code === 'KeyF' || e.code === 'Enter') tryEnterExit();
   if (e.code === 'KeyG') dispatch();
+  if (e.code === 'KeyT') cabDuty();
+  if (e.code === 'KeyE') interact();
+  if (e.code === 'KeyM') toggleBigMap();
   if (e.code === 'KeyH' && player.car) sfx.horn();
   if (e.code === 'KeyP' || e.code === 'Escape') pause();
   if (e.code === 'KeyQ') {
@@ -416,7 +539,7 @@ function frame(now) {
   frameNo++;
   if ((frameNo & 15) === 0) refreshLockHint();
   if (state !== 'paused') update(state === 'dead' ? realDt * 0.4 : realDt, realDt);
-  renderer.render(scene, camera);
+  renderFrame();
 }
 requestAnimationFrame(frame);
 
@@ -427,6 +550,7 @@ window.NEON = {
     return state;
   },
   startGame, pause, resume, setWanted, tryEnterExit, playerAttack, crime, hurt, landmarks,
+  route, cab, heli, bigMap, PROPERTIES, PERKS, perk, cabDuty, interact, toggleBigMap, addMoney, persist,
   setTime(hours) {
     tod = hours;
   },

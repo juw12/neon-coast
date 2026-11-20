@@ -8,7 +8,7 @@ const PANTS = ['#2b2f3a', '#3d5a80', '#6b705c', '#e0d8c3', '#1d1d22'];
 const SKINS = ['#f1c9a5', '#d9a47a', '#a8744f', '#7a4f33', '#f5d7bd'];
 const HAIRS = ['#1b1b1b', '#5a3a1e', '#c9a24b', '#8a8a8a', '#7a2b1b'];
 
-function buildPerson(shirt, pants, skin, hair) {
+function buildPerson(shirt, pants, skin, hair, jacket) {
   const group = new T.Group();
   const part = (w, h, d, hex, x, y, z, parent) => {
     const mesh = new T.Mesh(boxGeo, mat(hex));
@@ -26,10 +26,24 @@ function buildPerson(shirt, pants, skin, hair) {
     return pivot;
   };
   part(0.5, 0.62, 0.28, shirt, 0, 1.13, 0);
-  part(0.3, 0.3, 0.3, skin, 0, 1.6, 0);
-  part(0.32, 0.1, 0.32, hair, 0, 1.78, 0);
-  group.userData.legs = [limb(-0.13, 0.82, 0.2, 0.82, pants), limb(0.13, 0.82, 0.2, 0.82, pants)];
-  group.userData.arms = [limb(-0.33, 1.42, 0.14, 0.6, skin), limb(0.33, 1.42, 0.14, 0.6, skin)];
+  part(0.56, 0.16, 0.3, shirt, 0, 1.38, 0);                  // shoulders
+  part(0.51, 0.07, 0.29, '#15151a', 0, 0.85, 0);             // belt
+  part(0.14, 0.08, 0.14, skin, 0, 1.47, 0);                  // neck
+  part(0.3, 0.3, 0.3, skin, 0, 1.63, 0);
+  part(0.32, 0.1, 0.32, hair, 0, 1.81, 0);
+  part(0.32, 0.2, 0.08, hair, 0, 1.7, -0.13);
+  for (const side of [-0.075, 0.075]) part(0.05, 0.04, 0.02, '#15151a', side, 1.66, 0.151);   // eyes
+  if (jacket) {
+    part(0.16, 0.5, 0.02, jacket, 0, 1.14, 0.141);           // open jacket over a light shirt
+    part(0.34, 0.06, 0.34, '#20242e', 0, 1.87, 0.02);        // cap
+    part(0.26, 0.03, 0.14, '#20242e', 0, 1.85, 0.22);
+  }
+  const legs = [limb(-0.13, 0.82, 0.2, 0.82, pants), limb(0.13, 0.82, 0.2, 0.82, pants)];
+  const arms = [limb(-0.35, 1.44, 0.14, 0.6, skin), limb(0.35, 1.44, 0.14, 0.6, skin)];
+  for (const leg of legs) part(0.22, 0.1, 0.34, '#1a1a1e', 0, -0.77, 0.05, leg);       // shoes
+  for (const arm of arms) part(0.17, 0.26, 0.19, shirt, 0, -0.12, 0, arm);            // sleeves
+  group.userData.legs = legs;
+  group.userData.arms = arms;
   return group;
 }
 
@@ -48,7 +62,7 @@ const player = {
   hp: 100, speed: 0, phase: 0,
   car: null, lastCar: null,
   ammo: 48, gun: true, fireT: 0, punchT: 0,
-  mesh: buildPerson('#ff4fa3', '#20242e', '#d9a47a', '#1b1b1b'),
+  mesh: buildPerson('#ff4fa3', '#2b3350', '#d9a47a', '#1b1b1b', '#f4f4f4'),
 };
 scene.add(player.mesh);
 const focus = () => (player.car ? [player.car.x, player.car.z] : [player.x, player.z]);
@@ -196,8 +210,49 @@ const wreckMat = new T.MeshLambertMaterial({ color: '#1a1614' });
 const wheelGeo = new T.CylinderGeometry(0.36, 0.36, 0.28, 12);
 wheelGeo.rotateZ(Math.PI / 2);
 
+// body and cabin outlines per type, extruded across the car's width (made once, shared by every car of that type)
+const CAR_RAKE = { van: [0.28, 0.04], pickup: [0.5, 0.06], sports: [1.0, 0.75], muscle: [0.8, 0.6] };
+const carGeoCache = {};
+function carGeos(type) {
+  if (carGeoCache[type]) return carGeoCache[type];
+  const t = VEHICLE_TYPES[type];
+  const half = t.len / 2;
+  const bodyH = t.hgt * 0.48;
+  const y0 = 0.3;
+  const y1 = y0 + bodyH;
+  const cabH = t.hgt * 0.46;
+  const cabL = t.len * t.cab[0];
+  const cabZ = t.len * t.cab[1];
+  const zr = cabZ - cabL / 2;
+  const zf = cabZ + cabL / 2;
+  const [rakeF, rakeR] = CAR_RAKE[type] || [0.8, 0.5];
+  const extrude = (points, width) => {
+    const shape = new T.Shape(points.map((p) => new T.Vector2(p[0], p[1])));
+    const geo = new T.ExtrudeGeometry(shape, { depth: width, bevelEnabled: false });
+    geo.rotateY(-Math.PI / 2);        // outline x becomes the car's length, the extrusion its width
+    geo.translate(width / 2, 0, 0);
+    return geo;
+  };
+  const hoodZ = Math.min(zf + 0.1, half - 0.35);
+  const body = extrude([
+    [-half + 0.14, y0], [half - 0.18, y0], [half, y0 + bodyH * 0.36], [half - 0.06, y1 - bodyH * 0.2],
+    [hoodZ, y1], [-half + 0.1, y1], [-half, y0 + bodyH * 0.5],
+  ], t.wid);
+  const topF = zf - rakeF * cabH;
+  const topR = zr + rakeR * cabH;
+  const cabin = extrude([[zr, y1], [zf, y1], [topF, y1 + cabH], [topR, y1 + cabH]], t.wid * 0.86);
+  return (carGeoCache[type] = { body, cabin, y0, y1, bodyH, cabH, cabZ, zr, zf, topF, topR });
+}
+const beamPoolGeo = new T.PlaneGeometry(7, 12);
+beamPoolGeo.rotateX(-Math.PI / 2);
+const hubGeo = new T.CylinderGeometry(0.2, 0.2, 0.3, 8);
+hubGeo.rotateZ(Math.PI / 2);
+const hubMat = new T.MeshLambertMaterial({ color: '#b9bec8' });
+const trimMat = new T.MeshLambertMaterial({ color: '#22252b' });
+
 function buildCar(type, colorHex) {
   const t = VEHICLE_TYPES[type];
+  const g = carGeos(type);
   const group = new T.Group();
   const paint = mat(colorHex);
   const add = (w, h, d, material, x, y, z) => {
@@ -208,42 +263,53 @@ function buildCar(type, colorHex) {
     group.add(mesh);
     return mesh;
   };
-  const bodyH = t.hgt * 0.48;
-  const bodyY = 0.32 + bodyH / 2;
-  const cabH = t.hgt * 0.46;
-  const cabL = t.len * t.cab[0];
-  const cabZ = t.len * t.cab[1];
-  const cabY = 0.32 + bodyH + cabH / 2;
-  const painted = [add(t.wid, bodyH, t.len, paint, 0, bodyY, 0)];
-  add(t.wid * 0.88, cabH, cabL, glassMat, 0, cabY, cabZ);
-  painted.push(add(t.wid * 0.9, 0.09, cabL * 0.94, paint, 0, cabY + cabH / 2, cabZ));
-  add(t.wid + 0.06, 0.2, 0.22, mat('#22252b'), 0, 0.42, t.len / 2);
-  add(t.wid + 0.06, 0.2, 0.22, mat('#22252b'), 0, 0.42, -t.len / 2);
+  const body = new T.Mesh(g.body, paint);
+  const cabin = new T.Mesh(g.cabin, glassMat);
+  body.castShadow = cabin.castShadow = true;
+  group.add(body, cabin);
+  const bodyY = g.y0 + g.bodyH / 2;
+  const roofY = g.y1 + g.cabH;
+  const roofZ = (g.topF + g.topR) / 2;
+  const painted = [body];
+  painted.push(add(t.wid * 0.88, 0.07, g.topF - g.topR + 0.08, paint, 0, roofY + 0.03, roofZ));
+  painted.push(add(t.wid * 0.875, g.cabH, 0.13, paint, 0, g.y1 + g.cabH / 2, roofZ));          // door pillar
+  add(t.wid + 0.08, 0.2, 0.2, trimMat, 0, 0.42, t.len / 2 - 0.02);
+  add(t.wid + 0.08, 0.2, 0.2, trimMat, 0, 0.42, -t.len / 2 + 0.02);
+  add(t.wid * 0.5, 0.13, 0.06, trimMat, 0, bodyY + 0.02, t.len / 2 - 0.02);                    // grille
   for (const side of [-1, 1]) {
-    add(0.44, 0.16, 0.08, glowMat('#fff6d8'), side * t.wid * 0.32, bodyY + 0.1, t.len / 2 + 0.02);
-    add(0.44, 0.14, 0.08, glowMat('#ff2a2a'), side * t.wid * 0.32, bodyY + 0.1, -t.len / 2 - 0.02);
+    add(0.42, 0.15, 0.1, glowMat('#fff6d8'), side * t.wid * 0.33, bodyY + 0.07, t.len / 2 - 0.05);
+    add(0.42, 0.13, 0.1, glowMat('#ff2a2a'), side * t.wid * 0.33, bodyY + 0.12, -t.len / 2 + 0.03);
+    add(0.06, 0.1, 0.2, trimMat, side * (t.wid * 0.43 + 0.1), g.y1 + 0.1, g.zf - 0.25);          // door mirror
   }
+  if (type === 'sports' || type === 'muscle') {
+    painted.push(add(t.wid * 0.92, 0.06, 0.32, paint, 0, g.y1 + 0.2, -t.len / 2 + 0.24));        // rear wing
+    for (const side of [-1, 1]) add(0.08, 0.2, 0.1, trimMat, side * t.wid * 0.34, g.y1 + 0.1, -t.len / 2 + 0.26);
+  }
+  if (type === 'pickup') add(t.wid * 0.82, 0.04, g.zr + t.len / 2 - 0.25, trimMat, 0, g.y1 + 0.01, (g.zr - t.len / 2) / 2);   // load bed
   const wheels = [];
   for (const wz of [1, -1]) {
     for (const wx of [-1, 1]) {
       const wheel = new T.Mesh(wheelGeo, tireMat);
       wheel.position.set(wx * (t.wid / 2 - 0.1), 0.36, wz * t.len * 0.31);
       wheel.castShadow = true;
+      wheel.add(new T.Mesh(hubGeo, hubMat));
       group.add(wheel);
       wheels.push(wheel);
     }
   }
+  const beam = new T.Mesh(beamPoolGeo, lampGlowMat);     // pool of light on the road after dark
+  beam.position.set(0, 0.07, t.len / 2 + 5.5);
+  group.add(beam);
   group.userData = { painted, wheels, bar: null };
   if (type === 'police') {
-    add(t.wid + 0.03, bodyH * 0.55, t.len * 0.36, mat('#15171c'), 0, bodyY, -0.15);
-    const roofY = cabY + cabH / 2 + 0.12;
-    add(t.wid * 0.62, 0.1, 0.3, mat('#2a2d35'), 0, roofY - 0.02, cabZ);
+    add(t.wid + 0.03, g.bodyH * 0.55, t.len * 0.36, mat('#15171c'), 0, bodyY, -0.15);
+    add(t.wid * 0.62, 0.1, 0.3, mat('#2a2d35'), 0, roofY + 0.1, roofZ);
     group.userData.bar = [
-      add(t.wid * 0.3, 0.16, 0.3, glowMat('#ff2233'), -t.wid * 0.16, roofY + 0.04, cabZ),
-      add(t.wid * 0.3, 0.16, 0.3, glowMat('#2a6bff'), t.wid * 0.16, roofY + 0.04, cabZ),
+      add(t.wid * 0.3, 0.16, 0.3, glowMat('#ff2233'), -t.wid * 0.16, roofY + 0.2, roofZ),
+      add(t.wid * 0.3, 0.16, 0.3, glowMat('#2a6bff'), t.wid * 0.16, roofY + 0.2, roofZ),
     ];
   }
-  if (type === 'taxi') add(0.62, 0.2, 0.3, glowMat('#ffe36b'), 0, cabY + cabH / 2 + 0.16, cabZ);
+  if (type === 'taxi') add(0.62, 0.2, 0.3, glowMat('#ffe36b'), 0, roofY + 0.17, roofZ);
   return group;
 }
 
@@ -602,7 +668,8 @@ function explode(v) {
   v.driver = null;
   v.siren = false;
   v.mesh.traverse((o) => {
-    if (o.isMesh) o.material = wreckMat;
+    if (o.isMesh && o.material === lampGlowMat) o.visible = false;
+    else if (o.isMesh) o.material = wreckMat;
   });
   for (let k = 0; k < 60; k++) {
     puff(v.x, 1, v.z, rand(-9, 9), rand(2, 14), rand(-9, 9), rand(0.5, 1.3), 1, rand(0.3, 0.7), 0.1, 10);
@@ -727,6 +794,7 @@ function enterCar(v) {
   player.mesh.visible = false;
   sfx.door();
   toast('veh', v.t.name);
+  if (v.type === 'taxi' && !mission.active && !cab.on) hint('City Cab: press T to pick up fares.', 5);
   if (radio.station === 0 && !radio.touched) setStation(1);
 }
 

@@ -1,0 +1,51 @@
+{
+  "mode": "pair",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "judges": {
+    "Pega-Vision": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Version 2 offers a significantly richer experience with new systems like property ownership, cab fares, and perks that deepen gameplay, while superior UX features like route guidance and a full map better satisfy the goal of helping a stranger understand what to do immediately.",
+        "Version 1 delivers superior performance (144 fps vs 78 fps) and significantly richer gameplay content (property, cab fares, helicopter, perks) that better satisfies the criteria for variety and player guidance."
+      ]
+    },
+    "Pega-Thinking": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both versions pass all 10 hard gates, but VERSION 2 substantially improves C3 (Things to do) by adding cab fares, property ownership with rent, a police helicopter at 4-5 stars, route guidance, a whole-city map, and a perks system that ties activities together—exactly the 'feed each other' quality the rubric rewards. VERSION 2 also shows thoughtful refinements in C1 (smart hint that only appears if standing still, route chevrons), C4 (money change popups, perks on pause screen, 720p-friendly layout), and C5 (more transparent testing notes), with no regression in C2.",
+        "Both versions pass all 10 hard gates, but VERSION 1 substantially improves the soft criteria: it adds route guidance, a whole-city map, cab fares, property ownership, a police helicopter, four kinds of odd jobs, and perks (C1, C3, C4), while maintaining the same visual style and honesty (C2, C5). VERSION 2 is essentially the earlier look-pass build with fewer activities and less first-minute guidance."
+      ]
+    },
+    "GLM-5.3-Flash": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both versions pass all 10 hard gates and share the same city look (C2 tie), but Version 2 adds cab fares, property, the helicopter, four odd-job types and perks that make activities feed each other (clearly better C3), plus route chevrons and smarter on-foot key hints for the first minute (C1) and a more candid account of limits and failed test runs (C5), with cleaner re-laid menus (C4).",
+        "Both versions pass all 10 gates, but Version 1 (a superset of Version 2's content) directly hits the rubric's top anchors: its cab fares, property, perks, helicopter and route guidance make activities 'feed each other' (C3 10-anchor), and its HUD refinements, clearer first minute and more transparent testing notes give it edges in C1, C4 and C5, while Version 2's look pass is already contained in Version 1."
+      ]
+    }
+  },
+  "votes": {
+    "A": 0,
+    "B": 3,
+    "tie": 0
+  },
+  "quorum": 3,
+  "b_wins": true,
+  "label": "council-judged (3 judges)"
+}

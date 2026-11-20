@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 9.0,
+        "C3": 9.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "Controls listed on Title Screen and repeated as 'Mouse looks...' hint in gameplay (Screenshot 2), violating 'without reading anything twice'.",
+        "C2": "Consistent neon/low-poly style (Screenshot 7), but unique 'Sol Wheel' landmark not visible in the opening shot to establish immediate recognition.",
+        "C3": "Strong loop described (police/respray/jobs), but 'varied' experience in the first 10 minutes relies on short distances and fast completion.",
+        "C4": "HUD is clean and passes overlap gate (G8), but the temporary control hint box adds visual noise during the critical first moments.",
+        "C5": "Fact sheet explicitly lists 'Not covered by the tests' and Title screen states 'not affiliated', meeting all honesty anchors."
+      },
+      "fixes": [
+        "Remove the redundant 'Mouse looks...' control hint in gameplay for players who have already viewed the Title Screen controls.",
+        "Spawn the player closer to the first objective vehicle (currently 135m away) to guarantee the 'finished first job within 60 seconds' anchor is met.",
+        "Orient the starting camera or first job path to include the 'Sol Wheel' landmark immediately, establishing the unique mood in the first screenshot."
+      ],
+      "total": 8.85,
+      "seconds": 96.5
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 8.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen lists controls and settings; first view shows 'Get into the red car ahead [F]' with 'JOB 135 m' marker and bottom hint 'Mouse looks, W A S D moves, P pauses' - a stranger is led from title to a clear first objective without reading twice.",
+        "C2": "Consistent neon-noir style with pink/purple dusk skies, lit windows at night, neon trim, Sol Wheel landmark, and distinct districts (Meridian towers, Sol Beach palms, Rustport industry). However buildings remain relatively simple geometric boxes despite shop fronts and window frames.",
+        "C3": "Six story jobs, harbor courier shift, 15 hidden packages, police with 5 wanted levels, money sinks (respray/repair/ammo/hospital/bail), and 3-stage tune-up shop that improves the driven car. Activities feed each other, but fact sheet notes 'Jobs are passed by script... their difficulty is not measured.'",
+        "C4": "Clean HUD with money/time/health/ammo/wanted stars, minimap with markers, district name, speed and car condition bar. G8 confirms no overlaps at 3 resolutions. Pause menu is well-organized with settings and a map legend explaining markers.",
+        "C5": "Own city and names (G9 passes), title screen states 'six original story jobs and existing saves are unchanged' with not-affiliated disclaimer, and fact sheet plainly states limits: 'Jobs are passed by script... Only tested in Chrome on one Windows laptop; no phone or gamepad controls.'"
+      },
+      "fixes": [
+        "Add more architectural variety beyond uniform boxy buildings - the screenshots show quite repetitive structures even with shop fronts and window frames; varied rooflines, setbacks, signage, and street props would strengthen the city's own identity.",
+        "Playtest the six story jobs with a real driver instead of moving the car between markers by script - the fact sheet admits difficulty is unmeasured, so jobs may be too easy, too hard, or have unclear objectives when actually driven.",
+        "Improve the on-foot player character model - the pink-shirt figure in the first-view screenshot is very simple compared to the detailed cars and buildings; a more detailed character would match the upgraded look pass."
+      ],
+      "total": 8.35,
+      "seconds": 20.8
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 9.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "'Get into the red car ahead [F]' plus 'JOB 135 m' marker; hint box 'Mouse looks, W A S D moves, P pauses.' guides first minute",
+        "C2": "Dusk neon streets, lit windows, light pools at night, Sol Wheel pier; consistent style, but daytime mood is never shown",
+        "C3": "Six story jobs, courier shift, odd jobs, respray/tune-up sinks, 15 packages; interlocking, but job difficulty unmeasured by scripts",
+        "C4": "G8 no overlaps at three sizes; pause legend explains map icons; driving shots read cleanly, though top-right stack is dense",
+        "C5": "'not affiliated' line; 'Not covered by the tests' plainly lists script-passed jobs, one laptop, no gamepad"
+      },
+      "fixes": [
+        "Prove a daytime identity: show and tune day lighting so the city has its own mood beyond dusk and night shots.",
+        "Make landmark content playable, e.g. a reachable pier, since the Sol Wheel is look-only and limits ten-minute variety.",
+        "Hand-test job timers and chase tension; scripts move the car between markers, so real-player difficulty is unverified."
+      ],
+      "total": 8.75,
+      "seconds": 208.0
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.75,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 9.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 1.0,
+    "C2": 1.0,
+    "C3": 1.0,
+    "C4": 1.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.35,
+    8.85
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Remove the redundant 'Mouse looks...' control hint in gameplay for players who have already viewed the Title Screen controls."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Spawn the player closer to the first objective vehicle (currently 135m away) to guarantee the 'finished first job within 60 seconds' anchor is met."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Orient the starting camera or first job path to include the 'Sol Wheel' landmark immediately, establishing the unique mood in the first screenshot."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Add more architectural variety beyond uniform boxy buildings - the screenshots show quite repetitive structures even with shop fronts and window frames; varied rooflines, setbacks, signage, and street props would strengthen the city's own identity."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Playtest the six story jobs with a real driver instead of moving the car between markers by script - the fact sheet admits difficulty is unmeasured, so jobs may be too easy, too hard, or have unclear objectives when actually driven."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Improve the on-foot player character model - the pink-shirt figure in the first-view screenshot is very simple compared to the detailed cars and buildings; a more detailed character would match the upgraded look pass."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Prove a daytime identity: show and tune day lighting so the city has its own mood beyond dusk and night shots."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Make landmark content playable, e.g. a reachable pier, since the Sol Wheel is look-only and limits ten-minute variety."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Hand-test job timers and chase tension; scripts move the car between markers, so real-player difficulty is unverified."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}
