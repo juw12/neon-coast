@@ -264,13 +264,13 @@ SOFTWARE.
           <kbd>Mouse</kbd><span>Look and aim</span>
           <kbd>F</kbd><span>In or out of any car</span>
           <kbd>Space</kbd><span>Jump / handbrake</span>
+          <kbd>Shift</kbd><span>Sprint</span>
           <kbd>M</kbd><span>The whole map</span>
           <kbd>P</kbd><span>Pause (or Esc)</span>
         </div>
         <details class="more">
           <summary>The other eight keys</summary>
           <div class="keys pairs">
-            <kbd>Shift</kbd><span>Sprint</span>
             <kbd>Left click</kbd><span>Shoot or punch</span>
             <kbd>Q</kbd><span>Pistol / fists</span>
             <kbd>H</kbd><span>Horn</span>
@@ -278,13 +278,15 @@ SOFTWARE.
             <kbd>E</kbd><span>Buy or use, on foot</span>
             <kbd>T</kbd><span>Cab fares, in a City Cab</span>
             <kbd>G</kbd><span>Harbor courier shift</span>
+            <kbd>J</kbd><span>Another kind of odd job</span>
           </div>
         </details>
       </div>
     </div>
     <details class="news">
-      <summary><strong>Version 1.3 · Clear Day</strong> — a first job that ends at the Sol Wheel, a wheel you can ride, a lighter screen, a city with its own look by day. What changed, release by release</summary>
+      <summary><strong>Version 1.4 · Skyline</strong> — a roof line for every district, a container quay off Rustport, a first job the police stay out of, odd jobs you pick, three radio stations that sound different. What changed, release by release</summary>
       <ul>
+        <li><strong>1.4 · Skyline</strong> — Roof edges, crowns and fins on the Meridian towers, balconies on the Sol Beach hotels, saw-tooth factory roofs and tanks in Rustport, and a quay with cranes, containers and a freighter off the docks. Until your first job is done the police let you off. After the story, J picks the kind of odd job, and a new one is done on foot. The three radio stations now differ in drums, bass and tune, not only in speed. Smoother edges on Pretty graphics.</li>
         <li><strong>1.3 · Clear Day</strong> — The first job is a short run down the beach road to the Sol Wheel. Ride the wheel for $25: it rests you and marks hidden packages on the map. Stars, pistol and clock leave the screen when they do not matter; perks report their progress as you play. Police heat now shuts the tune-up shop and keeps cab fares out of the car, and a property you own hides you from two stars. By day: murals, an airship, gulls, a warmer sky and sea.</li>
         <li><strong>1.2 · City Lights</strong> — Cab fares in any City Cab (T). Four properties to buy that pay rent. A police helicopter at four stars. Arrows on the road and a line on the map to every target, and the whole map on M. Four perks earned by packages, fares and story jobs. Four kinds of odd job after the story. New look: shop fronts, stepped towers, street trees, detailed cars, moving water, clouds, and glow at night. Existing saves carry over.</li>
         <li><strong>1.1 · Harbor shift</strong> — Three courier stops, a ferry deadline and a saved personal best. Landmarks to steer by, the Tune-up shop.</li>
@@ -804,6 +806,269 @@ function dressBuilding(block, x0, x1, z0, z1, h, roofInset, shops, wallTop) {
   }
 }
 
+// ---------- outlines: a roof line for every district, so the skyline is not a row of plain boxes ----------
+// Everything here is dressing above or outside the walls: nothing to collide with, its own random stream.
+const RO = seeded(2718);
+const trimBoxes = [];             // {x, y, z, sx, sy, sz, color}
+const trimWedges = [];            // {x, y, z, sx, sy, sz, rot, color}: upright side at -x before turning
+const trimDrums = [];             // {x, y, z, r, h, color}
+const tint = (col, k) => new T.Color(Math.min(1, col[0] * k), Math.min(1, col[1] * k), Math.min(1, col[2] * k));
+const TRIM = {
+  white: new T.Color('#f6f0e4'), chimney: new T.Color('#8a5546'), saw: new T.Color('#5d7f86'), glass: new T.Color('#9fd3dc'),
+  tank: new T.Color('#b9b2a2'), wood: new T.Color('#8a5a3c'), concrete: new T.Color('#7d7f86'), crane: new T.Color('#e8b53a'),
+  hull: new T.Color('#27364f'), keel: new T.Color('#a8432f'),
+  deco: ['#ff7fb0', '#3fd6c8', '#ffb347', '#8f9bff'].map((hex) => new T.Color(hex)),
+  crates: ['#c0503c', '#2f7fb8', '#e08a2e', '#3f9f68', '#e5c443', '#7d5aa8', '#d9d4c8', '#1f8f8f'].map((hex) => new T.Color(hex)),
+};
+
+function slab(x0, x1, z0, z1, y, thick, color, over) {
+  trimBoxes.push({ x: (x0 + x1) / 2, y: y + thick / 2, z: (z0 + z1) / 2, sx: x1 - x0 + over * 2, sy: thick, sz: z1 - z0 + over * 2, color });
+}
+
+function shapeBuilding(block, x0, x1, z0, z1, h, waist, step, top, col, mural) {
+  const type = block.type;
+  const w = x1 - x0;
+  const d = z1 - z0;
+  const cx = (x0 + x1) / 2;
+  const cz = (z0 + z1) / 2;
+  const roll = RO();
+  const roll2 = RO();
+  const roll3 = RO();
+  if (type === 'suburb' && h < 15) {
+    // houses: a chimney through the pitched roof
+    if (roll < 0.7) trimBoxes.push({ x: cx + (roll2 - 0.5) * w * 0.4, y: h + 1.9, z: cz + (roll3 - 0.5) * d * 0.4, sx: 1.1, sy: 3.8, sz: 1.1, color: TRIM.chimney });
+    return;
+  }
+  // every flat roof gets an edge that overhangs the wall and throws a shadow line
+  const lip = tint(col, type === 'beach' ? 1.14 : 0.74);
+  const tiered = waist < h;
+  if (tiered) slab(x0, x1, z0, z1, waist, 0.6, lip, 0.45);
+  const s = tiered ? step : 0;
+  slab(x0 + s, x1 - s, z0 + s, z1 - s, h, 0.6, lip, 0.45);
+  let rx0 = x0 + s;
+  let rx1 = x1 - s;
+  let rz0 = z0 + s;
+  let rz1 = z1 - s;
+  let ry = h + 0.6;
+  if (top > h) {
+    rx0 = x0 + 4;
+    rx1 = x1 - 4;
+    rz0 = z0 + 4;
+    rz1 = z1 - 4;
+    ry = top + 0.5;
+    slab(rx0, rx1, rz0, rz1, top, 0.5, lip, 0.35);
+  }
+  const rw = rx1 - rx0;
+  const rd = rz1 - rz0;
+
+  if (type === 'downtown' && h > 42) {
+    if (roll < 0.34) {
+      // a slanted crown
+      const quarter = Math.floor(roll3 * 4);
+      trimWedges.push({ x: (rx0 + rx1) / 2, y: ry, z: (rz0 + rz1) / 2, sx: quarter & 1 ? rd : rw, sy: 5 + roll2 * 9, sz: quarter & 1 ? rw : rd,
+        rot: quarter * Math.PI / 2, color: tint(col, 0.86) });
+    } else if (roll < 0.62) {
+      // a stepped crown: two more tiers
+      for (let k = 1; k <= 2; k++) {
+        const inset = Math.min(rw, rd) * 0.17 * k;
+        slab(rx0 + inset, rx1 - inset, rz0 + inset, rz1 - inset, ry + (k - 1) * 3.4, 3.4, tint(col, 1.04 - k * 0.08), 0);
+      }
+    } else if (roll < 0.86) {
+      // corner fins that run up the upper part and stand over the roof
+      const base = top > h ? h : tiered ? waist : SHOP_H;
+      const fin = tint(col, 1.18);
+      for (const fx of [rx0, rx1]) {
+        for (const fz of [rz0, rz1]) trimBoxes.push({ x: fx, y: (base + ry + 2.6) / 2, z: fz, sx: 1.3, sy: ry + 2.6 - base, sz: 1.3, color: fin });
+      }
+    }
+  } else if (type === 'downtown' && roll < 0.55 && rw > 9 && rd > 9) {
+    // lower blocks: a water tank on legs
+    const tx = rx0 + 3.2 + roll2 * (rw - 6.4);
+    const tz = rz0 + 3.2 + roll3 * (rd - 6.4);
+    trimBoxes.push({ x: tx, y: ry + 0.6, z: tz, sx: 2.2, sy: 1.2, sz: 2.2, color: TRIM.concrete });
+    trimDrums.push({ x: tx, y: ry + 2.8, z: tz, r: 1.8, h: 3.2, color: TRIM.wood });
+  }
+
+  if (type === 'beach') {
+    // hotel balconies: a band under every row of windows, left off where a wall is painted
+    const rows = Math.max(1, Math.round((h - SHOP_H) / 3.5));
+    const floor = (h - SHOP_H) / rows;
+    if (roll < 0.78) {
+      for (let k = 1; k < rows; k++) {
+        const y = SHOP_H + k * floor - 0.15;
+        for (let f = 0; f < 4; f++) {
+          if (mural && mural.f === f && y + 0.9 > mural.y0 && y < mural.y0 + mural.tall) continue;
+          const out = 0.5;
+          if (f < 2) trimBoxes.push({ x: f === 0 ? x0 - out : x1 + out, y: y + 0.45, z: cz, sx: 1, sy: 0.9, sz: d - 1.6, color: TRIM.white });
+          else trimBoxes.push({ x: cx, y: y + 0.45, z: f === 2 ? z0 - out : z1 + out, sx: w - 1.6, sy: 0.9, sz: 1, color: TRIM.white });
+        }
+      }
+    }
+    // a deco fin up one wall and over the roof
+    if (roll2 < 0.6) {
+      let f = Math.floor(roll3 * 4);
+      if (mural && mural.f === f) f ^= 1;
+      const color = TRIM.deco[Math.floor(roll * 97) % TRIM.deco.length];
+      const tall = h + 4.2 - SHOP_H;
+      const slide = (roll - 0.5) * 0.3;
+      if (f < 2) trimBoxes.push({ x: f === 0 ? x0 - 0.7 : x1 + 0.7, y: SHOP_H + tall / 2, z: cz + slide * d, sx: 1.4, sy: tall, sz: 2.6, color });
+      else trimBoxes.push({ x: cx + slide * w, y: SHOP_H + tall / 2, z: f === 2 ? z0 - 0.7 : z1 + 0.7, sx: 2.6, sy: tall, sz: 1.4, color });
+    } else if (rw > 10 && rd > 10) {
+      // or a round penthouse
+      trimDrums.push({ x: cx, y: ry + 1.7, z: cz, r: Math.min(rw, rd) * 0.24, h: 3.4, color: TRIM.white });
+      trimDrums.push({ x: cx, y: ry + 3.55, z: cz, r: Math.min(rw, rd) * 0.28, h: 0.3, color: lip });
+    }
+  }
+
+  if (type === 'industrial') {
+    if (roll < 0.6) {
+      // saw-tooth factory roof: the upright side of each tooth is glass
+      const teeth = Math.max(2, Math.round(w / 9));
+      for (let k = 0; k < teeth; k++) {
+        const tx = x0 + (k + 0.5) * (w / teeth);
+        trimWedges.push({ x: tx, y: ry, z: cz, sx: w / teeth, sy: 3, sz: d - 1.2, rot: 0, color: TRIM.saw });
+        trimBoxes.push({ x: tx - w / teeth / 2 + 0.08, y: ry + 1.5, z: cz, sx: 0.12, sy: 2.4, sz: d - 2.4, color: TRIM.glass });
+      }
+    } else {
+      // storage tanks on the roof
+      const count = 2 + Math.floor(roll2 * 2);
+      const tall = 4 + roll3 * 3;
+      for (let k = 0; k < count; k++) {
+        if (4 + k * 6.4 > w - 4) break;
+        trimDrums.push({ x: x0 + 4 + k * 6.4, y: ry + tall / 2, z: z0 + 4.2 + roll * Math.max(0, d - 8.4), r: 2.6, h: tall, color: k % 2 ? TRIM.tank : tint(col, 1.1) });
+      }
+    }
+  }
+}
+
+function yardTexture() {
+  const c = mkCanvas(256, 256);
+  const g = c.getContext('2d');
+  g.fillStyle = '#4b4a4c';
+  g.fillRect(0, 0, 256, 256);
+  for (let k = 0; k < 900; k++) {
+    g.fillStyle = RO() < 0.5 ? `rgba(0,0,0,${RO() * 0.12})` : `rgba(255,220,180,${RO() * 0.05})`;
+    g.fillRect(RO() * 256, RO() * 256, 2 + RO() * 3, 2 + RO() * 3);
+  }
+  for (let k = 0; k < 7; k++) {
+    // rust and oil
+    const x = RO() * 256;
+    const y = RO() * 256;
+    const stain = g.createRadialGradient(x, y, 2, x, y, 14 + RO() * 22);
+    stain.addColorStop(0, RO() < 0.5 ? 'rgba(150,72,38,0.45)' : 'rgba(18,18,24,0.5)');
+    stain.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = stain;
+    g.fillRect(0, 0, 256, 256);
+  }
+  // concrete joints, then a hazard border round the yard
+  g.strokeStyle = 'rgba(0,0,0,0.28)';
+  g.lineWidth = 1.5;
+  for (let k = 32; k < 256; k += 32) {
+    g.beginPath();
+    g.moveTo(k, 0);
+    g.lineTo(k, 256);
+    g.moveTo(0, k);
+    g.lineTo(256, k);
+    g.stroke();
+  }
+  g.save();
+  g.beginPath();
+  g.rect(0, 0, 256, 256);
+  g.rect(10, 10, 236, 236);
+  g.clip('evenodd');
+  g.fillStyle = '#d9b23c';
+  g.fillRect(0, 0, 256, 256);
+  g.strokeStyle = '#2a2a2e';
+  g.lineWidth = 7;
+  for (let k = -256; k < 512; k += 18) {
+    g.beginPath();
+    g.moveTo(k, 0);
+    g.lineTo(k + 256, 256);
+    g.stroke();
+  }
+  g.restore();
+  return new T.CanvasTexture(c);
+}
+
+function buildOutlines() {
+  // Rustport yards: stained concrete with a hazard border instead of the city's pavement
+  const yardMat = new T.MeshLambertMaterial({ map: yardTexture() });
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      const block = blocks[i][j];
+      if (block.type !== 'industrial') continue;
+      const yard = new T.Mesh(new T.PlaneGeometry(BLOCK - 1, BLOCK - 1), yardMat);
+      yard.rotation.x = -Math.PI / 2;
+      yard.position.set(block.x0 + BLOCK / 2, 0.035, block.z0 + BLOCK / 2);
+      yard.receiveShadow = true;
+      scene.add(yard);
+    }
+  }
+
+  // Rustport quay: containers, gantry cranes and a freighter on the water south of the docks (out of reach)
+  const qx0 = -HALF + 6;
+  const qx1 = roadC(4) - 8;
+  const qz0 = HALF + SHORE - 1;
+  slab(qx0, qx1, qz0, qz0 + 34, -1.2, 1.9, TRIM.concrete, 0);
+  for (let x = qx0 + 9; x < qx1 - 8; x += 13.2) {
+    for (let row = 0; row < 2; row++) {
+      const high = Math.floor(RO() * 4.4);
+      for (let k = 0; k < high; k++) {
+        trimBoxes.push({ x, y: 0.7 + 1.3 + k * 2.62, z: qz0 + 6 + row * 3.4, sx: 12.2, sy: 2.6, sz: 2.5, color: TRIM.crates[Math.floor(RO() * TRIM.crates.length)] });
+      }
+    }
+  }
+  for (const x of [qx0 + 60, qx0 + 150, qx0 + 250]) {
+    for (const lx of [-9, 9]) {
+      for (const lz of [16, 30]) trimBoxes.push({ x: x + lx, y: 0.7 + 17, z: qz0 + lz, sx: 1.5, sy: 34, sz: 1.5, color: TRIM.crane });
+      trimBoxes.push({ x: x + lx, y: 34.5, z: qz0 + 23, sx: 1.5, sy: 1.8, sz: 15.5, color: TRIM.crane });
+    }
+    trimBoxes.push({ x, y: 36.4, z: qz0 + 16, sx: 19.5, sy: 2, sz: 1.6, color: TRIM.crane });
+    trimBoxes.push({ x, y: 36.4, z: qz0 + 30, sx: 19.5, sy: 2, sz: 1.6, color: TRIM.crane });
+    trimBoxes.push({ x, y: 38.2, z: qz0 + 42, sx: 3.2, sy: 2.2, sz: 66, color: TRIM.crane });      // the boom, out over the ship
+    trimBoxes.push({ x, y: 45, z: qz0 + 23, sx: 2, sy: 12, sz: 2, color: TRIM.crane });
+    trimBoxes.push({ x, y: 34.6, z: qz0 + 48 + (x % 7), sx: 4, sy: 3, sz: 4, color: TRIM.white });   // the cab
+  }
+  const shipX = qx0 + 150;
+  const shipZ = qz0 + 50;
+  trimBoxes.push({ x: shipX, y: 1.4, z: shipZ, sx: 150, sy: 5, sz: 19, color: TRIM.hull });
+  trimBoxes.push({ x: shipX, y: -0.9, z: shipZ, sx: 150.4, sy: 1.4, sz: 19.4, color: TRIM.keel });
+  trimBoxes.push({ x: shipX - 62, y: 9.5, z: shipZ, sx: 14, sy: 11, sz: 15, color: TRIM.white });
+  trimBoxes.push({ x: shipX - 64, y: 17.5, z: shipZ, sx: 4, sy: 5, sz: 4, color: TRIM.keel });
+  for (let x = shipX - 46; x < shipX + 68; x += 13.2) {
+    for (let row = -2; row <= 2; row++) {
+      const high = 1 + Math.floor(RO() * 3.2);
+      for (let k = 0; k < high; k++) {
+        trimBoxes.push({ x, y: 3.9 + 1.3 + k * 2.62, z: shipZ + row * 3.2, sx: 12.2, sy: 2.6, sz: 2.6, color: TRIM.crates[Math.floor(RO() * TRIM.crates.length)] });
+      }
+    }
+  }
+
+  const tintable = () => new T.MeshLambertMaterial({ color: '#ffffff' });
+  const boxes = instanced(boxGeo, tintable(), trimBoxes, (o, b) => {
+    o.position.set(b.x, b.y, b.z);
+    o.scale.set(b.sx, b.sy, b.sz);
+  });
+  const wedgeGeo = new T.BufferGeometry();
+  const A = [-0.5, 0, -0.5], B = [-0.5, 0, 0.5], C = [-0.5, 1, 0.5], D = [-0.5, 1, -0.5], E = [0.5, 0, -0.5], F = [0.5, 0, 0.5];
+  wedgeGeo.setAttribute('position', new T.Float32BufferAttribute([].concat(A, B, C, A, C, D, D, C, F, D, F, E, B, F, C, A, D, E), 3));
+  wedgeGeo.computeVertexNormals();
+  const wedges = instanced(wedgeGeo, tintable(), trimWedges, (o, b) => {
+    o.position.set(b.x, b.y, b.z);
+    o.rotation.y = b.rot;
+    o.scale.set(b.sx, b.sy, b.sz);
+  });
+  const drums = instanced(new T.CylinderGeometry(1, 1, 1, 14), tintable(), trimDrums, (o, b) => {
+    o.position.set(b.x, b.y, b.z);
+    o.scale.set(b.r, b.h, b.r);
+  });
+  for (const mesh of [boxes, wedges, drums]) {
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+  }
+  return { boxes: trimBoxes.length, wedges: trimWedges.length, drums: trimDrums.length };
+}
+
 function signTexture(text, hex) {
   const c = mkCanvas(512, 112);
   const g = c.getContext('2d');
@@ -874,13 +1139,16 @@ function buildBlocks() {
         addBox(bx0, bx1, bz0, bz1, 0, waist, col, R, shops);
         if (tiered) addBox(bx0 + step, bx1 - step, bz0 + step, bz1 - step, waist, h, col, RT);
         block.boxes.push({ x0: bx0, x1: bx1, z0: bz0, z1: bz1, h });
+        const muralsBefore = murals.length;
         dressBuilding(block, bx0, bx1, bz0, bz1, h, step, shops, waist);
+        const mural = murals.length > muralsBefore ? murals[murals.length - 1] : null;
         let top = h;
         if (h > 55 && R() < 0.6) {
           top = h + 12 + R() * 28;
           addBox(bx0 + 4, bx1 - 4, bz0 + 4, bz1 - 4, h, top, col);
         }
         if (top > 60) towerTops.push({ x: (bx0 + bx1) / 2, z: (bz0 + bz1) / 2, y: top, w: Math.min(bx1 - bx0, bz1 - bz0) });
+        shapeBuilding(block, bx0, bx1, bz0, bz1, h, waist, step, top, col, mural);
         const chance = block.type === 'downtown' ? 0.5 : block.type === 'beach' ? 0.75 : block.type === 'suburb' ? 0.12 : 0;
         if (R() < chance) neonBand(bx0, bx1, bz0, bz1, waist - 0.7, pickR(NEON));
         if (R() < chance) neonBand(bx0, bx1, bz0, bz1, SHOP_H + 0.1, pickR(NEON));
@@ -1386,6 +1654,7 @@ function buildProps() {
 const landmarks = { wheel: null };
 
 function buildLandmarks() {
+  landmarks.outlines = buildOutlines();
   // hip roofs for the low houses
   const hipGeo = new T.ConeGeometry(1, 1, 4).toNonIndexed();
   hipGeo.rotateY(Math.PI / 4);
@@ -2956,9 +3225,16 @@ const audio = { ctx: null };
 const radio = { station: 0, step: 0, next: 0, touched: false };
 const STATIONS = [
   { name: 'Radio Off' },
-  { name: 'Neon FM 88.1', bpm: 104, root: 45, prog: [0, -4, 3, -2], arp: [0, 7, 12, 7, 3, 7, 12, 15] },
-  { name: 'Coast 98', bpm: 122, root: 43, prog: [0, 5, -3, 2], arp: [0, null, 7, 12, null, 7, 4, null] },
-  { name: 'Low Tide', bpm: 84, root: 41, prog: [0, 3, -2, -5], arp: [12, null, 7, null, 3, null, 7, null] },
+  // synthwave: four on the floor, a driving saw bass, a busy square arpeggio
+  { name: 'Neon FM 88.1', tag: 'synthwave', bpm: 104, root: 45, prog: [0, -4, 3, -2], thirds: [3, 4, 4, 4], arp: [0, 7, 12, 7, 3, 7, 12, 15],
+    kick: [0, 4, 8, 12], snare: [4, 12], bass: 'drive', pad: 'triangle', lead: null, swing: 0 },
+  // beach pop in a major key: off-beat bass and open hats, hand claps, a tune on top
+  { name: 'Coast 98', tag: 'beach pop', bpm: 122, root: 43, prog: [0, 5, -3, 2], thirds: [4, 4, 3, 3], arp: [0, null, 7, 12, null, 7, 4, null],
+    kick: [0, 4, 8, 12], snare: [4, 12], bass: 'offbeat', pad: 'sawtooth', swing: 0,
+    lead: [0, null, 4, null, 7, null, 9, 7, null, 4, null, 2, 4, null, null, null, 0, null, 4, null, 7, null, 12, 9, null, 7, null, 4, 2, null, 0, null] },
+  // slow and warm: half-time drums with a late swing, long bass notes, seventh chords, a few bell notes
+  { name: 'Low Tide', tag: 'late night', bpm: 84, root: 41, prog: [0, 3, -2, -5], thirds: [3, 4, 4, 3], arp: [12, null, null, 7, null, null, 3, null, 10, null, null, 7, null, null, null, null],
+    kick: [0, 10], snare: [8], bass: 'long', pad: 'sine', lead: null, swing: 0.3 },
 ];
 
 function initAudio() {
@@ -2967,7 +3243,18 @@ function initAudio() {
   if (!Ctx) return;
   const ctx = (audio.ctx = new Ctx());
   audio.master = ctx.createGain();
-  audio.master.connect(ctx.destination);
+  // a limiter so a crash, a siren and the radio together cannot clip; the tap lets a test measure what comes out
+  audio.limit = ctx.createDynamicsCompressor();
+  audio.limit.threshold.value = -9;
+  audio.limit.knee.value = 6;
+  audio.limit.ratio.value = 14;
+  audio.limit.attack.value = 0.003;
+  audio.limit.release.value = 0.2;
+  audio.tap = ctx.createAnalyser();
+  audio.tap.fftSize = 2048;
+  audio.master.connect(audio.limit);
+  audio.limit.connect(ctx.destination);
+  audio.limit.connect(audio.tap);
   audio.fx = ctx.createGain();
   audio.fx.gain.value = 0.7;
   audio.fx.connect(audio.master);
@@ -3093,7 +3380,8 @@ function setStation(k) {
   radio.station = k;
   radio.step = 0;
   radio.next = 0;
-  toast('radio', STATIONS[k].name);
+  toast('radio', STATIONS[k].name + (STATIONS[k].tag ? '  ·  ' + STATIONS[k].tag : ''));
+  noiseBurst(0.09, 0.05, 2600, 0, audio.fx, 'bandpass');     // the dial crackles between stations
 }
 
 function updateAudio() {
@@ -3123,15 +3411,40 @@ function updateAudio() {
   while (radio.next < now + 0.2) {
     const step = radio.step++;
     const beat = step & 15;
-    const root = station.root + station.prog[(step >> 4) % station.prog.length];
-    if (beat % 4 === 0) musicKick(radio.next);
-    if (beat === 4 || beat === 12) noiseBurst(0.13, 0.22, 1900, radio.next, audio.music, 'bandpass');
-    if (beat % 2 === 0) noiseBurst(0.04, 0.07, 7000, radio.next, audio.music, 'highpass');
-    if (beat % 2 === 0) musicNote(radio.next, midiHz(root - 12 + (beat % 8 === 6 ? 12 : 0)), stepDur * 1.8, 0.24, 'sawtooth', 520);
+    const bar = (step >> 4) % station.prog.length;
+    const root = station.root + station.prog[bar];
+    const third = station.thirds[bar];
+    const when = radio.next + (beat & 1 ? stepDur * station.swing : 0);
+    // drums
+    if (station.kick.includes(beat)) musicKick(when);
+    if (station.snare.includes(beat)) {
+      noiseBurst(0.13, 0.22, 1900, when, audio.music, 'bandpass');
+      if (station.bass === 'offbeat') noiseBurst(0.1, 0.12, 1200, when + 0.012, audio.music, 'bandpass');   // a clap has two edges
+    }
+    if (station.bass === 'offbeat') {
+      if (beat % 4 === 2) noiseBurst(0.11, 0.09, 8000, when, audio.music, 'highpass');
+      else if (beat % 2 === 0) noiseBurst(0.03, 0.04, 9000, when, audio.music, 'highpass');
+    } else if (station.bass === 'long') {
+      if (beat % 4 === 2 || beat === 15) noiseBurst(0.03, 0.035, 6000, when, audio.music, 'highpass');
+    } else if (beat % 2 === 0) noiseBurst(0.04, 0.07, 7000, when, audio.music, 'highpass');
+    // bass
+    if (station.bass === 'drive' && beat % 2 === 0) musicNote(when, midiHz(root - 12 + (beat % 8 === 6 ? 12 : 0)), stepDur * 1.8, 0.24, 'sawtooth', 520);
+    if (station.bass === 'offbeat' && (beat % 4 === 2 || beat % 8 === 7)) musicNote(when, midiHz(root - 12 + (beat % 8 === 7 ? 7 : 0)), stepDur * 1.5, 0.25, 'sawtooth', 640);
+    if (station.bass === 'long' && (beat === 0 || beat === 10)) musicNote(when, midiHz(root - 12), stepDur * (beat ? 5 : 9), 0.34, 'triangle', 380);
+    // arpeggio (3 and 4 stand for the chord's own third), tune, chords
     const arp = station.arp[beat % station.arp.length];
-    if (arp !== null) musicNote(radio.next, midiHz(root + 12 + arp), stepDur * 1.6, 0.06, 'square', 2300);
+    if (arp !== null) {
+      const note = arp === 3 || arp === 4 ? third : arp === 15 || arp === 16 ? third + 12 : arp;
+      if (station.bass === 'long') musicNote(when, midiHz(root + 24 + note), stepDur * 5, 0.05, 'sine', 4000);
+      else musicNote(when, midiHz(root + 12 + note), stepDur * 1.6, station.lead ? 0.035 : 0.06, 'square', 2300);
+    }
+    if (station.lead) {
+      const tune = station.lead[step % station.lead.length];
+      if (tune !== null) musicNote(when, midiHz(station.root + 24 + tune), stepDur * 2.4, 0.075, 'triangle', 3200);
+    }
     if (beat === 0) {
-      for (const interval of [0, 3, 7]) musicNote(radio.next, midiHz(root + interval), stepDur * 15, 0.035, 'triangle', 1400);
+      const chord = station.bass === 'long' ? [0, third, 7, 10] : [0, third, 7];
+      for (const interval of chord) musicNote(when, midiHz(root + interval), stepDur * 15, station.pad === 'sawtooth' ? 0.018 : 0.035, station.pad, station.pad === 'sawtooth' ? 900 : 1400);
     }
     radio.next += stepDur;
   }
@@ -3237,6 +3550,12 @@ function refreshStars() {
 
 function crime(points) {
   if (state !== 'play' || points <= 0) return;
+  // learner phase: until the first job is done the police look away, so a first minute cannot end in an arrest
+  if (save.mission === 0) {
+    if (!wanted.letOff) hint('The police let that one go. After your first job they will not.', 4.5);
+    wanted.letOff = true;
+    return;
+  }
   wanted.pts = Math.min(20, wanted.pts + points);
   wanted.evade = 0;
   refreshStars();
@@ -3975,15 +4294,29 @@ function dispatch() {
   startMission();
 }
 
-// after the story: four kinds of odd job, taken in turn, one from each contact's line of work
+// after the story: five kinds of odd job, offered in turn; J asks for another kind
+const ODD_KINDS = ['delivery', 'repo', 'dash', 'heat', 'foot'];
 let oddCount = 0;
 function oddJob() {
-  const kind = ['delivery', 'repo', 'dash', 'heat'][oddCount++ % 4];
+  const kind = ODD_KINDS[oddCount++ % ODD_KINDS.length];
   const at = corner(irand(1, 8), irand(1, 8));
+  if (kind === 'foot') {
+    // on foot: four envelopes round one block, against the clock
+    let b = null;
+    while (!b || b.type === 'park') b = blocks[irand(1, 8)][irand(1, 8)];
+    const mx = (b.x0 + b.x1) / 2;
+    const mz = (b.z0 + b.z1) / 2;
+    const stops = [[mx, b.z0 + 2.4], [b.x1 - 2.4, mz], [mx, b.z1 - 2.4], [b.x0 + 2.4, mz]];
+    return {
+      name: 'Paper Round', by: 'Lena', at: blockCorner(b, 0), reward: 550, kind,
+      steps: stops.map((p, k) => ({ t: 'goto', at: p, foot: true, time: k === 0 ? 16 : 0, addTime: k === 0 ? 0 : 11,
+        text: `Envelope ${k + 1} of 4: on foot, round the block  [Shift] sprints` })),
+    };
+  }
   if (kind === 'repo') {
     const type = pick(['sports', 'muscle']);
     return {
-      name: 'Repo Run', by: 'Mo', at, reward: 750, spawn: { type, i: irand(1, 8), j: irand(0, 8) },
+      name: 'Repo Run', by: 'Mo', at, reward: 750, kind, spawn: { type, i: irand(1, 8), j: irand(0, 8) },
       steps: [
         { t: 'car', target: true, wantedAfter: 1, text: 'Take the marked ' + VEHICLE_TYPES[type].name + '. The owner will call it in.' },
         { t: 'goto', at: PLACES.garage, car: true, target: true, text: "Bring it to Mo's Respray in one piece" },
@@ -3996,13 +4329,13 @@ function oddJob() {
     const w = irand(2, 3);
     const h = irand(2, 3);
     return {
-      name: 'Block Dash', by: 'Rico', at: corner(i, j), reward: 500 + (w + h) * 80,
+      name: 'Block Dash', by: 'Rico', at: corner(i, j), reward: 500 + (w + h) * 80, kind,
       steps: [{ t: 'car', text: 'Get in something fast' }].concat(lap([[i + w, j], [i + w, j + h], [i, j + h], [i, j]], 22, 14)),
     };
   }
   if (kind === 'heat') {
     return {
-      name: 'Hot Parcel', by: 'Lena', at, reward: 650,
+      name: 'Hot Parcel', by: 'Lena', at, reward: 650, kind,
       steps: [
         { t: 'goto', at: corner(irand(0, 9), irand(0, 9)), text: 'Collect the parcel. Someone is watching it.' },
         { t: 'lose', stars: 2, text: 'Shake the two-star heat' },
@@ -4014,7 +4347,7 @@ function oddJob() {
   while (manhattan(to, from) < 250) to = corner(irand(0, 9), irand(0, 9));
   const metres = manhattan(to, from);
   return {
-    name: 'Rush Order', by: 'Lena', at, reward: Math.round(metres * 0.9 / 50) * 50 + 200,
+    name: 'Rush Order', by: 'Lena', at, reward: Math.round(metres * 0.9 / 50) * 50 + 200, kind,
     steps: [
       { t: 'goto', at: from, text: 'Pick up the package' },
       { t: 'goto', at: to, time: 30 + metres / 14, text: 'Deliver it before time runs out' },
@@ -4084,6 +4417,23 @@ function cabDuty() {
   cab.streak = 0;
   mission.def = cabFare();
   startMission();
+}
+
+// J: after the story, ask the contacts for another kind of odd job
+function anotherJob() {
+  if (mission.active) {
+    hint('Finish your current job first.');
+    return;
+  }
+  const job = mission.offer;
+  if (save.mission < MISSIONS.length) {
+    hint(`Next job: ${job.name} from ${job.by}, $${job.reward}. Odd jobs open after the story.`, 4.5);
+    return;
+  }
+  offerMission();
+  const next = mission.offer;
+  hint(`${next.name} from ${next.by}, $${next.reward}${next.kind === 'foot' ? ', on foot' : ''}.  [J] another kind`, 5);
+  sfx.cash();
 }
 
 function offerMission() {
@@ -4164,7 +4514,11 @@ function endMission(passed, reason) {
       rehome(rider);
       cab.nextT = 3.4;
     } else {
-      if (save.mission < MISSIONS.length) save.mission++;
+      if (save.mission < MISSIONS.length) {
+        save.mission++;
+        if (save.mission === 1) hint('From now on the police are watching you.', 5);
+        if (save.mission === MISSIONS.length) hint('Story finished. Odd jobs from here: [J] picks the kind.', 7);
+      }
       banner('pass', 'MISSION PASSED', '+$' + pay, 4.5);
     }
     addMoney(pay);
@@ -4227,6 +4581,10 @@ function updateMission(dt) {
     const r = step.car ? 6.5 : 3;
     done = dist2(step.at[0], step.at[1], px, pz) < r * r;
     if (step.car && !player.car) done = false;
+    if (step.foot && player.car) {
+      done = false;
+      setText('objective', 'This job is on foot: leave the car  [F]');
+    } else if (step.foot) setText('objective', step.text);
     if (step.target && player.car !== mission.car) done = false;
     if (step.stop) {
       const distance = Math.round(Math.hypot(step.at[0] - px, step.at[1] - pz));
@@ -4954,13 +5312,34 @@ const blurMat = postMat({ map: { value: null }, dir: { value: new T.Vector2() } 
     c += (texture2D(map, vUv + dir * 3.231).rgb + texture2D(map, vUv - dir * 3.231).rgb) * 0.070;
     gl_FragColor = vec4(c, 1.0);
   }`);
-const mixMat = postMat({ map: { value: null }, glow: { value: null }, strength: { value: 0.5 } }, `
+// the last pass also smooths edges (FXAA) on top of the 4x multisampling of the scene target
+const mixMat = postMat({ map: { value: null }, glow: { value: null }, strength: { value: 0.5 }, px: { value: new T.Vector2() } }, `
   uniform sampler2D map;
   uniform sampler2D glow;
   uniform float strength;
+  uniform vec2 px;
   varying vec2 vUv;
+  const vec3 LUMA = vec3(0.299, 0.587, 0.114);
+  vec3 smoothEdges(vec2 uv) {
+    vec3 m = texture2D(map, uv).rgb;
+    float nw = dot(texture2D(map, uv + vec2(-1.0, -1.0) * px).rgb, LUMA);
+    float ne = dot(texture2D(map, uv + vec2(1.0, -1.0) * px).rgb, LUMA);
+    float sw = dot(texture2D(map, uv + vec2(-1.0, 1.0) * px).rgb, LUMA);
+    float se = dot(texture2D(map, uv + vec2(1.0, 1.0) * px).rgb, LUMA);
+    float lm = dot(m, LUMA);
+    float lo = min(lm, min(min(nw, ne), min(sw, se)));
+    float hi = max(lm, max(max(nw, ne), max(sw, se)));
+    if (hi - lo < max(0.04, hi * 0.11)) return m;
+    vec2 dir = vec2(-((nw + ne) - (sw + se)), (nw + sw) - (ne + se));
+    float reduce = max((nw + ne + sw + se) * 0.03125, 0.0078125);
+    dir = clamp(dir / (min(abs(dir.x), abs(dir.y)) + reduce), -8.0, 8.0) * px;
+    vec3 a = 0.5 * (texture2D(map, uv + dir * (1.0 / 3.0 - 0.5)).rgb + texture2D(map, uv + dir * (2.0 / 3.0 - 0.5)).rgb);
+    vec3 b = a * 0.5 + 0.25 * (texture2D(map, uv - dir * 0.5).rgb + texture2D(map, uv + dir * 0.5).rgb);
+    float lb = dot(b, LUMA);
+    return (lb < lo || lb > hi) ? a : b;
+  }
   void main() {
-    vec3 c = texture2D(map, vUv).rgb + texture2D(glow, vUv).rgb * strength;
+    vec3 c = smoothEdges(vUv) + texture2D(glow, vUv).rgb * strength;
     vec2 q = vUv - 0.5;
     gl_FragColor = vec4(c * (1.0 - dot(q, q) * 0.5), 1.0);
   }`);
@@ -4991,6 +5370,7 @@ function renderFrame() {
     postPass(blurMat, post.b, post.a);
   }
   mixMat.uniforms.glow.value = post.a.texture;
+  mixMat.uniforms.px.value.set(1 / post.full.width, 1 / post.full.height);
   mixMat.uniforms.strength.value = lerp(0.3, 0.95, glowAmount);
   postPass(mixMat, post.full, null);
 }
@@ -5173,7 +5553,7 @@ $('btn-quit').onclick = () => {
 };
 
 // ---------- input ----------
-const GAME_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyF', 'KeyQ', 'KeyR', 'KeyH', 'KeyT', 'KeyE', 'KeyM', 'Tab']);
+const GAME_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyF', 'KeyQ', 'KeyR', 'KeyH', 'KeyT', 'KeyE', 'KeyM', 'KeyJ', 'Tab']);
 window.addEventListener('keydown', (e) => {
   if (state === 'play' && GAME_KEYS.has(e.code)) e.preventDefault();
   if (e.repeat) return;
@@ -5193,6 +5573,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyT') cabDuty();
   if (e.code === 'KeyE') interact();
   if (e.code === 'KeyM') toggleBigMap();
+  if (e.code === 'KeyJ') anotherJob();
   if (e.code === 'KeyH' && player.car) sfx.horn();
   if (e.code === 'KeyP' || e.code === 'Escape') pause();
   if (e.code === 'KeyQ') {
@@ -5264,7 +5645,7 @@ window.NEON = {
   },
   startGame, pause, resume, setWanted, tryEnterExit, playerAttack, crime, hurt, landmarks,
   route, cab, heli, bigMap, PROPERTIES, PERKS, perk, cabDuty, interact, toggleBigMap, addMoney, persist,
-  ride, checkPerks, packageSpots, damageVehicle,
+  ride, checkPerks, packageSpots, damageVehicle, audio, radio, STATIONS, setStation, anotherJob, offerMission, blocks,
   setTime(hours) {
     tod = hours;
   },

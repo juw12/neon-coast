@@ -1,16 +1,29 @@
-"""Real-input drive test: finish the first story job using only key presses.
+"""Real-input drive test: finish a story job using only key presses.
 
-Nothing is teleported and no game function is called. The script reads the game
-state (position, heading, the route the game itself draws, people and cars close
-by) and answers with the same keys a player has: W A S D and F. It brakes for
-whoever is in its lane. It walks to the red car, gets in, drives
-to the yellow job beam, then to the Sol Wheel pier, and passes when the save file
-records the job as done.
+Nothing is teleported and no game function is called while it plays. The script
+reads the game state (position, heading, the route the game itself draws, people
+and cars close by) and answers with the same keys a player has: W A S D and F.
+It brakes for whoever is in its lane (not while the police are chasing it). It
+walks to a car, gets in, drives to the yellow job beam, follows every step of the
+job, and passes when the save file records the job as done.
+
+Jobs it can play (version 1.4):
+    1  First Wheels    new game, red car, Sol Wheel pier
+    2  Hot Delivery    pick up in Meridian, deliver to Rustport inside 80 s
+    4  Borrowed Time   steal the marked car (two stars), bring it to the respray
+
+For jobs 2 and 4 the save file is first set to "job N-1 done" and Continue is
+pressed, which is the one thing that is set up rather than played. A failed try
+(timer out, arrested, taken out) is not hidden: the game offers the job again, the
+script tries again inside the same time limit, and the result lists the tries it took
+("tries") and how often it was arrested or taken out ("downs").
+The races (jobs 3 and 6) and the three-star escape (job 5) are not covered.
 
 Traffic is random, so one run is one sample: run it a few times before trusting it.
 
-    python test/drive.py            # one run; prints a JSON result, exit code 0 on pass
-    python test/drive.py 5          # five runs, exit code 0 only when all five pass
+    python test/drive.py            # one run of job 1; prints a JSON result, exit code 0 on pass
+    python test/drive.py 5          # five runs of job 1, exit code 0 only when all five pass
+    python test/drive.py 3 2        # three runs of job 2 (result in test/drive-result-job2.json)
 """
 import json
 import math
@@ -23,19 +36,29 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parent.parent
 LANE = 3.2
 TIME_LIMIT = 240.0
+# cruise speed on a straight / in a bend (m/s), and the time allowed for the whole run
+JOBS = {
+    1: {"name": "First Wheels", "straight": 15.0, "bend": 7.5, "limit": 240.0},
+    2: {"name": "Hot Delivery", "straight": 19.0, "bend": 8.0, "limit": 300.0},
+    4: {"name": "Borrowed Time", "straight": 19.0, "bend": 8.0, "limit": 420.0},
+}
 
 STATE_JS = """() => {
   const n = NEON, p = n.player, c = p.car;
-  const starter = n.vehicles.filter(v => v.type === 'muscle' && !v.dead && v.driver !== 'ai')
+  // the car to walk to: the red starter car on a new game, otherwise the nearest parked one
+  const starter = n.vehicles.filter(v => (n.save.mission > 0 || v.type === 'muscle') && !v.dead && v.driver !== 'ai')
     .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
+  const step = n.mission.active ? n.mission.def.steps[n.mission.step] : null;
+  const marked = step && step.t === 'car' && step.target && n.mission.car && c !== n.mission.car ? n.mission.car : null;
   return {
     state: n.state, x: p.x, z: p.z, yaw: n.cam.yaw, hp: p.hp, stars: n.wanted.stars,
     car: c ? { x: c.x, z: c.z, h: c.h, vx: c.vx, vz: c.vz, hp: c.hp, max: c.t.hp } : null,
     starter: starter ? [starter.x, starter.z] : null,
+    marked: marked ? [marked.x, marked.z] : null,
     route: n.route.points, blip: n.mission.blip, active: n.mission.active,
     // what a driver sees: people and other cars close by
-    near: c ? n.peds.filter(q => q.state !== 'down' && Math.hypot(q.x - c.x, q.z - c.z) < 32).map(q => [q.x, q.z])
-      .concat(n.vehicles.filter(v => v !== c && Math.hypot(v.x - c.x, v.z - c.z) < 32).map(v => [v.x, v.z])) : [],
+    people: c ? n.peds.filter(q => q.state !== 'down' && Math.hypot(q.x - c.x, q.z - c.z) < 32).map(q => [q.x, q.z]) : [],
+    cars: c ? n.vehicles.filter(v => v !== c && Math.hypot(v.x - c.x, v.z - c.z) < 32).map(v => [v.x, v.z]) : [],
     job: n.mission.active ? n.mission.def.name : '', step: n.mission.step, done: n.save.mission,
     money: n.save.money,
   };
@@ -67,11 +90,12 @@ def aim_point(state, ahead):
 
 
 def blocked_ahead(state, speed):
-    """True when a person or a car is in the lane ahead, inside the distance needed to stop."""
+    """True when a person or a car is in the lane ahead, inside the distance needed to stop.
+    With the police behind it still stops for people, but no longer queues behind cars."""
     car = state["car"]
     fx, fz = math.sin(car["h"]), math.cos(car["h"])
     reach = 7.0 + speed * 1.1
-    for x, z in state["near"]:
+    for x, z in state["people"] + (state["cars"] if state["stars"] == 0 else []):
         dx, dz = x - car["x"], z - car["z"]
         ahead = dx * fx + dz * fz
         across = abs(dx * fz - dz * fx)
@@ -96,8 +120,11 @@ class Keys:
         self.down = wanted
 
 
-def run():
-    result = {"passed": False, "phase": "start", "seconds": 0, "reverses": 0, "yields": 0, "max_stars": 0}
+def run(job=1):
+    plan = JOBS[job]
+    result = {"job": job, "name": plan["name"], "passed": False, "phase": "start", "seconds": 0, "tries": 0,
+              "downs": 0,
+              "reverses": 0, "yields": 0, "max_stars": 0}
     problems = []
     with sync_playwright() as pw:
         browser = pw.chromium.launch(channel="chrome", headless=True, args=[
@@ -107,9 +134,20 @@ def run():
         page.on("console", lambda m: problems.append(f"{m.type}: {m.text}") if m.type == "error" else None)
         page.goto((ROOT / "NeonCoast.html").as_uri())
         page.wait_for_timeout(1200)
-        page.click("#btn-new")
+        if job > 1:
+            # the one thing that is set up, not played: a save file with the earlier jobs done
+            page.evaluate("() => NEON.persist()")
+            key = page.evaluate("() => Object.keys(localStorage).find(k => /neon/i.test(k))")
+            page.evaluate("([k, v]) => localStorage.setItem(k, JSON.stringify(v))", [key, {"money": 200, "mission": job - 1}])
+            page.reload()
+            page.wait_for_timeout(1200)
+            page.click("#btn-continue")
+        else:
+            page.click("#btn-new")
         page.wait_for_timeout(1000)
         keys = Keys(page)
+        was_active = False
+        down = False
         started = time.time()
         stuck_since = None
         waiting_since = None
@@ -117,15 +155,27 @@ def run():
         reverse_until = 0.0
         reverse_keys = []
         start_money = None
-        while time.time() - started < TIME_LIMIT:
+        while time.time() - started < plan["limit"]:
             s = page.evaluate(STATE_JS)
             now = time.time()
             if start_money is None:
                 start_money = s["money"]
             result["max_stars"] = max(result["max_stars"], s["stars"])
-            if s["done"] >= 1:
+            if s["active"] and not was_active:
+                result["tries"] += 1
+            was_active = s["active"]
+            if s["done"] >= job:
                 result["passed"] = True
                 break
+            if s["state"] == "dead":
+                # arrested or taken out: the game puts the player back on foot after a few seconds
+                if not down:
+                    result["downs"] += 1
+                down = True
+                keys.hold([])
+                page.wait_for_timeout(200)
+                continue
+            down = False
             if s["state"] != "play":
                 result["phase"] = "stopped: game state " + s["state"]
                 break
@@ -133,9 +183,9 @@ def run():
             if not car:
                 # on foot: walk to the driver's side of the red car, then F
                 result["phase"] = "walking to the car"
-                if not s["starter"]:
+                if not (s["marked"] or s["starter"]):
                     break
-                tx, tz = s["starter"]
+                tx, tz = s["marked"] or s["starter"]
                 dx, dz = tx - s["x"], tz - s["z"]
                 gap = math.hypot(dx, dz)
                 if gap < 3.2:
@@ -165,6 +215,17 @@ def run():
                 page.wait_for_timeout(100)
                 continue
             speed = math.hypot(car["vx"], car["vz"])
+            if s["marked"] and math.hypot(s["marked"][0] - car["x"], s["marked"][1] - car["z"]) < 11:
+                # the job wants another car: stop short of it and get out
+                result["phase"] = "changing to the marked car"
+                if speed > 1.2:
+                    keys.hold(["Space"])
+                    page.wait_for_timeout(45)
+                else:
+                    keys.hold([])
+                    page.keyboard.press("f")
+                    page.wait_for_timeout(350)
+                continue
             error = wrap(math.atan2(target[0] - car["x"], target[1] - car["z"]) - car["h"])
             if now < reverse_until:
                 keys.hold(reverse_keys)
@@ -184,7 +245,7 @@ def run():
             far = aim_point(s, 30.0)
             bend = abs(wrap(math.atan2(far[0] - car["x"], far[1] - car["z"]) - car["h"]))
             to_go = math.hypot(s["blip"][0] - car["x"], s["blip"][1] - car["z"])
-            cruise = 15.0 if bend < 0.25 else 7.5
+            cruise = plan["straight"] if bend < 0.25 else plan["bend"]
             if to_go < 26:
                 cruise = 6.0                  # the last stretch crosses a pavement: go gently
             # brake for whoever is in the way, the way a careful driver would; give up waiting after 5 s
@@ -228,21 +289,25 @@ def run():
         shots = ROOT / "test" / "shots"
         shots.mkdir(parents=True, exist_ok=True)
         page.wait_for_timeout(600)
-        page.screenshot(path=str(shots / "drive-end.png"))
+        page.screenshot(path=str(shots / ("drive-end.png" if job == 1 else f"drive-end-job{job}.png")))
         browser.close()
     return result
 
 
 if __name__ == "__main__":
     runs = int(sys.argv[1]) if len(sys.argv) > 1 else 1
-    samples = [run() for _ in range(runs)]
+    job = int(sys.argv[2]) if len(sys.argv) > 2 else 1
+    samples = [run(job) for _ in range(runs)]
     summary = {
+        "job": job,
+        "name": JOBS[job]["name"],
         "runs": runs,
         "passed": sum(1 for sample in samples if sample["passed"]),
         "seconds": [sample["seconds"] for sample in samples],
         "samples": samples,
     }
-    (ROOT / "test" / "drive-result.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    name = "drive-result.json" if job == 1 else f"drive-result-job{job}.json"
+    (ROOT / "test" / name).write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2))
     clean = all(not sample["console_errors"] for sample in samples)
     sys.exit(0 if summary["passed"] == runs and clean else 1)

@@ -473,6 +473,269 @@ function dressBuilding(block, x0, x1, z0, z1, h, roofInset, shops, wallTop) {
   }
 }
 
+// ---------- outlines: a roof line for every district, so the skyline is not a row of plain boxes ----------
+// Everything here is dressing above or outside the walls: nothing to collide with, its own random stream.
+const RO = seeded(2718);
+const trimBoxes = [];             // {x, y, z, sx, sy, sz, color}
+const trimWedges = [];            // {x, y, z, sx, sy, sz, rot, color}: upright side at -x before turning
+const trimDrums = [];             // {x, y, z, r, h, color}
+const tint = (col, k) => new T.Color(Math.min(1, col[0] * k), Math.min(1, col[1] * k), Math.min(1, col[2] * k));
+const TRIM = {
+  white: new T.Color('#f6f0e4'), chimney: new T.Color('#8a5546'), saw: new T.Color('#5d7f86'), glass: new T.Color('#9fd3dc'),
+  tank: new T.Color('#b9b2a2'), wood: new T.Color('#8a5a3c'), concrete: new T.Color('#7d7f86'), crane: new T.Color('#e8b53a'),
+  hull: new T.Color('#27364f'), keel: new T.Color('#a8432f'),
+  deco: ['#ff7fb0', '#3fd6c8', '#ffb347', '#8f9bff'].map((hex) => new T.Color(hex)),
+  crates: ['#c0503c', '#2f7fb8', '#e08a2e', '#3f9f68', '#e5c443', '#7d5aa8', '#d9d4c8', '#1f8f8f'].map((hex) => new T.Color(hex)),
+};
+
+function slab(x0, x1, z0, z1, y, thick, color, over) {
+  trimBoxes.push({ x: (x0 + x1) / 2, y: y + thick / 2, z: (z0 + z1) / 2, sx: x1 - x0 + over * 2, sy: thick, sz: z1 - z0 + over * 2, color });
+}
+
+function shapeBuilding(block, x0, x1, z0, z1, h, waist, step, top, col, mural) {
+  const type = block.type;
+  const w = x1 - x0;
+  const d = z1 - z0;
+  const cx = (x0 + x1) / 2;
+  const cz = (z0 + z1) / 2;
+  const roll = RO();
+  const roll2 = RO();
+  const roll3 = RO();
+  if (type === 'suburb' && h < 15) {
+    // houses: a chimney through the pitched roof
+    if (roll < 0.7) trimBoxes.push({ x: cx + (roll2 - 0.5) * w * 0.4, y: h + 1.9, z: cz + (roll3 - 0.5) * d * 0.4, sx: 1.1, sy: 3.8, sz: 1.1, color: TRIM.chimney });
+    return;
+  }
+  // every flat roof gets an edge that overhangs the wall and throws a shadow line
+  const lip = tint(col, type === 'beach' ? 1.14 : 0.74);
+  const tiered = waist < h;
+  if (tiered) slab(x0, x1, z0, z1, waist, 0.6, lip, 0.45);
+  const s = tiered ? step : 0;
+  slab(x0 + s, x1 - s, z0 + s, z1 - s, h, 0.6, lip, 0.45);
+  let rx0 = x0 + s;
+  let rx1 = x1 - s;
+  let rz0 = z0 + s;
+  let rz1 = z1 - s;
+  let ry = h + 0.6;
+  if (top > h) {
+    rx0 = x0 + 4;
+    rx1 = x1 - 4;
+    rz0 = z0 + 4;
+    rz1 = z1 - 4;
+    ry = top + 0.5;
+    slab(rx0, rx1, rz0, rz1, top, 0.5, lip, 0.35);
+  }
+  const rw = rx1 - rx0;
+  const rd = rz1 - rz0;
+
+  if (type === 'downtown' && h > 42) {
+    if (roll < 0.34) {
+      // a slanted crown
+      const quarter = Math.floor(roll3 * 4);
+      trimWedges.push({ x: (rx0 + rx1) / 2, y: ry, z: (rz0 + rz1) / 2, sx: quarter & 1 ? rd : rw, sy: 5 + roll2 * 9, sz: quarter & 1 ? rw : rd,
+        rot: quarter * Math.PI / 2, color: tint(col, 0.86) });
+    } else if (roll < 0.62) {
+      // a stepped crown: two more tiers
+      for (let k = 1; k <= 2; k++) {
+        const inset = Math.min(rw, rd) * 0.17 * k;
+        slab(rx0 + inset, rx1 - inset, rz0 + inset, rz1 - inset, ry + (k - 1) * 3.4, 3.4, tint(col, 1.04 - k * 0.08), 0);
+      }
+    } else if (roll < 0.86) {
+      // corner fins that run up the upper part and stand over the roof
+      const base = top > h ? h : tiered ? waist : SHOP_H;
+      const fin = tint(col, 1.18);
+      for (const fx of [rx0, rx1]) {
+        for (const fz of [rz0, rz1]) trimBoxes.push({ x: fx, y: (base + ry + 2.6) / 2, z: fz, sx: 1.3, sy: ry + 2.6 - base, sz: 1.3, color: fin });
+      }
+    }
+  } else if (type === 'downtown' && roll < 0.55 && rw > 9 && rd > 9) {
+    // lower blocks: a water tank on legs
+    const tx = rx0 + 3.2 + roll2 * (rw - 6.4);
+    const tz = rz0 + 3.2 + roll3 * (rd - 6.4);
+    trimBoxes.push({ x: tx, y: ry + 0.6, z: tz, sx: 2.2, sy: 1.2, sz: 2.2, color: TRIM.concrete });
+    trimDrums.push({ x: tx, y: ry + 2.8, z: tz, r: 1.8, h: 3.2, color: TRIM.wood });
+  }
+
+  if (type === 'beach') {
+    // hotel balconies: a band under every row of windows, left off where a wall is painted
+    const rows = Math.max(1, Math.round((h - SHOP_H) / 3.5));
+    const floor = (h - SHOP_H) / rows;
+    if (roll < 0.78) {
+      for (let k = 1; k < rows; k++) {
+        const y = SHOP_H + k * floor - 0.15;
+        for (let f = 0; f < 4; f++) {
+          if (mural && mural.f === f && y + 0.9 > mural.y0 && y < mural.y0 + mural.tall) continue;
+          const out = 0.5;
+          if (f < 2) trimBoxes.push({ x: f === 0 ? x0 - out : x1 + out, y: y + 0.45, z: cz, sx: 1, sy: 0.9, sz: d - 1.6, color: TRIM.white });
+          else trimBoxes.push({ x: cx, y: y + 0.45, z: f === 2 ? z0 - out : z1 + out, sx: w - 1.6, sy: 0.9, sz: 1, color: TRIM.white });
+        }
+      }
+    }
+    // a deco fin up one wall and over the roof
+    if (roll2 < 0.6) {
+      let f = Math.floor(roll3 * 4);
+      if (mural && mural.f === f) f ^= 1;
+      const color = TRIM.deco[Math.floor(roll * 97) % TRIM.deco.length];
+      const tall = h + 4.2 - SHOP_H;
+      const slide = (roll - 0.5) * 0.3;
+      if (f < 2) trimBoxes.push({ x: f === 0 ? x0 - 0.7 : x1 + 0.7, y: SHOP_H + tall / 2, z: cz + slide * d, sx: 1.4, sy: tall, sz: 2.6, color });
+      else trimBoxes.push({ x: cx + slide * w, y: SHOP_H + tall / 2, z: f === 2 ? z0 - 0.7 : z1 + 0.7, sx: 2.6, sy: tall, sz: 1.4, color });
+    } else if (rw > 10 && rd > 10) {
+      // or a round penthouse
+      trimDrums.push({ x: cx, y: ry + 1.7, z: cz, r: Math.min(rw, rd) * 0.24, h: 3.4, color: TRIM.white });
+      trimDrums.push({ x: cx, y: ry + 3.55, z: cz, r: Math.min(rw, rd) * 0.28, h: 0.3, color: lip });
+    }
+  }
+
+  if (type === 'industrial') {
+    if (roll < 0.6) {
+      // saw-tooth factory roof: the upright side of each tooth is glass
+      const teeth = Math.max(2, Math.round(w / 9));
+      for (let k = 0; k < teeth; k++) {
+        const tx = x0 + (k + 0.5) * (w / teeth);
+        trimWedges.push({ x: tx, y: ry, z: cz, sx: w / teeth, sy: 3, sz: d - 1.2, rot: 0, color: TRIM.saw });
+        trimBoxes.push({ x: tx - w / teeth / 2 + 0.08, y: ry + 1.5, z: cz, sx: 0.12, sy: 2.4, sz: d - 2.4, color: TRIM.glass });
+      }
+    } else {
+      // storage tanks on the roof
+      const count = 2 + Math.floor(roll2 * 2);
+      const tall = 4 + roll3 * 3;
+      for (let k = 0; k < count; k++) {
+        if (4 + k * 6.4 > w - 4) break;
+        trimDrums.push({ x: x0 + 4 + k * 6.4, y: ry + tall / 2, z: z0 + 4.2 + roll * Math.max(0, d - 8.4), r: 2.6, h: tall, color: k % 2 ? TRIM.tank : tint(col, 1.1) });
+      }
+    }
+  }
+}
+
+function yardTexture() {
+  const c = mkCanvas(256, 256);
+  const g = c.getContext('2d');
+  g.fillStyle = '#4b4a4c';
+  g.fillRect(0, 0, 256, 256);
+  for (let k = 0; k < 900; k++) {
+    g.fillStyle = RO() < 0.5 ? `rgba(0,0,0,${RO() * 0.12})` : `rgba(255,220,180,${RO() * 0.05})`;
+    g.fillRect(RO() * 256, RO() * 256, 2 + RO() * 3, 2 + RO() * 3);
+  }
+  for (let k = 0; k < 7; k++) {
+    // rust and oil
+    const x = RO() * 256;
+    const y = RO() * 256;
+    const stain = g.createRadialGradient(x, y, 2, x, y, 14 + RO() * 22);
+    stain.addColorStop(0, RO() < 0.5 ? 'rgba(150,72,38,0.45)' : 'rgba(18,18,24,0.5)');
+    stain.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = stain;
+    g.fillRect(0, 0, 256, 256);
+  }
+  // concrete joints, then a hazard border round the yard
+  g.strokeStyle = 'rgba(0,0,0,0.28)';
+  g.lineWidth = 1.5;
+  for (let k = 32; k < 256; k += 32) {
+    g.beginPath();
+    g.moveTo(k, 0);
+    g.lineTo(k, 256);
+    g.moveTo(0, k);
+    g.lineTo(256, k);
+    g.stroke();
+  }
+  g.save();
+  g.beginPath();
+  g.rect(0, 0, 256, 256);
+  g.rect(10, 10, 236, 236);
+  g.clip('evenodd');
+  g.fillStyle = '#d9b23c';
+  g.fillRect(0, 0, 256, 256);
+  g.strokeStyle = '#2a2a2e';
+  g.lineWidth = 7;
+  for (let k = -256; k < 512; k += 18) {
+    g.beginPath();
+    g.moveTo(k, 0);
+    g.lineTo(k + 256, 256);
+    g.stroke();
+  }
+  g.restore();
+  return new T.CanvasTexture(c);
+}
+
+function buildOutlines() {
+  // Rustport yards: stained concrete with a hazard border instead of the city's pavement
+  const yardMat = new T.MeshLambertMaterial({ map: yardTexture() });
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      const block = blocks[i][j];
+      if (block.type !== 'industrial') continue;
+      const yard = new T.Mesh(new T.PlaneGeometry(BLOCK - 1, BLOCK - 1), yardMat);
+      yard.rotation.x = -Math.PI / 2;
+      yard.position.set(block.x0 + BLOCK / 2, 0.035, block.z0 + BLOCK / 2);
+      yard.receiveShadow = true;
+      scene.add(yard);
+    }
+  }
+
+  // Rustport quay: containers, gantry cranes and a freighter on the water south of the docks (out of reach)
+  const qx0 = -HALF + 6;
+  const qx1 = roadC(4) - 8;
+  const qz0 = HALF + SHORE - 1;
+  slab(qx0, qx1, qz0, qz0 + 34, -1.2, 1.9, TRIM.concrete, 0);
+  for (let x = qx0 + 9; x < qx1 - 8; x += 13.2) {
+    for (let row = 0; row < 2; row++) {
+      const high = Math.floor(RO() * 4.4);
+      for (let k = 0; k < high; k++) {
+        trimBoxes.push({ x, y: 0.7 + 1.3 + k * 2.62, z: qz0 + 6 + row * 3.4, sx: 12.2, sy: 2.6, sz: 2.5, color: TRIM.crates[Math.floor(RO() * TRIM.crates.length)] });
+      }
+    }
+  }
+  for (const x of [qx0 + 60, qx0 + 150, qx0 + 250]) {
+    for (const lx of [-9, 9]) {
+      for (const lz of [16, 30]) trimBoxes.push({ x: x + lx, y: 0.7 + 17, z: qz0 + lz, sx: 1.5, sy: 34, sz: 1.5, color: TRIM.crane });
+      trimBoxes.push({ x: x + lx, y: 34.5, z: qz0 + 23, sx: 1.5, sy: 1.8, sz: 15.5, color: TRIM.crane });
+    }
+    trimBoxes.push({ x, y: 36.4, z: qz0 + 16, sx: 19.5, sy: 2, sz: 1.6, color: TRIM.crane });
+    trimBoxes.push({ x, y: 36.4, z: qz0 + 30, sx: 19.5, sy: 2, sz: 1.6, color: TRIM.crane });
+    trimBoxes.push({ x, y: 38.2, z: qz0 + 42, sx: 3.2, sy: 2.2, sz: 66, color: TRIM.crane });      // the boom, out over the ship
+    trimBoxes.push({ x, y: 45, z: qz0 + 23, sx: 2, sy: 12, sz: 2, color: TRIM.crane });
+    trimBoxes.push({ x, y: 34.6, z: qz0 + 48 + (x % 7), sx: 4, sy: 3, sz: 4, color: TRIM.white });   // the cab
+  }
+  const shipX = qx0 + 150;
+  const shipZ = qz0 + 50;
+  trimBoxes.push({ x: shipX, y: 1.4, z: shipZ, sx: 150, sy: 5, sz: 19, color: TRIM.hull });
+  trimBoxes.push({ x: shipX, y: -0.9, z: shipZ, sx: 150.4, sy: 1.4, sz: 19.4, color: TRIM.keel });
+  trimBoxes.push({ x: shipX - 62, y: 9.5, z: shipZ, sx: 14, sy: 11, sz: 15, color: TRIM.white });
+  trimBoxes.push({ x: shipX - 64, y: 17.5, z: shipZ, sx: 4, sy: 5, sz: 4, color: TRIM.keel });
+  for (let x = shipX - 46; x < shipX + 68; x += 13.2) {
+    for (let row = -2; row <= 2; row++) {
+      const high = 1 + Math.floor(RO() * 3.2);
+      for (let k = 0; k < high; k++) {
+        trimBoxes.push({ x, y: 3.9 + 1.3 + k * 2.62, z: shipZ + row * 3.2, sx: 12.2, sy: 2.6, sz: 2.6, color: TRIM.crates[Math.floor(RO() * TRIM.crates.length)] });
+      }
+    }
+  }
+
+  const tintable = () => new T.MeshLambertMaterial({ color: '#ffffff' });
+  const boxes = instanced(boxGeo, tintable(), trimBoxes, (o, b) => {
+    o.position.set(b.x, b.y, b.z);
+    o.scale.set(b.sx, b.sy, b.sz);
+  });
+  const wedgeGeo = new T.BufferGeometry();
+  const A = [-0.5, 0, -0.5], B = [-0.5, 0, 0.5], C = [-0.5, 1, 0.5], D = [-0.5, 1, -0.5], E = [0.5, 0, -0.5], F = [0.5, 0, 0.5];
+  wedgeGeo.setAttribute('position', new T.Float32BufferAttribute([].concat(A, B, C, A, C, D, D, C, F, D, F, E, B, F, C, A, D, E), 3));
+  wedgeGeo.computeVertexNormals();
+  const wedges = instanced(wedgeGeo, tintable(), trimWedges, (o, b) => {
+    o.position.set(b.x, b.y, b.z);
+    o.rotation.y = b.rot;
+    o.scale.set(b.sx, b.sy, b.sz);
+  });
+  const drums = instanced(new T.CylinderGeometry(1, 1, 1, 14), tintable(), trimDrums, (o, b) => {
+    o.position.set(b.x, b.y, b.z);
+    o.scale.set(b.r, b.h, b.r);
+  });
+  for (const mesh of [boxes, wedges, drums]) {
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+  }
+  return { boxes: trimBoxes.length, wedges: trimWedges.length, drums: trimDrums.length };
+}
+
 function signTexture(text, hex) {
   const c = mkCanvas(512, 112);
   const g = c.getContext('2d');
@@ -543,13 +806,16 @@ function buildBlocks() {
         addBox(bx0, bx1, bz0, bz1, 0, waist, col, R, shops);
         if (tiered) addBox(bx0 + step, bx1 - step, bz0 + step, bz1 - step, waist, h, col, RT);
         block.boxes.push({ x0: bx0, x1: bx1, z0: bz0, z1: bz1, h });
+        const muralsBefore = murals.length;
         dressBuilding(block, bx0, bx1, bz0, bz1, h, step, shops, waist);
+        const mural = murals.length > muralsBefore ? murals[murals.length - 1] : null;
         let top = h;
         if (h > 55 && R() < 0.6) {
           top = h + 12 + R() * 28;
           addBox(bx0 + 4, bx1 - 4, bz0 + 4, bz1 - 4, h, top, col);
         }
         if (top > 60) towerTops.push({ x: (bx0 + bx1) / 2, z: (bz0 + bz1) / 2, y: top, w: Math.min(bx1 - bx0, bz1 - bz0) });
+        shapeBuilding(block, bx0, bx1, bz0, bz1, h, waist, step, top, col, mural);
         const chance = block.type === 'downtown' ? 0.5 : block.type === 'beach' ? 0.75 : block.type === 'suburb' ? 0.12 : 0;
         if (R() < chance) neonBand(bx0, bx1, bz0, bz1, waist - 0.7, pickR(NEON));
         if (R() < chance) neonBand(bx0, bx1, bz0, bz1, SHOP_H + 0.1, pickR(NEON));
@@ -1055,6 +1321,7 @@ function buildProps() {
 const landmarks = { wheel: null };
 
 function buildLandmarks() {
+  landmarks.outlines = buildOutlines();
   // hip roofs for the low houses
   const hipGeo = new T.ConeGeometry(1, 1, 4).toNonIndexed();
   hipGeo.rotateY(Math.PI / 4);
