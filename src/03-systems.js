@@ -319,13 +319,13 @@ const hudCache = {};
 function setText(id, value) {
   if (hudCache[id] === value) return;
   hudCache[id] = value;
-  $(id).textContent = value;
+  $(id).textContent = id === 'objective' || id === 'bigmap-note' ? say(value) : value;
 }
 
 const toastTimers = {};
 function toast(id, text, secs) {
   const el = $(id);
-  el.textContent = text;
+  el.textContent = say(text);
   el.classList.add('show');
   clearTimeout(toastTimers[id]);
   toastTimers[id] = setTimeout(() => el.classList.remove('show'), (secs || 3) * 1000);
@@ -336,7 +336,7 @@ function banner(kind, title, sub, secs) {
   const el = $('banner');
   el.className = 'show ' + kind;
   el.querySelector('b').textContent = title;
-  el.querySelector('span').textContent = sub || '';
+  el.querySelector('span').textContent = say(sub || '');
   clearTimeout(toastTimers.banner);
   toastTimers.banner = setTimeout(() => (el.className = ''), (secs || 4) * 1000);
 }

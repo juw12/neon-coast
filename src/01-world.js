@@ -84,6 +84,8 @@ const peds = [];
 const pickups = [];
 const markers = [];
 const keys = {};
+// touch play: stick x is right, stick y is forward, both -1..1 (see part 3b)
+const touch = { on: false, sx: 0, sy: 0, run: false };
 let state = 'title';              // title | play | paused | dead
 let tod = 17.4;                   // time of day in hours
 const cam = { yaw: Math.PI, pitch: -0.2, dist: 6, shake: 0, lastMouse: 0 };
@@ -1608,7 +1610,7 @@ const sky = new T.Mesh(
     side: T.BackSide,
     depthWrite: false,
     fog: false,
-    uniforms: { top: { value: new T.Color() }, bot: { value: new T.Color() } },
+    uniforms: { top: { value: new T.Color() }, bot: { value: new T.Color() }, solid: { value: 1 } },
     vertexShader: `
       varying float h;
       void main() {
@@ -1618,9 +1620,12 @@ const sky = new T.Mesh(
     fragmentShader: `
       uniform vec3 top;
       uniform vec3 bot;
+      uniform float solid;
       varying float h;
       void main() {
-        gl_FragColor = vec4(mix(bot, top, smoothstep(0.0, 0.5, h)), 0.0);   // alpha 0: the glow pass leaves the sky alone
+        // alpha 0 under the glow pass, which then leaves the sky alone. Drawn straight to the page (Fast
+        // graphics) the sky must be solid: Safari shows a colour with no alpha as black
+        gl_FragColor = vec4(mix(bot, top, smoothstep(0.0, 0.5, h)), solid);
       }`,
   })
 );

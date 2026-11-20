@@ -14,10 +14,59 @@
 An original single-player 3D island sandbox in one HTML file: steal cars, run jobs, drive a cab, buy
 property, outrun the police. Not a Rockstar product or mod; no Grand Theft Auto installation or assets needed.
 
-Open NeonCoast.html in Chrome or Edge on a desktop with WebGL. No server, network, installer or account
+On a phone or tablet, open the [play link](https://juw12.github.io/neon-coast/) in Safari or Chrome: the
+game switches to touch controls by itself, landscape or upright (see [On a phone](#on-a-phone-or-tablet)).
+
+On a desktop, open NeonCoast.html in Chrome or Edge with WebGL. No server, network, installer or account
 needed. Choose New Game or Continue. Walk up to a car and press F. Drive with WASD; Space is the handbrake.
 Follow the arrows on the road to the yellow J marker for the first of six jobs. Press M for the whole map
 and P to pause. Progress is stored in your browser, so use the same browser and file location to resume.
+
+## Version 1.5 · Pocket
+
+- **Touch controls.** A thumb stick on the left walks and steers; GAS, BRAKE, HAND BRAKE and the rest sit
+  under the right thumb. Drag anywhere else to look around. The buttons change with what you are doing:
+  on foot, in a car, on the Sol Wheel.
+- **Landscape or upright.** The screen rearranges itself for both. Landscape shows more road; upright
+  widens the lens so the street still fits.
+- **An icon on the home screen.** From the web address the game can be installed: it then opens full
+  screen and plays with no network.
+- **A sky on Safari.** On Fast graphics Safari drew the sky black. Fixed.
+- Keyboard and mouse play exactly as before, and NeonCoast.html is still one file that runs on its own.
+
+## On a phone or tablet
+
+Open <https://juw12.github.io/neon-coast/> in Safari (iPhone, iPad) or Chrome (Android).
+
+| On its side | Upright |
+|---|---|
+| ![Driving with the phone on its side: stick on the left, pedals on the right](docs/phone-landscape.jpg) | <img src="docs/phone-upright.jpg" alt="The same drive with the phone upright" width="230"> |
+
+| Control | What it does |
+|---|---|
+| Left thumb, lower left | A stick appears under it. Walk, or steer the car. Push it right out to sprint |
+| Drag the view | Look and aim |
+| CAR / EXIT | In or out of any car |
+| GAS, BRAKE, HAND BRAKE | Drive. BRAKE at a standstill reverses |
+| FIRE / PUNCH, SWAP | Shoot or punch; slide the thumb on FIRE to aim. SWAP changes pistol and fists |
+| JUMP, HORN, RADIO | As named |
+| USE, CAB | Appear when they apply: in a property or Sol Wheel ring, in a City Cab |
+| The round map | Tap for the whole island, tap again to close |
+| II | Pause. The pause screen also starts the harbor courier shift and picks another odd job |
+
+**Install it.** iPhone or iPad: Share, then *Add to Home Screen*. Android: browser menu, then *Install app*
+or *Add to Home screen*. The icon opens the game full screen, and after that first visit it plays offline.
+On an iPhone this is the only way to get rid of Safari's bars; on Android the game also goes full screen
+by itself when you start.
+
+**Good to know.** A phone starts on Fast graphics; Pretty is in the settings if yours can take it. On an
+iPhone the ring/silent switch also silences the game. Progress is stored per browser, so Safari and the
+home-screen icon each keep their own save. A laptop with a touch screen switches to touch controls at the
+first finger; adding `?touch=1` to the address shows the phone layout with a mouse, `?touch=0` keeps
+it off.
+
+The phone files are `manifest.webmanifest`, `sw.js` and `icons/` (drawn by `tools/make_icons.py`). They
+are only asked for on a web address; the single HTML file opened from disk asks for nothing.
 
 ## Version 1.4 · Skyline
 
@@ -114,13 +163,21 @@ Needs Python with Playwright and Chrome. Run from this folder after `python buil
   script was arrested or taken out three times and ran out of its seven minutes. Traffic is random, so
   results vary.
 
+- `python test/touch.py` - touch play in Chrome emulating a phone at four screen sizes, landscape and
+  upright, with real touch events (two fingers where two thumbs are needed): every button, the stick, the
+  look drag, the map, pause, the Sol Wheel; nothing overlapping or off screen; every hint naming a button
+  and not a key; the desktop page unchanged; the manifest, icons and an offline reload from a local web
+  server; and, if Playwright's WebKit is installed (`playwright install webkit`), a run on Safari's engine.
+
 - `python test/fps_ab.py NeonCoast.html other-build.html` - frame rate of two builds measured in turn, for
   when the PC is busy and the frame-rate gate reads low.
 
 Apart from those three driven jobs, jobs are passed by script (the car or the player is moved between
 markers), so the tests do not measure how hard the two races, the three-star getaway, the odd jobs, the
-cab fares or the courier shift are for a person. Tested in Chrome on one Windows laptop; no phone or gamepad
-controls. No real players have tried it yet; the scores in `hone/refine_log.md` come from AI judges reading
+cab fares or the courier shift are for a person. Tested in Chrome on one Windows laptop and one Mac. The
+touch controls were tested in Chrome's phone emulation and Playwright's WebKit on a Mac, not yet on a real
+iPhone or Android phone, so frame rate and feel in the hand are unknown. No gamepad controls. No real
+players have tried it yet; the scores in `hone/refine_log.md` come from AI judges reading
 a fact sheet and screenshots. `hone/rubric.md` holds the scoring rubric.
 
 ## Edit and rebuild

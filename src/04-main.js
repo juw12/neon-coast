@@ -7,6 +7,7 @@ let deadKind = 'wasted';
 let popT = 0;
 let frameNo = 0;
 let titleAngle = 0.6;
+const view = { fov: 62 };        // the lens at rest; resize() widens it on an upright screen
 
 // ---------- keeping the streets busy around the player ----------
 function updatePopulation(dt) {
@@ -130,8 +131,8 @@ function updateCamera(dt) {
     const a = -Math.PI / 2 + (1 - ride.t / RIDE_SECS) * Math.PI * 2;
     camera.position.set(w.x - 3.2, w.y + Math.sin(a) * 25 + 1.2, w.z + Math.cos(a) * 25);
     camera.lookAt(w.x - 420, 16, w.z - 60);
-    if (Math.abs(camera.fov - 62) > 0.05) {
-      camera.fov = 62;
+    if (Math.abs(camera.fov - view.fov) > 0.05) {
+      camera.fov = view.fov;
       camera.updateProjectionMatrix();
     }
     return;
@@ -144,6 +145,12 @@ function updateCamera(dt) {
   if (car && performance.now() - cam.lastMouse > 1400 && car.vf > 2.5) {
     cam.yaw += wrapPi(car.h - cam.yaw) * Math.min(1, dt * 2.8);
     cam.pitch += (-0.2 - cam.pitch) * Math.min(1, dt * 1.5);
+  }
+  if (!car && touch.on && player.speed > 0 && performance.now() - cam.lastMouse > 1200) {
+    // one thumb walks and no mouse turns the view, so the camera swings round behind the player
+    // (not when they walk towards it: that would spin the view half a turn)
+    const turn = wrapPi(player.h - cam.yaw);
+    if (Math.abs(turn) < 2.2) cam.yaw += turn * Math.min(1, dt * 1.3);
   }
   const cp = Math.cos(cam.pitch);
   const dx = Math.sin(cam.yaw) * cp;
@@ -170,7 +177,7 @@ function updateCamera(dt) {
   const jy = (Math.random() - 0.5) * cam.shake;
   camera.position.set(ox - dx * cam.dist + jx, Math.max(0.5, ty - dy * cam.dist + jy), oz - dz * cam.dist);
   camera.lookAt(ox + dx * 10, ty + dy * 10, oz + dz * 10);
-  const fov = 62 + Math.min(14, speed * 0.3);
+  const fov = view.fov + Math.min(14, speed * 0.3);
   if (Math.abs(fov - camera.fov) > 0.05) {
     camera.fov = lerp(camera.fov, fov, Math.min(1, dt * 3));
     camera.updateProjectionMatrix();
@@ -335,8 +342,15 @@ function renderFrame() {
 function resize() {
   renderer.setSize(window.innerWidth, window.innerHeight, false);
   camera.aspect = window.innerWidth / window.innerHeight;
+  // upright phone: keep about 50 degrees of road across the screen, up to an 88 degree lens
+  const lens = clamp(T.MathUtils.radToDeg(2 * Math.atan(Math.tan(T.MathUtils.degToRad(25)) / camera.aspect)), 62, 88);
+  if (lens !== view.fov) {
+    view.fov = lens;
+    camera.fov = lens;
+  }
   camera.updateProjectionMatrix();
   post.on = !!save.quality;
+  sky.material.uniforms.solid.value = post.on ? 0 : 1;
   if (!post.on) return;
   const size = renderer.getDrawingBufferSize(new T.Vector2());
   const w = Math.max(4, Math.ceil(size.x / 4));
@@ -353,7 +367,8 @@ function resize() {
 }
 
 function applySettings() {
-  renderer.setPixelRatio(save.quality ? Math.min(window.devicePixelRatio || 1, 2) : 1);
+  // Fast on a phone: 1.5 pixels per point, or the dense screen shows every stair-step
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, save.quality ? 2 : touch.on ? 1.5 : 1));
   renderer.shadowMap.enabled = !!save.quality;
   sun.castShadow = !!save.quality;
   resize();
@@ -385,6 +400,8 @@ function renderSettings() {
     }
   }
   $('btn-end-shift').hidden = !(mission.active && mission.def === FERRY);
+  $('btn-shift').hidden = mission.active;
+  $('btn-oddjob').hidden = mission.active || save.mission < MISSIONS.length;
   const jobs = Math.min(save.mission, MISSIONS.length) + ' / ' + MISSIONS.length;
   const have = PROPERTIES.filter(owned).length;
   $('progress').textContent = 'Time ' + clockText() + '     Jobs ' + jobs + '     Packages ' + save.packages.length + ' / ' + packageSpots.length + '     Cash $' + save.money + (save.ferryRuns ? `     Ferry shifts ${save.ferryRuns} · best ${save.ferryBest}s` : '')
@@ -410,13 +427,15 @@ function showScreen(id) {
   $('title').classList.toggle('hidden', id !== 'title');
   $('pause').classList.toggle('hidden', id !== 'pause');
   $('hud').classList.toggle('hidden', id === 'title');
+  document.body.classList.toggle('paused', id === 'pause');   // a phone has no room for the HUD behind the pause screen
 }
 
 function refreshLockHint() {
-  $('lockhint').classList.toggle('show', state === 'play' && document.pointerLockElement !== canvas);
+  $('lockhint').classList.toggle('show', state === 'play' && !touch.on && document.pointerLockElement !== canvas);
 }
 
 function lockPointer() {
+  if (touch.on) return;            // a finger drags the view instead
   try {
     const request = canvas.requestPointerLock();
     if (request && request.catch) request.catch(() => {});
@@ -453,6 +472,7 @@ function startGame(fresh) {
   state = 'play';
   showScreen(null);
   lockPointer();
+  goFullscreen();
   Object.assign(intro, { on: save.mission === 0, idle: 0, shown: false });
   if (!intro.on) hint('Welcome back. M shows the whole map.', 5);
 }
@@ -497,6 +517,14 @@ $('btn-end-shift').onclick = () => {
   resume();
 };
 $('btn-resume').onclick = resume;
+$('btn-shift').onclick = () => {
+  resume();
+  dispatch();
+};
+$('btn-oddjob').onclick = () => {
+  resume();
+  anotherJob();
+};
 $('btn-restart').onclick = () => {
   state = 'paused';
   resetSession();
@@ -511,36 +539,40 @@ $('btn-quit').onclick = () => {
 
 // ---------- input ----------
 const GAME_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'KeyF', 'KeyQ', 'KeyR', 'KeyH', 'KeyT', 'KeyE', 'KeyM', 'KeyJ', 'Tab']);
-window.addEventListener('keydown', (e) => {
-  if (state === 'play' && GAME_KEYS.has(e.code)) e.preventDefault();
-  if (e.repeat) return;
-  keys[e.code] = true;
-  if (state === 'paused' && (e.code === 'KeyP' || e.code === 'Escape')) {
+// what one press of a key does; the touch buttons (part 3b) call this with the same codes
+function keyAction(code) {
+  if (state === 'paused' && (code === 'KeyP' || code === 'Escape')) {
     resume();
     return;
   }
   if (state !== 'play') return;
   if (ride.t > 0) {
-    if (e.code === 'KeyF' || e.code === 'KeyE' || e.code === 'Enter') endRide();
-    else if (e.code === 'KeyP' || e.code === 'Escape') pause();
+    if (code === 'KeyF' || code === 'KeyE' || code === 'Enter') endRide();
+    else if (code === 'KeyP' || code === 'Escape') pause();
     return;
   }
-  if (e.code === 'KeyF' || e.code === 'Enter') tryEnterExit();
-  if (e.code === 'KeyG') dispatch();
-  if (e.code === 'KeyT') cabDuty();
-  if (e.code === 'KeyE') interact();
-  if (e.code === 'KeyM') toggleBigMap();
-  if (e.code === 'KeyJ') anotherJob();
-  if (e.code === 'KeyH' && player.car) sfx.horn();
-  if (e.code === 'KeyP' || e.code === 'Escape') pause();
-  if (e.code === 'KeyQ') {
+  if (code === 'KeyF' || code === 'Enter') tryEnterExit();
+  if (code === 'KeyG') dispatch();
+  if (code === 'KeyT') cabDuty();
+  if (code === 'KeyE') interact();
+  if (code === 'KeyM') toggleBigMap();
+  if (code === 'KeyJ') anotherJob();
+  if (code === 'KeyH' && player.car) sfx.horn();
+  if (code === 'KeyP' || code === 'Escape') pause();
+  if (code === 'KeyQ') {
     player.gun = !player.gun;
     hint(player.gun ? 'Pistol drawn' : 'Fists');
   }
-  if (e.code === 'KeyR' && player.car) {
+  if (code === 'KeyR' && player.car) {
     radio.touched = true;
     setStation((radio.station + 1) % STATIONS.length);
   }
+}
+window.addEventListener('keydown', (e) => {
+  if (state === 'play' && GAME_KEYS.has(e.code)) e.preventDefault();
+  if (e.repeat) return;
+  keys[e.code] = true;
+  keyAction(e.code);
 });
 window.addEventListener('keyup', (e) => {
   keys[e.code] = false;
@@ -556,7 +588,7 @@ document.addEventListener('mousemove', (e) => {
   cam.lastMouse = performance.now();
 });
 canvas.addEventListener('mousedown', (e) => {
-  if (state !== 'play') return;
+  if (state !== 'play' || touch.on) return;
   if (document.pointerLockElement !== canvas) {
     lockPointer();
     return;
@@ -577,6 +609,7 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('resize', resize);
 
 // ---------- go ----------
+gameReady = true;
 applySettings();
 renderSettings();
 resetSession();
@@ -589,6 +622,7 @@ function frame(now) {
   lastTime = now;
   frameNo++;
   if ((frameNo & 15) === 0) refreshLockHint();
+  refreshPad();
   if (state !== 'paused') update(state === 'dead' ? realDt * 0.4 : realDt, realDt);
   renderFrame();
 }
@@ -603,6 +637,7 @@ window.NEON = {
   startGame, pause, resume, setWanted, tryEnterExit, playerAttack, crime, hurt, landmarks,
   route, cab, heli, bigMap, PROPERTIES, PERKS, perk, cabDuty, interact, toggleBigMap, addMoney, persist,
   ride, checkPerks, packageSpots, damageVehicle, audio, radio, STATIONS, setStation, anotherJob, offerMission, blocks,
+  touch, say, keyAction, setTouchMode, view,
   setTime(hours) {
     tod = hours;
   },
