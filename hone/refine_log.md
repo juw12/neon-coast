@@ -5,11 +5,11 @@
 - [x] 1. Freeze rubric v1 (`hone/rubric.md`)
 - [x] 2. Write the gate checker `test/gates.py` (G1-G10) without touching the game
 - [x] 3. Baseline v0: gates + council score
-- [ ] 4. Loop rounds (max 5): fix failed gates first, then the council's top fixes
-- [ ] 5. Sync GitHub: new public repo `juw12/neon-coast`, MIT, GitHub Pages so it plays from a link
-- [ ] 6. Sync profile README `juw12/juw12` (game section)
-- [ ] 7. Sync portfolio card (juwenlie.pages.dev)
-- [ ] 8. Sync landing page (juw12.github.io/p/neon-coast/)
+- [~] 4. Loop rounds (max 5) - rounds 1 and 2 kept, rounds 3-5 not run (see stop line): fix failed gates first, then the council's top fixes
+- [x] 5. Sync GitHub: new public repo `juw12/neon-coast`, MIT, GitHub Pages so it plays from a link
+- [x] 6. Sync profile README `juw12/juw12` (game section)
+- [x] 7. Sync portfolio card (juwenlie.pages.dev)
+- [x] 8. Sync landing page (juw12.github.io/p/neon-coast/)
 - [ ] 9. Sync Obsidian: project note + Update Log, vault pushed
 - [ ] 10. `P --log`, lessons, final message
 
@@ -39,3 +39,29 @@
 | 1 (v1) | new start spot, first-job guidance, waypoint arrow, shop signs, pause legend | 10/10 | 7.85 | 3-0 | kept | +0.90 |
 | 2 (v2) | landmarks (Sol Wheel, Meridian Spire, masts, smokestacks, pitched roofs), Tune-up shop, no start banner, shorter legend | 10/10 (22 checks) | 8.35 | 3-0 | kept | +0.50; judged set grew by 2 screenshots (job running, Sol Wheel) |
 | merge | v2 merged with the harbor courier release (1.1) that another session shipped to `juw12/neon-coast` from the v0 code; 3 small conflicts (save fields) | 10/10 (22 checks) + `test/harbor.py` passes | not rescored (8.35 is v2 before the merge) | - | shipped by PR | both features kept |
+
+stop: session budget. Best is v2 at 8.35 (rubric v1, council of 3), below the done score of 8.5, no plateau yet.
+The remaining budget went to merging with the 1.1 harbor release from the parallel session and to the sync.
+
+## Sync (2026-11-20 15:44)
+
+- GitHub: `juw12/neon-coast` already existed (made by the parallel session at 15:32 with the v0 code plus the
+  harbor courier shift). v2 went in by PR #2 (squash dafc8ae), favicon fix by PR #3 (squash 945c37e).
+  Live https://juw12.github.io/neon-coast/ serves the merged build (checked: Sol Wheel, Tune-up place, ferry
+  button, six jobs present; console clean after PR #3).
+- Profile README, portfolio card, landing page: all three were added by the parallel session
+  (profile b1faee7, catalog juw12/projects 120651a, site 998ccd6) and are live. Left unchanged: their text is
+  still true for the merged build. The landing page is a hand-made page outside the landing skill's state
+  (`L status` lists it as NEW), so it was not rebuilt.
+- Obsidian: project note and Update Log written by this run.
+
+## Handoff
+
+- Done: rubric v1, gate checker, baseline, rounds 1-2 (6.95 -> 7.85 -> 8.35), merge with release 1.1,
+  PRs #2 and #3 merged, live site verified, Obsidian notes.
+- In progress: nothing.
+- Left: loop rounds 3-5. The council's open fixes: more varied building silhouettes at street level (C2),
+  a job-difficulty check that is not a teleport (C3), label the health bar and the clock (C4).
+- Next command: in a fresh chat, `/hone neon-coast` with the clone of `juw12/neon-coast`; rubric and log are in
+  `hone/`, run `python test/gates.py` and `python test/harbor.py` before judging. Rescore the merged build
+  first (8.35 is v2 before the harbor merge).
