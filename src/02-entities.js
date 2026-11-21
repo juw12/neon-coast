@@ -587,7 +587,7 @@ function updateVehicle(v, dt) {
   } else if (v.driver === 'player') {
     if (state === 'play') {
       throttle = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
-      steer = (keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0);
+      steer = clamp((keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0) - touch.sx, -1, 1);
       handbrake = !!keys.Space;
     }
   } else {
@@ -873,14 +873,14 @@ function tryEnterExit() {
 
 // ---------- player on foot ----------
 function updatePlayerOnFoot(dt) {
-  const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
-  const s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
+  const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) + touch.sy;
+  const s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + touch.sx;
   let mx = Math.sin(cam.yaw) * f - Math.cos(cam.yaw) * s;
   let mz = Math.cos(cam.yaw) * f + Math.sin(cam.yaw) * s;
   const len = Math.hypot(mx, mz);
   player.speed = 0;
   if (len > 0) {
-    player.speed = keys.ShiftLeft || keys.ShiftRight ? 7.6 : 4.3;
+    player.speed = keys.ShiftLeft || keys.ShiftRight || touch.run ? 7.6 : 4.3;
     mx /= len;
     mz /= len;
     player.h += wrapPi(Math.atan2(mx, mz) - player.h) * Math.min(1, dt * 12);

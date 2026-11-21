@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 THREE_URL = "https://unpkg.com/three@0.149.0/build/three.min.js"
 THREE_FILE = ROOT / "vendor" / "three.min.js"
-PARTS = ["01-world.js", "02-entities.js", "03-systems.js", "04-main.js"]
+PARTS = ["01-world.js", "02-entities.js", "03-systems.js", "03b-touch.js", "04-main.js"]
 
 
 def main():
@@ -23,7 +23,9 @@ def main():
     page = (ROOT / "src" / "template.html").read_text(encoding="utf-8")
     page = page.replace("/*__THREE__*/", three).replace("/*__GAME__*/", game)
     out = ROOT / "NeonCoast.html"
-    out.write_text(page, encoding="utf-8")
+    # the same bytes whichever system builds it: the file has had Windows line ends since 1.0
+    with open(out, "w", encoding="utf-8", newline="\r\n") as handle:
+        handle.write(page)
     print(f"{out}  {out.stat().st_size / 1024:.0f} KB, game code {len(game.splitlines())} lines")
 
 
