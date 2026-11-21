@@ -696,6 +696,7 @@ function playerAttack() {
   }
   player.ammo--;
   player.fireT = 0.2;
+  if (touch.on) aimAssist();      // a thumb cannot aim like a mouse
   const cp = Math.cos(cam.pitch);
   const dx = Math.sin(cam.yaw) * cp;
   const dy = Math.sin(cam.pitch);

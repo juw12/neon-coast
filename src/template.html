@@ -275,7 +275,19 @@ SOFTWARE.
   .tb.act { border-color: var(--gold); }
   .tb.sys { width: 40px; height: 40px; top: calc(8px + var(--st)); right: calc(10px + var(--sr)); bottom: auto; font-size: 15px;
     letter-spacing: 2px; padding-left: 2px; }
-  #pad:not(.car) .in-car, #pad:not(.foot) .on-foot, #pad:not(.ride) .on-ride, #pad.ride #stick, .tb.ctx:not(.on) { display: none; }
+  #pad:not(.car) .in-car, #pad:not(.foot) .on-foot, #pad:not(.ride) .on-ride, #pad.ride #stick, .tb.ctx:not(.on),
+  #pad:not(.arrows) .tb.arrow, #pad.arrows #stick { display: none; }
+  .tb.arrow { left: calc(var(--l) * var(--u) + var(--sl)); right: auto; }
+  .tb.arrow::before { content: ''; border: calc(3.4 * var(--u)) solid transparent; }
+  .tb.arrow.go-left::before { border-right-color: #fff; margin-left: calc(-3.4 * var(--u)); }
+  .tb.arrow.go-right::before { border-left-color: #fff; margin-right: calc(-3.4 * var(--u)); }
+  .tb.near:not(.on) { opacity: .45; }
+  @media (orientation: landscape) { #pad.arrows ~ #hud #hint { left: calc(53 * var(--u) + var(--sl)); } }
+  @media (orientation: portrait) {
+    .tb.arrow { width: calc(17 * var(--u)); height: calc(17 * var(--u)); }
+    .tb.arrow.go-left { left: calc(3 * var(--u) + var(--sl)); }
+    .tb.arrow.go-right { left: calc(23 * var(--u) + var(--sl)); }
+  }
 
   /* menus on a small screen */
   body.touch .panel { max-height: 100%; padding: calc(10px + var(--st)) calc(8px + var(--sr)) calc(12px + var(--sb)) calc(8px + var(--sl));
@@ -306,6 +318,8 @@ SOFTWARE.
 <div id="pad" class="for-touch hidden">
   <div id="stick"><i></i></div>
   <div class="tb sys" data-tap="KeyP" aria-label="Pause">II</div>
+  <div class="tb in-car arrow go-left" data-hold="KeyA" aria-label="Steer left" style="--s:21;--l:4;--b:8"></div>
+  <div class="tb in-car arrow go-right" data-hold="KeyD" aria-label="Steer right" style="--s:21;--l:28;--b:8"></div>
   <div class="tb go in-car" data-hold="KeyW" style="--s:22;--r:4;--b:6">GAS</div>
   <div class="tb stop in-car" data-hold="KeyS" style="--s:19;--r:29;--b:3">BRAKE</div>
   <div class="tb in-car" data-hold="Space" style="--s:15;--r:27;--b:25">HAND<br>BRAKE</div>
@@ -316,7 +330,7 @@ SOFTWARE.
   <div class="tb act in-car ctx" id="tb-cab" data-tap="KeyT" style="--s:13;--r:37;--b:43">CAB</div>
   <div class="tb stop on-foot" id="tb-fire" data-fire style="--s:22;--r:4;--b:6">FIRE</div>
   <div class="tb on-foot" data-hold="Space" style="--s:17;--r:29;--b:3">JUMP</div>
-  <div class="tb act on-foot" data-tap="KeyF" style="--s:15;--r:27;--b:23">CAR</div>
+  <div class="tb act on-foot near" id="tb-car" data-tap="KeyF" style="--s:15;--r:27;--b:23">CAR</div>
   <div class="tb on-foot" data-tap="KeyQ" style="--s:12;--r:5;--b:31">SWAP</div>
   <div class="tb act on-foot ctx" id="tb-use" data-tap="KeyE" style="--s:15;--r:22;--b:41">USE</div>
   <div class="tb act on-ride" data-tap="KeyF" style="--s:20;--r:6;--b:8">GET<br>OFF</div>
@@ -391,11 +405,11 @@ SOFTWARE.
       <div class="card">
         <h2>HOW TO PLAY</h2>
         <div class="keys touchkeys for-touch">
-          <kbd>Left thumb</kbd><span>Walk, or steer the car. Push it right out to sprint</span>
+          <kbd>Left thumb</kbd><span>Walk, or steer the car. Push it right out to sprint. Settings can give the car two arrows instead</span>
           <kbd>Drag the view</kbd><span>Look and aim</span>
           <kbd>CAR / EXIT</kbd><span>In or out of any car</span>
           <kbd>GAS · BRAKE</kbd><span>Drive. BRAKE at a standstill reverses</span>
-          <kbd>FIRE</kbd><span>Shoot or punch. Slide the thumb on it to aim. SWAP changes pistol and fists</span>
+          <kbd>FIRE</kbd><span>Shoot or punch. Shots find a target near the crosshair; slide the thumb on FIRE to aim yourself. SWAP changes pistol and fists</span>
           <kbd>Round map</kbd><span>Tap it for the whole island</span>
           <kbd>II</kbd><span>Pause: settings, courier shift, odd jobs</span>
         </div>
@@ -425,9 +439,10 @@ SOFTWARE.
       </div>
     </div>
     <details class="news">
-      <summary><strong>Version 1.6 · Tail Lights</strong> — a new odd job with no clock: follow a car without being noticed. The first job now starts 40 m from where you stand. What changed, release by release</summary>
+      <summary><strong>Version 1.7 · Tail Lights</strong> — a new odd job with no clock: follow a car without being noticed. The first job now starts 40 m from where you stand. What changed, release by release</summary>
       <ul>
-        <li><strong>1.6 · Tail Lights</strong> — Shadow Run, a sixth odd job with no clock and no marker: stay 12 to 60 m behind a pink car for 40 seconds. The first job beam stands in the red car's own lane, 40 m ahead. Paper Round says ON FOOT on its beam and waits until you leave the car. Ten seconds of head start when you take the marked car in Borrowed Time. While you lose the police in a job, the road arrows lead to Mo's Respray. The shore in front of the Rustport quay is a dock apron with a lane, a crane rail and bollards. On a phone the buttons are more see-through, so the road shows behind them.</li>
+        <li><strong>1.7 · Tail Lights</strong> — Shadow Run, a sixth odd job with no clock and no marker: stay 12 to 60 m behind a pink car for 40 seconds. The first job beam stands in the red car's own lane, 40 m ahead. Paper Round says ON FOOT on its beam and waits until you leave the car. Ten seconds of head start when you take the marked car in Borrowed Time. While you lose the police in a job, the road arrows lead to Mo's Respray. The shore in front of the Rustport quay is a dock apron with a lane, a crane rail and bollards. On a phone the buttons are more see-through, so the road shows behind them.</li>
+        <li><strong>1.6 · Sharp</strong> — Graphics has a third choice, Auto, and a phone starts on it: twice the drawn pixels of 1.5, the neon glow, and shadows when the frame rate allows. It measures as you play, gives up shadows first and sharpness last, and takes back what it gave up when the phone is smooth again. On a touch screen each shot turns onto a target near the crosshair, the CAR button lights up when a car is in reach, and Settings can swap the steering stick for two arrows.</li>
         <li><strong>1.5 · Pocket</strong> — Touch controls for phones and tablets: a thumb stick to walk and steer, GAS and BRAKE, drag the view to look, tap the round map for the whole island. The screen rearranges itself for landscape and for upright. On a web address it can be added to the home screen, where it opens full screen and plays offline. Keyboard and mouse play as before.</li>
         <li><strong>1.4 · Skyline</strong> — Roof edges, crowns and fins on the Meridian towers, balconies on the Sol Beach hotels, saw-tooth factory roofs and tanks in Rustport, and a quay with cranes, containers and a freighter off the docks. Until your first job is done the police let you off. After the story, J picks the kind of odd job, and a new one is done on foot. The three radio stations now differ in drums, bass and tune, not only in speed. Smoother edges on Pretty graphics.</li>
         <li><strong>1.3 · Clear Day</strong> — The first job is a short run down the beach road to the Sol Wheel. Ride the wheel for $25: it rests you and marks hidden packages on the map. Stars, pistol and clock leave the screen when they do not matter; perks report their progress as you play. Police heat now shuts the tune-up shop and keeps cab fares out of the car, and a property you own hides you from two stars. By day: murals, an airship, gulls, a warmer sky and sea.</li>

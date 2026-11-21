@@ -2,7 +2,7 @@
 and police heat reaching fares, shops and your own front door, the Sol Wheel ride and the perk card (1.3),
 the learner phase, the J key, the Paper Round on foot and the building outlines (1.4),
 the near first job beam, the on-foot rule at the beam, the Shadow Run tail job, the head start on a stolen
-car and the respray route while losing heat (1.6).
+car and the respray route while losing heat (1.7).
 
 State is set through the game's test handle (window.NEON) so each rule can be
 checked in seconds. It proves the rules work; it does not prove they are fun.
@@ -64,7 +64,7 @@ def run():
         ends_at_target = bool(route["points"]) and abs(route["points"][-1][0] - route["blip"][0]) < 0.1 and abs(route["points"][-1][1] - route["blip"][1]) < 0.1
         check("route follows streets to the job beam", len(route["points"]) >= 2 and axis_aligned and ends_at_target,
               f"{len(route['points'])} points, {round(route['length'])} m")
-        # 2b. (1.6) the first job beam stands in the first view: 30 to 45 m from the start spot, and ahead of the player
+        # 2b. (1.7) the first job beam stands in the first view: 30 to 45 m from the start spot, and ahead of the player
         first = page.evaluate("""() => { const n = NEON, p = n.player, b = n.mission.blip, dx = b[0] - p.x, dz = b[1] - p.z;
             const gap = Math.hypot(dx, dz);
             return { gap, ahead: (Math.sin(n.cam.yaw) * dx + Math.cos(n.cam.yaw) * dz) / gap, name: n.mission.offer.name }; }""")
@@ -91,7 +91,7 @@ def run():
         page.wait_for_timeout(600)
         on_duty = page.evaluate("() => NEON.cab.on && NEON.mission.active && NEON.mission.def.cab === true && !!NEON.cab.passenger")
         check("T in a City Cab starts a fare with a waiting passenger", on_duty)
-        # the long route (this was the job-beam check until 1.6 moved that beam next to the start spot)
+        # the long route (this was the job-beam check until 1.7 moved that beam next to the start spot)
         page.wait_for_timeout(500)
         route = page.evaluate("() => ({ points: NEON.route.points, length: NEON.route.length, blip: NEON.mission.blip })")
         axis_aligned = all(abs(a[0] - b[0]) < 0.6 or abs(a[1] - b[1]) < 0.6 for a, b in zip(route["points"][1:-1], route["points"][2:-1]))
@@ -289,7 +289,7 @@ def run():
               offer["name"] == "Paper Round" and offer["reward"] == 550 and offer["steps"] == 4 and offer["foot"], json.dumps(offer))
         marker = page.evaluate("() => NEON.mission.startMarker.text")
         check("the Paper Round beam is labelled ON FOOT", "ON FOOT" in marker, marker)
-        # arrive by car (1.6): the round does not start from the driver's seat, and the hint says why
+        # arrive by car (1.7): the round does not start from the driver's seat, and the hint says why
         page.evaluate("""() => { const n = NEON, p = n.player;
             const car = n.vehicles.filter(v => v.driver !== 'ai' && !v.dead)
               .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
@@ -333,7 +333,7 @@ def run():
               steps_seen == [1, 2, 3, -1] and not paid["active"] and paid["money"] - money_before == 550 and not paid["car"],
               json.dumps({"steps": steps_seen, "paid": paid["money"] - money_before}))
 
-        # 14. (1.6) Shadow Run: follow a moving car, no clock and no marker. The follow time is cut from 40 s to 3 s
+        # 14. (1.7) Shadow Run: follow a moving car, no clock and no marker. The follow time is cut from 40 s to 3 s
         # for the check, and the player's car is held at a set distance behind the marked car.
         def start_tail():
             page.evaluate("""() => { const n = NEON, c = n.player.car; n.setWanted(0); n.player.hp = 100;
@@ -401,7 +401,7 @@ def run():
         check("never closing up loses them once the opening twenty seconds and eight more are gone",
               not gone["active"] and gone["money"] == money_before and "lost them" in gone["card"], json.dumps(gone))
 
-        # 15. (1.6) Borrowed Time: ten seconds of head start before the stars
+        # 15. (1.7) Borrowed Time: ten seconds of head start before the stars
         page.evaluate("""() => { const n = NEON, c = n.player.car; n.setWanted(0); n.player.hp = 100; n.save.money = 1000;
             if (c) { c.vx = c.vz = 0; n.tryEnterExit(); } n.save.mission = 3; n.offerMission(); }""")
         page.wait_for_timeout(300)
@@ -418,7 +418,7 @@ def run():
               early["job"] == "Borrowed Time" and early["step"] == 1 and early["stars"] == 0 and "10 seconds" in early["hint"] and late >= 2,
               json.dumps({"early": early, "stars_after_11s": late}))
 
-        # 16. (1.6) Heat Wave: while losing the heat the route leads to the respray, and the respray ends it
+        # 16. (1.7) Heat Wave: while losing the heat the route leads to the respray, and the respray ends it
         page.evaluate("() => { NEON.setWanted(0); NEON.player.hp = 100; NEON.save.money = 1000; }")
         page.evaluate("""() => { const n = NEON, c = n.player.car, g = n.PLACES.garage;      // finish Borrowed Time the honest way: the car in the ring
             c.x = g[0]; c.z = g[1]; c.vx = c.vz = 0; c.hp = c.t.hp; }""")

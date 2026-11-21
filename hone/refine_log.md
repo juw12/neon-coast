@@ -284,6 +284,28 @@ controls and a home-screen install; see the README for what it does.
 - Cairn: `GitHub/neon-coast.md` and `Update Log/2026-11-21 0958 neon-coast 1.5 pocket.md`.
 - Not done: no real iPhone or Android phone has run it. Not scored by the judges.
 
+## Release 1.6 "Sharp" (2026-11-21, from the MacBook Pro; not a hone run, no judges)
+
+Ask, after Juwen tried 1.5 on his phone: "phone not that good, make it 10/10 better than gta6". He did not say
+what was not good. Read as: the picture and the feel on a phone. 1.5 started every phone on Fast graphics,
+1.5 drawn pixels per point with no glow and no shadows, which on a 3x screen is soft and flat. The second half
+of the ask cannot be met by a one-file browser game and is not claimed.
+
+- Added: Auto graphics with a frame-rate governor (a phone starts on it; phones from 1.5 move over once),
+  aim assist on touch, Steering: Stick or Arrows, CAR lit when a car is in reach, a tick under the thumb.
+- An emulated 844 x 390 phone at 3x: the 3D view went from 1266 x 585 drawn pixels (1.5) to 1688 x 780 (1.6),
+  with the glow pass and shadows on the top rung.
+- GitHub repo: [PR 9](https://github.com/juw12/neon-coast/pull/9) squash-merged, main `e6177c5`; release
+  [v1.6.0](https://github.com/juw12/neon-coast/releases/tag/v1.6.0) with `NeonCoast.html` (869,030 bytes).
+- Live check: the public page has the same bytes as the local build; opened as a phone it starts on Auto at
+  2 drawn pixels per point, reloads with the network off, and starts a game on WebKit as an iPhone 13.
+- `test/touch.py` 10/10 (new: sharpness of the picture, the governor fed with frame times, aim assist, arrows,
+  the CAR button). Older suites with fixed waits three times as long on the busy Mac: `gates.py` 8/10 (G6
+  pointer lock in headless Chrome on macOS, G7 51 fps), `harbor.py` pass, `city.py` 39/39.
+- Portfolio: catalog `juw12/projects` `5922bfe`, card sync run passed. Landing page `juw12/juw12.github.io`
+  `359852e`.
+- Not done: the frame rate on a real phone is still not measured (Auto decides on the phone). No judges, no score.
+
 ## Run 5 (2026-11-21, `/hone` again, from the shipped 1.5 build)
 
 Ask: check that the MacBook Pro edit is finished and, if so, hone again. It was finished: PR 8 merged, release

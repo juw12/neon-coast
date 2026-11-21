@@ -9,7 +9,7 @@ block and not through it; stepping round a lamp post or a parked car is counted 
 "sidesteps"), gets in, drives to the yellow job beam, follows every step of the
 job, and passes when the save file records the job as done.
 
-Jobs it can play (version 1.6):
+Jobs it can play (version 1.7):
     1     First Wheels     new game, red car, Sol Wheel pier
     2     Hot Delivery     pick up in Meridian, deliver to Rustport inside 80 s
     3     Midnight Sprint  seven checkpoints against the clock

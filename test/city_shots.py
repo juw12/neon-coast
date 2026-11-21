@@ -1,6 +1,6 @@
 """Screenshots for the judges: the 1.2 city systems (cab fare, whole map, helicopter, property) and the
 1.3 day look, Sol Wheel ride and perk card, the 1.4 skyline, Rustport quay, Paper Round and radio dial,
-and the 1.6 dock apron and Shadow Run.
+and the 1.7 dock apron and Shadow Run.
 
 State is set through window.NEON to reach each scene quickly (time of day, where you stand, where the
 airship is on its lap); the pictures are the real game.
@@ -151,7 +151,7 @@ def run():
         page.wait_for_timeout(1700)
         page.screenshot(path=str(OUT / "24-paper-round.png"))
 
-        # ---------- version 1.6: the dock apron, and the Shadow Run (follow a car unseen) ----------
+        # ---------- version 1.7: the dock apron, and the Shadow Run (follow a car unseen) ----------
         page.wait_for_timeout(19000)            # the round runs out of time; the next kind on offer is the tail job
         stand(11.5, -214, 447, 0.8, 0.26, 4.2)
         page.screenshot(path=str(OUT / "26-dock-apron.png"))

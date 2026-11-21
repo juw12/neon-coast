@@ -58,15 +58,12 @@ const touchAsked = /[?&]touch=([01])/.exec(location.search);     // ?touch=1 tri
 const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
 if (touchAsked ? touchAsked[1] === '1' : coarsePointer) setTouchMode(true);
 if (!touchAsked) window.addEventListener('touchstart', () => setTouchMode(true), { passive: true });
-if (coarsePointer) {
-  // a phone starts on Fast graphics; whatever the player picks afterwards is kept
-  let stored = null;
-  try {
-    stored = localStorage.getItem(SAVE_KEY);
-  } catch (err) {
-    // storage blocked
-  }
-  if (stored === null) save.quality = 0;
+if (coarsePointer && !save.auto16) {
+  // a phone starts on Auto graphics (part 4 measures the frame rate and draws what the phone can carry).
+  // Release 1.5 started phones on Fast, so a phone that met 1.5 is moved over once; a choice made after
+  // that is kept, because the mark is saved with it
+  save.quality = 2;
+  save.auto16 = 1;
 }
 
 // ---------- the stick: it appears under the left thumb wherever that lands ----------
@@ -120,6 +117,7 @@ function lookBy(dx, dy) {
 // ---------- buttons ----------
 function buttonDown(el) {
   el.classList.add('down');
+  if (navigator.vibrate) navigator.vibrate(8);     // a tick under the thumb where the phone can (Android)
   if (el.dataset.hold) keys[el.dataset.hold] = true;
   else if (el.dataset.tap) keyAction(el.dataset.tap);
   else firing = true;
@@ -155,7 +153,8 @@ canvas.addEventListener('pointerdown', (e) => {
   }
   if (touchPoints.has(e.pointerId)) return;
   let kind = null;
-  if (ride.t <= 0 && !hasPoint('stick') && inStickZone(e.clientX, e.clientY)) kind = 'stick';
+  const stickShown = !(player.car && save.steer === 1);       // Arrows steer the car instead
+  if (ride.t <= 0 && stickShown && !hasPoint('stick') && inStickZone(e.clientX, e.clientY)) kind = 'stick';
   else if (!hasPoint('look')) kind = 'look';
   if (!kind) return;
   try {
@@ -234,20 +233,62 @@ function padSet(id, on, label) {
 }
 function refreshPad() {
   if (!touch.on) return;
-  const mode = state !== 'play' ? '' : ride.t > 0 ? 'ride' : player.car ? 'car' : 'foot';
+  const mode = state !== 'play' ? '' : ride.t > 0 ? 'ride' : player.car ? (save.steer === 1 ? 'car arrows' : 'car') : 'foot';
   if (mode !== padMode) {
     // buttons that leave the screen let go of their keys; the stick stays under the thumb from foot to car
     if (mode === 'car' || mode === 'foot') releaseButtons();
-    else releaseTouch();
+    else releaseTouch();                // also when the stick leaves the screen for the arrows
     padMode = mode;
     pad.className = 'for-touch ' + (mode || 'hidden');
   }
   if (!mode) return;
   const armed = player.gun && player.ammo > 0;
   padSet('tb-fire', true, armed ? 'FIRE' : 'PUNCH');
-  padSet('tb-carfire', mode === 'car' && armed);
-  padSet('tb-cab', mode === 'car' && player.car.type === 'taxi');
+  padSet('tb-carfire', !!player.car && armed);
+  padSet('tb-cab', !!player.car && player.car.type === 'taxi');
+  padSet('tb-car', mode === 'foot' && carInReach());        // bright when a car is close enough to take
   padSet('tb-use', mode === 'foot' && (wheelGate.inside || PROPERTIES.some((p) => p.marker.inside)));
+}
+
+function carInReach() {
+  for (const v of vehicles) {
+    if (!v.dead && v.hp > 0 && dist2(v.x, v.z, player.x, player.z) < 18) return true;
+  }
+  return false;
+}
+
+// ---------- aiming with a thumb ----------
+// Each shot on a touch screen first turns the view onto the nearest target that is already close to the
+// crosshair: within 0.4 rad and 70 m, a police car before anything else. A mouse needs none of this.
+function aimAssist() {
+  const [px, pz] = focus();
+  const eye = player.car ? 1.6 : 1.55 + player.y;      // the height the camera looks along (updateCamera)
+  const shoulder = player.car ? 0 : 0.55;              // on foot the view sits over the right shoulder
+  let best = null;
+  let bestScore = 0.4;
+  const consider = (x, y, z, bonus, skip) => {
+    if (skip) return;
+    const dx = x - px;
+    const dz = z - pz;
+    const far = Math.hypot(dx, dz);
+    if (far < 2.5 || far > 70) return;
+    const off = Math.abs(wrapPi(Math.atan2(dx, dz) - cam.yaw));
+    if (off - bonus < bestScore) {
+      bestScore = off - bonus;
+      const rough = Math.atan2(dx, dz);
+      const ox = px - Math.cos(rough) * shoulder;      // where the line of sight passes the player
+      const oz = pz + Math.sin(rough) * shoulder;
+      best = { yaw: Math.atan2(x - ox, z - oz), pitch: Math.atan2(y - eye, far) };
+    }
+  };
+  // parked cars are left alone (one of them is yours), and with stars on you only the police count
+  for (const v of vehicles) consider(v.x, 0.8, v.z, v.driver === 'cop' ? 0.25 : 0, v === player.car || v.dead || !v.driver || (v.driver !== 'cop' && wanted.stars > 0));
+  for (const ped of peds) consider(ped.x, 1.0, ped.z, 0, ped.state === 'down' || wanted.stars > 0);
+  if (!best) return false;
+  cam.yaw = best.yaw;
+  cam.pitch = clamp(best.pitch, -1.2, 0.3);
+  cam.lastMouse = performance.now();
+  return true;
 }
 
 // ---------- full screen ----------

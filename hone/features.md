@@ -30,15 +30,15 @@
   turn: Rush Order (timed delivery), Repo Run (take a marked car, bring it to the garage with one star on
   you), Block Dash (a checkpoint lap round a few blocks), Hot Parcel (collect, then shake two stars),
   since 1.4 Paper Round (four envelopes round one block on foot against the clock, $550; it does not count
-  from a driver's seat) and, since 1.6, Shadow Run. Since 1.4 the J key asks for another kind instead of
+  from a driver's seat) and, since 1.7, Shadow Run. Since 1.4 the J key asks for another kind instead of
   taking what comes.
-- Shadow Run (release 1.6, $700 from Rico): the first job that is neither a clock nor a chase. A pink car
+- Shadow Run (release 1.7, $700 from Rico): the first job that is neither a clock nor a chase. A pink car
   pulls out and drives through the traffic; follow it for 40 seconds, 12 to 60 m behind. The top line
   shows the gap in metres, whether it is good, too close or too far, and the seconds left. Too close for
   3 seconds and they spot you in the mirror; too far for 8 seconds and they are gone; either ends the job.
   The car appears ahead of you where the streets allow, and for the first 20 seconds a gap does not count
   against you (the line says CATCH UP), so a slow start is not a lost tail.
-- Told before, not after (release 1.6): the Paper Round beam is labelled ON FOOT and does not start from a
+- Told before, not after (release 1.7): the Paper Round beam is labelled ON FOOT and does not start from a
   driver's seat (the line says to leave the car first); in 1.4 it started, then failed you for driving.
   The getaway jobs give a head start with the seconds on screen (10 s after the theft in Borrowed Time,
   8 s in Repo Run) before the police know. Every "lose the police" step now says the two ways out (get
@@ -68,7 +68,7 @@
   wanted, the Tune-up shop pulls its shutters down, the Sol Wheel will not sell a ticket, and walking into a
   property you own makes the police lose you at one or two stars (at three or more it refuses).
 - The first job (release 1.3) is shorter and ends at a landmark: get in the red car, drive to the job beam
-  (since 1.6 it stands 40 m ahead in the car's own lane, in the first view, instead of a block away),
+  (since 1.7 it stands 40 m ahead in the car's own lane, in the first view, instead of a block away),
   follow the beach road to the Sol Wheel pier. It used to end at the respray shop on the far side of town. Until that job is
   done the car you drive gets battered and smokes but cannot be wrecked, so a first minute cannot end in a
   burning car; after it, cars wreck as before.
@@ -77,7 +77,7 @@
   balcony bands, deco fins and round penthouses; Rustport sheds have saw-tooth roofs with glass and roof
   tanks, and yards instead of bare ground; suburb houses have chimneys. Beyond the Rustport waterline there
   is now a quay with container stacks, three gantry cranes and a freighter (scenery, out of reach).
-- A working dock front (release 1.6): the Rustport south shore was bare sand in front of the quay. It is
+- A working dock front (release 1.7): the Rustport south shore was bare sand in front of the quay. It is
   now a dock apron you can walk and drive on: grey concrete with lane lines, a crane rail, KEEP CLEAR
   stencils and a yellow hazard edge. On the quay behind it: a painted edge, mooring bollards, crane rails,
   four floodlight masts and three yard tractors with a box on the trailer. Both maps draw the dock.
@@ -89,7 +89,7 @@
   pause screens. The pause screen is three buttons, settings and perks; the map legend moved onto the map
   itself (M). The title screen shows the keys you need first (Sprint among them since 1.4) and folds the rest away.
 - Every gain or loss of money shows as a green or red amount under the cash figure.
-- The title screen has a "what changed" line that opens the release history (1.0 to 1.6).
+- The title screen has a "what changed" line that opens the release history (1.0 to 1.7).
 - Harbor courier shift (release 1.1, from the title screen or G in free roam): three timed stops, $450 plus
   a time bonus, best time saved; checked by `test/harbor.py`.
 - Money sinks: property, respray and repair $150 ($75 with the perk), ammo $80, hospital and bail fees of 10% of cash, and the Tune-up
@@ -108,13 +108,13 @@
 - Tests in the repository: `test/gates.py` (10 gates), `test/harbor.py` (the courier shift), `test/city.py`
   (54 checks: cab fares, property, perks, helicopter, route, map, old saves, for 1.3 the safehouse rule,
   the wheel ride, the refusals while wanted and the perk card, for 1.4 the learner phase, the J key,
-  the Paper Round and the building outlines, and for 1.6 the near first beam, the ON FOOT start rule,
+  the Paper Round and the building outlines, and for 1.7 the near first beam, the ON FOOT start rule,
   Shadow Run seen, lost and the slow start, the head start and the respray route), `test/radio.py` (new in 1.4: 14 checks that measure the
   three stations at the master output: loudness, no clipping, the beat repeating at each station's own
   tempo, different tone) and `test/drive.py`, which plays with key presses only (W A S D, F and Space,
   nothing moved by script). Since 1.4 it plays three story jobs instead of one: job 1 First Wheels, job 2
   Hot Delivery (against the 80 s clock) and job 4 Borrowed Time (a car theft with the police after it).
-  Since 1.6 it also plays job 3 Midnight Sprint and job 6 Coastline Run (the two races), job 5 Heat Wave
+  Since 1.7 it also plays job 3 Midnight Sprint and job 6 Coastline Run (the two races), job 5 Heat Wave
   (the three-star getaway) and Shadow Run.
 - Phones and tablets (release 1.5): the page switches to touch by itself when a touch screen is the main
   pointer. A thumb stick appears under the left thumb (walk, steer, a full push sprints); buttons on the
@@ -123,8 +123,14 @@
   map opens the whole island. The HUD moves to the top edge and the menus fit a 360 point wide screen, in
   landscape and upright (upright widens the lens from 62 to up to 88 degrees). On a web address the game
   can be added to the home screen, where it opens full screen and plays offline after one visit. Hints name
-  the buttons instead of keys. Since 1.6 the buttons are more see-through (fill 20% instead of 42%), so
+  the buttons instead of keys. Since 1.7 the buttons are more see-through (fill 20% instead of 42%), so
   the road shows through them. `test/touch.py` checks all of this on an emulated phone and on WebKit; no
   real phone has run it yet.
+- Graphics: Fast, Pretty or Auto (release 1.6). Auto is where a phone starts: 2 drawn pixels per point with
+  the glow pass, shadows when the frame rate allows. It measures the frame rate in play and walks a ladder:
+  shadows off first, then glow and half the crowd, drawn pixels last (never under 1.5 per point on a touch
+  screen, never under 1 anywhere). A step down that buys no frame rate is given back; over 55 fps for six
+  seconds it climbs. On a touch screen each shot turns onto a target near the crosshair, Settings can swap
+  the steering stick for two arrows, and CAR lights up when a car is in reach.
 - Own city, names and art. One line on the title screen says it is an original game and is not affiliated
   with the publisher or the series it is often compared to.

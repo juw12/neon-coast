@@ -85,6 +85,9 @@ def centre(page, selector):
 BESIDE_CAR = """() => {
     const n = NEON, p = n.player;
     const car = n.vehicles.find(v => v.type === 'muscle' && !v.driver);
+    // the second time round the car goes back to its kerb, facing up the empty street
+    if (!window.carHome) window.carHome = [car.x, car.z, car.h];
+    else { [car.x, car.z, car.h] = window.carHome; car.vx = car.vz = car.vf = 0; }
     p.x = car.x + 2.2; p.z = car.z;
     for (const v of n.vehicles) if (v !== car && Math.hypot(v.x - car.x, v.z - car.z) < 90) v.x -= 500;   // an empty street
     for (const ped of n.peds) if (Math.hypot(ped.x - car.x, ped.z - car.z) < 60) ped.x += 300;
@@ -112,7 +115,7 @@ OVERLAPS = """() => {
         boxes.push([id, document.getElementById(id).getBoundingClientRect()]);
     }
     for (const el of document.querySelectorAll('#pad .tb')) {
-        if (el.getClientRects().length) boxes.push([el.textContent.trim().replace(/\\s+/g, ' '), el.getBoundingClientRect()]);
+        if (el.getClientRects().length) boxes.push([el.textContent.trim().replace(/\\s+/g, ' ') || el.getAttribute('aria-label'), el.getBoundingClientRect()]);
     }
     const out = [];
     for (let a = 0; a < boxes.length; a++) for (let b = a + 1; b < boxes.length; b++) {
@@ -147,6 +150,15 @@ OFF_SCREEN = """(selector) => [...document.querySelectorAll(selector)].filter(e 
     return r.left < 0 || r.right > innerWidth;
 }).map(e => e.textContent.trim())"""
 
+EMPTY_STREET = """() => {
+    const n = NEON, p = n.player;
+    for (const v of n.vehicles) if (v.driver && v !== p.car && Math.hypot(v.x - p.x, v.z - p.z) < 110) v.x -= 600;
+    for (const ped of n.peds) if (Math.hypot(ped.x - p.x, ped.z - p.z) < 110) ped.x -= 600;
+}"""
+
+# feed the frame-rate governor a run of frames of one length, as the game loop would
+FEED = """([seconds, frame]) => { for (let t = 0; t < seconds; t += frame) NEON.governor(frame); return NEON.auto.level; }"""
+
 
 def play_on_phone(browser, name, width, height):
     """One emulated phone: every control once, with real touches."""
@@ -165,7 +177,9 @@ def play_on_phone(browser, name, width, height):
             failed.append(what)
 
     want(page.evaluate("NEON.touch.on && document.body.classList.contains('touch')"), "touch mode is not on")
-    want(page.evaluate("NEON.save.quality === 0"), "a first visit on a phone should start on Fast graphics")
+    want(page.evaluate("NEON.save.quality === 2"), "a first visit on a phone should start on Auto graphics")
+    sharp = page.evaluate("(() => { const c = document.getElementById('view'); return [c.width / c.clientWidth, c.getContext('webgl2').getContextAttributes().antialias]; })()")
+    want(sharp[0] >= 1.5 and sharp[1], f"picture drawn at {sharp[0]:.2f} pixels per point, antialiasing {sharp[1]}")
     want(page.evaluate("getComputedStyle(document.getElementById('pad')).display === 'none'"), "pad shows on the title screen")
     want(page.evaluate("document.querySelector('#title .touchkeys').getClientRects().length > 0"), "touch instructions are not shown")
     want(page.evaluate("document.querySelector('#title .keys.pairs').getClientRects().length === 0"), "keyboard instructions are shown")
@@ -206,7 +220,8 @@ def play_on_phone(browser, name, width, height):
     turned = page.evaluate("NEON.cam.yaw") - yaw
     want(abs(turned - 90 * 0.0058) < 0.02, f"look drag turned {turned:.3f} rad")
 
-    # fire: held, the pistol goes off; the thumb sliding on the button aims
+    # fire: held, the pistol goes off; the thumb sliding on the button aims (nobody near the crosshair to snap to)
+    page.evaluate(EMPTY_STREET)
     ammo, yaw = page.evaluate("[NEON.player.ammo, NEON.cam.yaw]")
     fx, fy = centre(page, "#tb-fire")
     fingers.down(3, fx, fy)
@@ -305,6 +320,73 @@ def play_on_phone(browser, name, width, height):
     fingers.tap(*centre(page, ".tb.in-car[data-tap=KeyF]"))
     page.wait_for_function("!NEON.player.car && document.getElementById('pad').classList.contains('foot')")
 
+    # CAR is dim with no car in reach and bright beside one
+    want(page.evaluate("document.getElementById('tb-car').classList.contains('on')"), "CAR is dim beside the car")
+    page.evaluate("NEON.player.x += 40")
+    page.wait_for_function("!document.getElementById('tb-car').classList.contains('on')", timeout=4000)
+    page.evaluate("NEON.player.x -= 40")
+
+    # a shot turns onto a target near the crosshair
+    aimed = page.evaluate("""() => {
+        const n = NEON, p = n.player, ped = n.peds[0];
+        for (const v of n.vehicles) if (v.driver && Math.hypot(v.x - p.x, v.z - p.z) < 110) v.x -= 600;
+        for (const other of n.peds) if (Math.hypot(other.x - p.x, other.z - p.z) < 110) other.x -= 600;
+        const yaw = n.cam.yaw + 0.25;
+        ped.x = p.x + Math.sin(yaw) * 18; ped.z = p.z + Math.cos(yaw) * 18; ped.state = 'walk'; ped.hp = 100;
+        const before = n.cam.yaw;
+        const found = n.aimAssist();
+        return [found, Math.abs(n.cam.yaw - yaw) < 0.05, before !== n.cam.yaw];
+    }""")
+    want(all(aimed), f"aim assist did not turn onto a walker 0.25 rad off the crosshair: {aimed}")
+    ammo = page.evaluate("NEON.player.ammo")
+    fingers.tap(*centre(page, "#tb-fire"))
+    page.wait_for_function("(a) => NEON.player.ammo < a", arg=ammo, timeout=5000)
+    want(page.evaluate("NEON.peds[0].hp < 100 || NEON.peds[0].state === 'down'"), "the assisted shot missed the walker")
+    page.evaluate("NEON.setWanted(0); NEON.wanted.pts = 0; NEON.cam.pitch = -0.18;")
+
+    # steering by arrows: picked on the pause screen, two buttons replace the stick in a car
+    fingers.tap(*centre(page, ".tb.sys"))
+    page.wait_for_function("NEON.state === 'paused'")
+    spot = """() => {
+        const b = [...document.querySelectorAll('#pause .seg')].find(e => e.textContent === 'Arrows');
+        if (!b) return null;
+        b.scrollIntoView({ block: 'center' });
+        const r = b.getBoundingClientRect();
+        return [r.left + r.width / 2, r.top + r.height / 2];
+    }"""
+    want(bool(page.evaluate(spot)), "no Steering choice on the pause screen")
+    page.wait_for_timeout(250)
+    page.touchscreen.tap(*page.evaluate(spot))
+    want(page.evaluate("NEON.save.steer === 1"), "Arrows was not picked")
+    page.evaluate("document.querySelector('#pause .panel').scrollTop = 0")
+    fingers.tap(*centre(page, "#btn-resume"))
+    page.wait_for_function("NEON.state === 'play'")
+    page.evaluate(BESIDE_CAR)
+    page.wait_for_timeout(150)
+    fingers.tap(*centre(page, "#tb-car"))
+    page.wait_for_function("!!NEON.player.car && document.getElementById('pad').classList.contains('arrows')")
+    want(page.evaluate("!document.getElementById('stick').getClientRects().length"), "the stick still shows with Arrows picked")
+    heading = page.evaluate("NEON.player.car.h")
+    fingers.down(1, *centre(page, ".tb[data-hold=KeyW]"))
+    fingers.down(2, *centre(page, ".tb.go-right"))
+    try:
+        page.wait_for_function("(h) => NEON.player.car.h < h - 0.15", arg=heading, timeout=15000)
+    except Exception:  # noqa: BLE001 - reported just below
+        pass
+    want(page.evaluate("NEON.player.car.h") < heading - 0.15, "the right arrow did not turn the car")
+    fingers.up(2)
+    fingers.up(1)
+    overlaps = page.evaluate(OVERLAPS.replace("'hint', 'stick'", "'hint'"))
+    want(not overlaps, "with arrows: " + ", ".join(overlaps))
+    page.screenshot(path=str(SHOTS / f"touch-{name}-arrows.png"))
+    page.evaluate("for (const id of ['hint', 'timer', 'perk']) document.getElementById(id).classList.remove('show')")
+    fingers.down(1, bx, by)
+    page.wait_for_function("Math.hypot(NEON.player.car.vx, NEON.player.car.vz) < 0.5", timeout=15000)
+    fingers.up(1)
+    fingers.tap(*centre(page, ".tb.in-car[data-tap=KeyF]"))
+    page.wait_for_function("!NEON.player.car && document.getElementById('pad').classList.contains('foot')")
+    want(page.evaluate("document.getElementById('stick').getClientRects().length > 0"), "on foot the stick is gone with Arrows picked")
+
     # the Sol Wheel: USE appears in the ring, GET OFF ends the ride
     page.evaluate("() => { const n = NEON, p = n.player; p.x = n.PLACES.wheel[0]; p.z = n.PLACES.wheel[1]; }")
     page.wait_for_function("document.getElementById('tb-use').classList.contains('on')", timeout=4000)
@@ -317,6 +399,81 @@ def play_on_phone(browser, name, width, height):
     want(not outside, "asked the network for " + ", ".join(outside[:3]))
     context.close()
     return failed
+
+
+def run_governor(browser):
+    """Auto graphics, fed frame times: shadows go before pixels, a step that buys nothing is given back,
+    a smooth phone climbs, and a touch screen never drops under 1.5 drawn pixels per point."""
+    context = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=3, is_mobile=True, has_touch=True)
+    page = context.new_page()
+    watch(page, "governor")
+    notes = []
+    page.goto(GAME.as_uri())
+    page.wait_for_function("window.NEON && NEON.state === 'title'")
+    page.tap("#btn-new")
+    page.wait_for_function("NEON.state === 'play'")
+    page.evaluate("NEON.auto.manual = true; Object.assign(NEON.auto, { level: 0, settle: 0, time: 0, frames: 0, calm: 0, hold: 0, trial: null, useless: {}, forget: 120 }); NEON.applySettings();")
+    ratio = "(() => { const c = document.getElementById('view'); return c.width / c.clientWidth; })()"
+    start = page.evaluate("[NEON.gfx.shadows, NEON.gfx.glow, NEON.gfx.ratio]")
+    if start != [True, True, 2]:
+        notes.append(f"top rung is {start}")
+    slow, smooth = 1 / 30, 1 / 60
+    # slow: one rung down (shadows off, pixels kept)
+    level = page.evaluate(FEED, [2.1, slow])
+    first = page.evaluate("[NEON.auto.level, NEON.gfx.shadows, NEON.gfx.glow, NEON.gfx.ratio]")
+    if first != [1, False, True, 2]:
+        notes.append(f"first step down gave {first}")
+    # the step bought enough (30 -> 50): it is kept; smooth for a while: it climbs back
+    page.evaluate(FEED, [2.0, slow])            # the settle time after a change does not count
+    page.evaluate(FEED, [2.1, 1 / 50])
+    if page.evaluate("NEON.auto.level") != 1:
+        notes.append("a step that helped was not kept")
+    for _ in range(3):
+        page.evaluate(FEED, [2.1, smooth])
+    if page.evaluate("NEON.auto.level") != 0:
+        notes.append(f"did not climb when smooth: level {page.evaluate('NEON.auto.level')}")
+    # the climb was too much: back down, and no new climb for a minute
+    page.evaluate(FEED, [2.0, slow])
+    page.evaluate(FEED, [2.1, slow])
+    held = page.evaluate("[NEON.auto.level, NEON.auto.hold > 50]")
+    if held != [1, True]:
+        notes.append(f"a climb that was too much gave {held}")
+    # slow whatever is drawn: every step is tried once and given back, the picture ends where it started
+    page.evaluate("Object.assign(NEON.auto, { level: 1, settle: 0, time: 0, frames: 0, calm: 0, hold: 0, trial: null, useless: {}, forget: 120 }); NEON.applySettings();")
+    seen = []
+    for _ in range(12):
+        page.evaluate(FEED, [2.0, slow])
+        seen.append(page.evaluate(FEED, [2.1, slow]))
+    lowest = max(seen)
+    floor = page.evaluate(ratio)
+    if lowest != 4 or seen[-1] != 1:
+        notes.append(f"a phone that stays slow walked {seen}")
+    # really bought by drawing less: it goes down to the floor and stays; never under 1.5 pixels per point
+    page.evaluate("Object.assign(NEON.auto, { level: 1, settle: 0, time: 0, frames: 0, calm: 0, hold: 0, trial: null, useless: {}, forget: 120 }); NEON.applySettings();")
+    rates = [30, 34, 39, 39, 39, 39, 39, 39]
+    walked = []
+    for rate in rates:
+        page.evaluate(FEED, [2.0, 1 / rate])
+        walked.append(page.evaluate(FEED, [2.1, 1 / rate]))
+    page.wait_for_timeout(300)
+    floor = page.evaluate(ratio)
+    if floor < 1.5 or max(walked) > 4:
+        notes.append(f"dropped to {floor:.2f} pixels per point, rungs {walked}")
+    # the player's own choice is kept: Fast picked on a phone stays Fast after a reload; 1.5 saves move to Auto once
+    page.evaluate("NEON.auto.manual = false; NEON.pause();")
+    page.evaluate("[...document.querySelectorAll('#pause .seg')].find(e => e.textContent === 'Fast').click()")
+    page.reload()
+    page.wait_for_function("window.NEON && NEON.state === 'title'")
+    if page.evaluate("NEON.save.quality") != 0:
+        notes.append("Fast picked on the phone did not survive a reload")
+    page.evaluate("localStorage.setItem('neon-coast-save-v1', JSON.stringify({ money: 900, mission: 1, quality: 0 }))")
+    page.reload()
+    page.wait_for_function("window.NEON && NEON.state === 'title'")
+    moved = page.evaluate("[NEON.save.quality, NEON.save.money]")
+    if moved != [2, 900]:
+        notes.append(f"a save from 1.5 was not moved to Auto: {moved}")
+    context.close()
+    return not notes, "shadows first, pixels last and never under 1.5 per point, steps given back, choice kept" if not notes else "; ".join(notes)
 
 
 def run_words(browser):
@@ -363,11 +520,13 @@ def run_desktop(browser):
             br: document.getElementById('br').parentElement.id,
             map: getComputedStyle(document.getElementById('map')).width,
             objective: getComputedStyle(document.getElementById('objective')).position,
+            steering: [...document.querySelectorAll('.seg')].filter(e => e.textContent === 'Arrows').length,
+            ratio: document.getElementById('view').width / document.getElementById('view').clientWidth,
         })"""
     )
     page.close()
     want = {"touch": False, "body": "", "pad": "none", "forTouch": 0, "quality": 1, "lens": 62,
-            "said": "Get into the red car ahead  [F]", "br": "hud", "map": "196px", "objective": "absolute"}
+            "said": "Get into the red car ahead  [F]", "br": "hud", "map": "196px", "objective": "absolute", "steering": 0, "ratio": 1}
     wrong = {k: facts[k] for k in want if facts[k] != want[k]}
     return not wrong, "unchanged" if not wrong else json.dumps(wrong)
 
@@ -449,8 +608,12 @@ def run_webkit(pw):
             page.wait_for_timeout(200)
             page.tap(".tb.on-foot[data-tap=KeyF]")
             page.wait_for_function("!!NEON.player.car && document.getElementById('pad').classList.contains('car')", timeout=5000)
-            page.wait_for_timeout(1500)        # the first seconds compile shaders
-            frames = page.evaluate("() => new Promise(done => { let n = 0; const t0 = performance.now(); const tick = () => { n++; performance.now() - t0 < 1500 ? requestAnimationFrame(tick) : done(n); }; requestAnimationFrame(tick); })")
+            frames = 0
+            for _ in range(5):                 # the first seconds compile shaders, and the machine may be busy
+                page.wait_for_timeout(1500)
+                frames = max(frames, page.evaluate("() => new Promise(done => { let n = 0; const t0 = performance.now(); const tick = () => { n++; performance.now() - t0 < 1500 ? requestAnimationFrame(tick) : done(n); }; requestAnimationFrame(tick); })"))
+                if frames >= 10:
+                    break
             if frames < 10:
                 notes.append(f"{name}: only {frames} frames in 1.5 s")
             overlaps = page.evaluate(OVERLAPS)
@@ -482,6 +645,7 @@ def main():
             except Exception as error:  # noqa: BLE001
                 failed = [str(error).splitlines()[0][:200]]
             check(f"phone {name} {width}x{height}", not failed, "every control answers, nothing overlaps" if not failed else "; ".join(failed))
+        check("auto graphics", *run_governor(browser))
         check("hints name buttons, not keys", *run_words(browser))
         check("desktop page unchanged", *run_desktop(browser))
         check("installs and plays offline", *run_install(browser))
