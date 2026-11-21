@@ -486,3 +486,18 @@ machine): worth a look together with R5-12.
   amount, so a slow PC cannot fail a timer check.
 - Left: R5-11, a real person plays ten minutes and a real iPhone and Android phone open the link (needs Juwen).
 - Next command: `/hone neon-coast` (run 6 starts from the 1.7 build; first item R5-12, on a quiet PC).
+
+## Sync (run 5, 2026-11-21)
+
+- GitHub repo: [PR 10](https://github.com/juw12/neon-coast/pull/10) squash-merged, main `81e953f`; release
+  [v1.7.0](https://github.com/juw12/neon-coast/releases/tag/v1.7.0) with `NeonCoast.html` (880,315 bytes).
+- Live check: https://juw12.github.io/neon-coast/NeonCoast.html has the same bytes as the local build and
+  `sw.js` names the cache `neon-coast-1.7.0`. Opened at the public URL in Chrome: the title shows 1.7 and the
+  Tail Lights news, Shadow Run is in the build, New Game starts play with "JOB 40 m" on the HUD, no console
+  problems (`live_check_17.py`, kept outside the repo).
+- Profile README: `juw12/juw12` `ea32e9a`.
+- Portfolio: catalog `juw12/projects` `44ebb63` and `c308f52` (the summary cut to 118 characters; the 1.6
+  summary had 126 against a limit of 120), card sync run 44914561680 passed.
+- Landing page: `juw12/juw12.github.io` `ca1f305`, https://juw12.github.io/p/neon-coast/ shows
+  TAIL LIGHTS / 01.7 and the three new items above the 1.6 ones.
+- Obsidian: `GitHub/neon-coast.md` and `Update Log/2026-11-21 2135 neon-coast hone.md`.
