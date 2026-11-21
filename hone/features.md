@@ -105,5 +105,11 @@
   can be added to the home screen, where it opens full screen and plays offline after one visit. Hints name
   the buttons instead of keys. `test/touch.py` checks all of this on an emulated phone and on WebKit; no
   real phone has run it yet.
+- Graphics: Fast, Pretty or Auto (release 1.6). Auto is where a phone starts: 2 drawn pixels per point with
+  the glow pass, shadows when the frame rate allows. It measures the frame rate in play and walks a ladder:
+  shadows off first, then glow and half the crowd, drawn pixels last (never under 1.5 per point on a touch
+  screen, never under 1 anywhere). A step down that buys no frame rate is given back; over 55 fps for six
+  seconds it climbs. On a touch screen each shot turns onto a target near the crosshair, Settings can swap
+  the steering stick for two arrows, and CAR lights up when a car is in reach.
 - Own city, names and art. One line on the title screen says it is an original game and is not affiliated
   with the publisher or the series it is often compared to.
