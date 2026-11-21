@@ -838,7 +838,7 @@ function addMarker(kind, x, z, r, hex, text) {
   }
   group.position.set(x, 0, z);
   scene.add(group);
-  const marker = { kind, x, z, r, hex, group, inside: false };
+  const marker = { kind, x, z, r, hex, group, inside: false, text: text || '' };
   if (kind === 'prop') marker.label = group.children[2] || null;
   markers.push(marker);
   return marker;
@@ -1065,7 +1065,7 @@ const lap = (points, first, extra) =>
   points.map((p, k) => ({ t: 'goto', at: node(p[0], p[1]), car: true, time: k === 0 ? first : 0, addTime: k === 0 ? 0 : extra, text: 'Hit every checkpoint' }));
 const MISSIONS = [
   {
-    name: 'First Wheels', by: 'Mo', at: corner(9, 4), reward: 250,
+    name: 'First Wheels', by: 'Mo', at: [roadC(9) + PARK, PLACES.home[1] + 10.4], reward: 250,   // 40 m ahead of the start spot, in the red car's own lane
     steps: [
       { t: 'car', text: 'Get into any vehicle  [F]' },
       { t: 'goto', at: PLACES.pier, car: true, label: 'SOL WHEEL', text: 'Follow the beach road to the Sol Wheel pier' },
@@ -1087,7 +1087,7 @@ const MISSIONS = [
   {
     name: 'Borrowed Time', by: 'Mo', at: corner(3, 6), reward: 1400, spawn: { type: 'sports', i: 9, j: 2 },
     steps: [
-      { t: 'car', target: true, wantedAfter: 2, text: 'Steal the Vanta GT parked in Sol Beach' },
+      { t: 'car', target: true, wantedAfter: 2, wantedDelay: 10, text: 'Steal the Vanta GT parked in Sol Beach' },
       { t: 'goto', at: PLACES.garage, car: true, target: true, text: "Bring it to Mo's Respray in one piece" },
     ],
   },
@@ -1095,7 +1095,7 @@ const MISSIONS = [
     name: 'Heat Wave', by: 'Lena', at: corner(2, 2), reward: 2200,
     steps: [
       { t: 'goto', at: PLACES.bank, text: 'Grab the bag outside Meridian Bank' },
-      { t: 'lose', stars: 3, text: 'Lose the three-star heat' },
+      { t: 'lose', stars: 3, text: "Lose the three-star heat: get out of their sight, or respray at Mo's" },
     ],
   },
   {
@@ -1158,8 +1158,9 @@ function dispatch() {
   startMission();
 }
 
-// after the story: five kinds of odd job, offered in turn; J asks for another kind
-const ODD_KINDS = ['delivery', 'repo', 'dash', 'heat', 'foot'];
+// after the story: six kinds of odd job, offered in turn; J asks for another kind
+const ODD_KINDS = ['delivery', 'repo', 'dash', 'heat', 'foot', 'tail'];
+const TAIL = { near: 11, far: 60, seen: 3, lost: 8, pickup: 20 };   // metres behind the marked car, seconds of grace, and the opening seconds in which a gap cannot lose them
 let oddCount = 0;
 function oddJob() {
   const kind = ODD_KINDS[oddCount++ % ODD_KINDS.length];
@@ -1177,12 +1178,23 @@ function oddJob() {
         text: `Envelope ${k + 1} of 4: on foot, round the block  [Shift] sprints` })),
     };
   }
+  if (kind === 'tail') {
+    // no clock and no marker: stay behind a moving car without being noticed
+    const type = pick(['sedan', 'sports', 'muscle']);
+    return {
+      name: 'Shadow Run', by: 'Rico', at, reward: 700, kind, tailType: type,
+      steps: [
+        { t: 'car', text: 'Get in a car: Rico wants someone followed' },
+        { t: 'tail', secs: 40, text: 'Tail the pink ' + VEHICLE_TYPES[type].name },
+      ],
+    };
+  }
   if (kind === 'repo') {
     const type = pick(['sports', 'muscle']);
     return {
       name: 'Repo Run', by: 'Mo', at, reward: 750, kind, spawn: { type, i: irand(1, 8), j: irand(0, 8) },
       steps: [
-        { t: 'car', target: true, wantedAfter: 1, text: 'Take the marked ' + VEHICLE_TYPES[type].name + '. The owner will call it in.' },
+        { t: 'car', target: true, wantedAfter: 1, wantedDelay: 8, text: 'Take the marked ' + VEHICLE_TYPES[type].name + '. The owner will call it in.' },
         { t: 'goto', at: PLACES.garage, car: true, target: true, text: "Bring it to Mo's Respray in one piece" },
       ],
     };
@@ -1202,7 +1214,7 @@ function oddJob() {
       name: 'Hot Parcel', by: 'Lena', at, reward: 650, kind,
       steps: [
         { t: 'goto', at: corner(irand(0, 9), irand(0, 9)), text: 'Collect the parcel. Someone is watching it.' },
-        { t: 'lose', stars: 2, text: 'Shake the two-star heat' },
+        { t: 'lose', stars: 2, text: "Shake the two-star heat: get out of their sight, or respray at Mo's" },
       ],
     };
   }
@@ -1296,7 +1308,7 @@ function anotherJob() {
   }
   offerMission();
   const next = mission.offer;
-  hint(`${next.name} from ${next.by}, $${next.reward}${next.kind === 'foot' ? ', on foot' : ''}.  [J] another kind`, 5);
+  hint(`${next.name} from ${next.by}, $${next.reward}${next.kind === 'foot' ? ', ON FOOT' : next.kind === 'tail' ? ', follow a car unseen' : ''}.  [J] another kind`, 5);
   sfx.cash();
 }
 
@@ -1304,8 +1316,42 @@ function offerMission() {
   removeMarker(mission.startMarker);
   mission.def = mission.offer = MISSIONS[save.mission] || oddJob();
   const [x, z] = mission.def.at;
-  mission.startMarker = addMarker('mission', x, z, 2.2, '#ffe14f', 'JOB: ' + mission.def.by.toUpperCase());
+  mission.startMarker = addMarker('mission', x, z, 2.2, '#ffe14f', 'JOB: ' + mission.def.by.toUpperCase() + (mission.def.kind === 'foot' ? ' · ON FOOT' : ''));
   mission.blip = [x, z];
+}
+
+function spawnTail(type) {
+  const [px, pz] = focus();
+  for (let tries = 0; tries < 80; tries++) {
+    const reach = tries < 50 ? 2 : 3;
+    const i = clamp(nodeOf(px) + irand(-reach, reach), 0, N);
+    const j = clamp(nodeOf(pz) + irand(-reach, reach), 0, N);
+    const d = irand(0, 3);
+    const ni = i + DX[d];
+    const nj = j + DZ[d];
+    if (ni < 0 || nj < 0 || ni > N || nj > N) continue;
+    const rd = (d + 1) & 3;
+    const x = roadC(i) + DX[d] * CELL / 2 + DX[rd] * LANE;
+    const z = roadC(j) + DZ[d] * CELL / 2 + DZ[rd] * LANE;
+    const gap = Math.hypot(x - px, z - pz);
+    if (gap < 26 || gap > (tries < 50 ? 58 : 130) || vehicleNear(x, z, 9)) continue;
+    if (tries < 30 && player.car) {
+      // first choice: in front of you and not driving at you, so the job does not open with a U-turn
+      const fx = Math.sin(player.car.h);
+      const fz = Math.cos(player.car.h);
+      if ((x - px) * fx + (z - pz) * fz < gap * 0.5 || DX[d] * fx + DZ[d] * fz < -0.5) continue;
+    }
+    const v = addVehicle(type, x, z, headingOf(d), 'ai', '#ff3f7f');
+    v.ai.d = d;
+    v.ai.ti = ni;
+    v.ai.tj = nj;
+    v.ai.cruise = 10.5;
+    v.vx = DX[d] * 6;
+    v.vz = DZ[d] * 6;
+    v.keep = true;
+    return v;
+  }
+  return null;
 }
 
 function beginStep(k) {
@@ -1321,6 +1367,11 @@ function beginStep(k) {
     mission.blip = step.at;
   }
   if (step.t === 'lose') setWanted(step.stars);
+  if (step.t === 'tail') {
+    mission.car = spawnTail(mission.def.tailType);
+    mission.tail = { good: 0, seen: 0, lost: 0, age: 0 };
+    if (mission.car) hint('Stay ' + (TAIL.near + 1) + ' to ' + TAIL.far + ' m behind the pink car for ' + step.secs + ' seconds. Too close and they notice.', 6);
+  }
   setText('objective', step.text);
 }
 
@@ -1329,6 +1380,8 @@ function startMission() {
   mission.active = true;
   mission.timer = -1;
   mission.car = null;
+  mission.heat = null;
+  mission.tail = null;
   removeMarker(mission.startMarker);
   mission.startMarker = null;
   if (def.spawn) {
@@ -1342,7 +1395,7 @@ function startMission() {
     mission.car.keep = true;
   }
   if (!def.cab) cab.on = false;
-  if (!def.cab || cab.streak === 0) banner('title', def.name, def.cab ? 'Stop in the ring to pick up. T ends the shift.' : 'A job from ' + def.by, 3.5);
+  if (!def.cab || cab.streak === 0) banner('title', def.name, def.cab ? 'Stop in the ring to pick up. T ends the shift.' : (def.kind === 'foot' ? 'On foot · a job from ' : 'A job from ') + def.by, 3.5);
   $('objective').classList.add('show');
   beginStep(0);
 }
@@ -1352,6 +1405,8 @@ function endMission(passed, reason) {
   const spare = Math.max(0, Math.floor(mission.timer));
   mission.active = false;
   mission.timer = -1;
+  mission.heat = null;
+  mission.tail = null;
   removeMarker(mission.goalMarker);
   mission.goalMarker = null;
   if (mission.car && mission.car !== player.car) mission.car.keep = false;
@@ -1404,8 +1459,17 @@ function updateMission(dt) {
   if (!mission.active) {
     const m = mission.startMarker;
     if (m && dist2(m.x, m.z, px, pz) < 9 && (!player.car || Math.abs(player.car.vf) < 6)) {
-      mission.def = mission.offer;
-      startMission();
+      if (mission.offer.kind === 'foot' && player.car) {
+        // said at the beam, before the clock starts
+        mission.footNote = (mission.footNote || 0) - dt;
+        if (mission.footNote <= 0) {
+          mission.footNote = 2.5;
+          hint(mission.offer.name + ' is on foot: leave the car  [F], then step into the beam.', 3);
+        }
+      } else {
+        mission.def = mission.offer;
+        startMission();
+      }
     } else if (cab.on) {
       // on duty between fares: the next one calls in after a moment
       cab.nextT -= dt;
@@ -1435,9 +1499,47 @@ function updateMission(dt) {
     endMission(false, 'The car was destroyed.');
     return;
   }
+  if (mission.heat) {
+    mission.heat.t -= dt;
+    if (mission.heat.t <= 0) {
+      if (wanted.stars < mission.heat.stars) setWanted(mission.heat.stars);
+      mission.heat = null;
+      hint('The owner has called it in. The police are looking for this car.', 4);
+    }
+  }
   const step = currentStep();
   let done = false;
-  if (step.t === 'car') {
+  if (step.t === 'tail') {
+    const car = mission.car;
+    if (!car) {
+      endMission(false, 'Rico: "They never showed. Ask me again."');
+      return;
+    }
+    const tail = mission.tail;
+    const gap = Math.hypot(car.x - px, car.z - pz);
+    mission.blip = [car.x, car.z];
+    const close = gap < TAIL.near;
+    const far = gap > TAIL.far || !player.car;
+    tail.seen = close ? tail.seen + dt : Math.max(0, tail.seen - dt * 0.5);
+    // a slow start is not a lost tail: for the opening seconds a gap does not count against you
+    tail.age += dt;
+    const opening = tail.age < TAIL.pickup;
+    tail.lost = far && !opening ? tail.lost + dt : 0;
+    if (!close && !far) tail.good += dt;
+    if (tail.seen >= TAIL.seen) {
+      car.ai.cruise = 22;
+      endMission(false, 'They spotted you in the mirror.');
+      return;
+    }
+    if (tail.lost >= TAIL.lost) {
+      endMission(false, 'You lost them.');
+      return;
+    }
+    const left = Math.max(0, Math.ceil(step.secs - tail.good));
+    const note = !player.car ? 'Get back in a car  [F]' : close ? 'TOO CLOSE: drop back' : far ? (opening ? 'CATCH UP: get within ' + TAIL.far + ' m' : 'LOSING THEM: catch up') : 'good: keep this distance';
+    setText('objective', `${step.text}  |  ${Math.round(gap)} m  ·  ${note}  ·  ${left} s to go`);
+    done = tail.good >= step.secs;
+  } else if (step.t === 'car') {
     done = step.target ? player.car === mission.car : !!player.car;
     if (step.target) mission.blip = [mission.car.x, mission.car.z];
     else mission.blip = null;
@@ -1462,11 +1564,15 @@ function updateMission(dt) {
       done = mission.handoff >= .65;
     }
   } else if (step.t === 'lose') {
-    mission.blip = null;
+    // the route leads to the respray: one sure way out, for anyone who cannot shake them
+    mission.blip = PLACES.garage;
     done = wanted.stars === 0;
   }
   if (!done) return;
-  if (step.wantedAfter) setWanted(step.wantedAfter);
+  if (step.wantedAfter && step.wantedDelay) {
+    mission.heat = { t: step.wantedDelay, stars: step.wantedAfter };
+    hint('The owner saw you take it. You have ' + step.wantedDelay + ' seconds before the police know.', 5);
+  } else if (step.wantedAfter) setWanted(step.wantedAfter);
   if (mission.def.cab && mission.step === 0) {
     clearPassenger();
     sfx.door();
@@ -1603,6 +1709,8 @@ function drawMap() {
   g.translate(-px, -pz);
   g.fillStyle = '#b9a877';
   g.fillRect(-HALF - SHORE, -HALF - SHORE, 2 * (HALF + SHORE), 2 * (HALF + SHORE));
+  g.fillStyle = '#7b7e88';      // the Rustport dock apron and quay
+  g.fillRect(DOCK.x0, DOCK.z0, DOCK.x1 - DOCK.x0, DOCK.z1 - DOCK.z0);
   g.fillStyle = '#5b6170';
   g.fillRect(-HALF, -HALF, WORLD, WORLD);
   const i0 = clamp(cellOf(px) - 3, 0, N - 1);
@@ -1705,6 +1813,8 @@ function bigMapBase(size) {
   g.scale(k, k);
   g.fillStyle = '#b9a877';
   g.fillRect(-HALF - SHORE, -HALF - SHORE, 2 * (HALF + SHORE), 2 * (HALF + SHORE));
+  g.fillStyle = '#7b7e88';      // the Rustport dock apron and quay
+  g.fillRect(DOCK.x0, DOCK.z0, DOCK.x1 - DOCK.x0, DOCK.z1 - DOCK.z0);
   g.fillStyle = '#6b7182';
   g.fillRect(-HALF, -HALF, WORLD, WORLD);
   const names = {};

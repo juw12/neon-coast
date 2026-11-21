@@ -1,6 +1,8 @@
 """City systems check: cab fares, property, perks, helicopter, route, big map, old saves (version 1.2),
 and police heat reaching fares, shops and your own front door, the Sol Wheel ride and the perk card (1.3),
-the learner phase, the J key, the Paper Round on foot and the building outlines (1.4).
+the learner phase, the J key, the Paper Round on foot and the building outlines (1.4),
+the near first job beam, the on-foot rule at the beam, the Shadow Run tail job, the head start on a stolen
+car and the respray route while losing heat (1.6).
 
 State is set through the game's test handle (window.NEON) so each rule can be
 checked in seconds. It proves the rules work; it does not prove they are fun.
@@ -60,8 +62,14 @@ def run():
         route = page.evaluate("() => ({ points: NEON.route.points, length: NEON.route.length, blip: NEON.mission.blip, at: [NEON.player.x, NEON.player.z] })")
         axis_aligned = all(abs(a[0] - b[0]) < 0.6 or abs(a[1] - b[1]) < 0.6 for a, b in zip(route["points"][1:-1], route["points"][2:-1]))
         ends_at_target = bool(route["points"]) and abs(route["points"][-1][0] - route["blip"][0]) < 0.1 and abs(route["points"][-1][1] - route["blip"][1]) < 0.1
-        check("route follows streets to the target", len(route["points"]) >= 2 and axis_aligned and ends_at_target and route["length"] > 50,
+        check("route follows streets to the job beam", len(route["points"]) >= 2 and axis_aligned and ends_at_target,
               f"{len(route['points'])} points, {round(route['length'])} m")
+        # 2b. (1.6) the first job beam stands in the first view: 30 to 45 m from the start spot, and ahead of the player
+        first = page.evaluate("""() => { const n = NEON, p = n.player, b = n.mission.blip, dx = b[0] - p.x, dz = b[1] - p.z;
+            const gap = Math.hypot(dx, dz);
+            return { gap, ahead: (Math.sin(n.cam.yaw) * dx + Math.cos(n.cam.yaw) * dz) / gap, name: n.mission.offer.name }; }""")
+        check("the first job beam is 30 to 45 m ahead of the start spot", first["name"] == "First Wheels" and 30 <= first["gap"] <= 45 and first["ahead"] > 0.9,
+              f"{round(first['gap'])} m, {round(first['ahead'], 2)} of straight ahead")
 
         # 3. the whole map opens and closes on M
         page.keyboard.press("m")
@@ -83,6 +91,13 @@ def run():
         page.wait_for_timeout(600)
         on_duty = page.evaluate("() => NEON.cab.on && NEON.mission.active && NEON.mission.def.cab === true && !!NEON.cab.passenger")
         check("T in a City Cab starts a fare with a waiting passenger", on_duty)
+        # the long route (this was the job-beam check until 1.6 moved that beam next to the start spot)
+        page.wait_for_timeout(500)
+        route = page.evaluate("() => ({ points: NEON.route.points, length: NEON.route.length, blip: NEON.mission.blip })")
+        axis_aligned = all(abs(a[0] - b[0]) < 0.6 or abs(a[1] - b[1]) < 0.6 for a, b in zip(route["points"][1:-1], route["points"][2:-1]))
+        ends_at_target = bool(route["points"]) and abs(route["points"][-1][0] - route["blip"][0]) < 0.1 and abs(route["points"][-1][1] - route["blip"][1]) < 0.1
+        check("route follows streets to a far target", len(route["points"]) >= 2 and axis_aligned and ends_at_target and route["length"] > 50,
+              f"{len(route['points'])} points, {round(route['length'])} m")
         before = page.evaluate("() => NEON.save.money")
         fare = page.evaluate("() => ({ reward: NEON.mission.def.reward, metres: NEON.mission.def.metres })")
         for step in (0, 1):
@@ -256,14 +271,14 @@ def run():
               told["job"] == "Hot Delivery" and "Hot Delivery" in told["hint"] and "after the story" in told["hint"], json.dumps(told))
         page.evaluate("() => { NEON.save.mission = NEON.MISSIONS.length; NEON.offerMission(); }")
         kinds = [page.evaluate("() => NEON.mission.offer.kind")]
-        for _ in range(4):
+        for _ in range(5):
             page.keyboard.press("j")
             page.wait_for_timeout(200)
             kinds.append(page.evaluate("() => NEON.mission.offer.kind"))
-        check("J deals five different kinds of odd job in turn", len(set(kinds)) == 5 and "foot" in kinds, json.dumps(kinds))
+        check("J deals six different kinds of odd job in turn", len(set(kinds)) == 6 and "foot" in kinds and "tail" in kinds, json.dumps(kinds))
 
         # 13. Paper Round: on foot only, four envelopes, pays $550
-        for _ in range(5):
+        for _ in range(6):
             if page.evaluate("() => NEON.mission.offer.kind") == "foot":
                 break
             page.keyboard.press("j")
@@ -272,14 +287,33 @@ def run():
             return { name: o.name, reward: o.reward, steps: o.steps.length, foot: o.steps.every(s => s.foot) }; }""")
         check("Paper Round is offered: four stops on foot for $550",
               offer["name"] == "Paper Round" and offer["reward"] == 550 and offer["steps"] == 4 and offer["foot"], json.dumps(offer))
-        # arrive by car: the job starts, but the first envelope does not count from the driver's seat
+        marker = page.evaluate("() => NEON.mission.startMarker.text")
+        check("the Paper Round beam is labelled ON FOOT", "ON FOOT" in marker, marker)
+        # arrive by car (1.6): the round does not start from the driver's seat, and the hint says why
         page.evaluate("""() => { const n = NEON, p = n.player;
             const car = n.vehicles.filter(v => v.driver !== 'ai' && !v.dead)
               .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
             p.x = car.x + 2.2; p.z = car.z; n.tryEnterExit();
             const at = n.mission.offer.at; n.player.car.x = at[0]; n.player.car.z = at[1]; n.player.car.vx = n.player.car.vz = 0; }""")
+        page.wait_for_timeout(700)
+        refused = page.evaluate("""() => ({ active: NEON.mission.active, car: !!NEON.player.car, hint: document.getElementById('hint').textContent })""")
+        check("the round does not start from a car, and the hint says it is on foot",
+              refused["car"] and not refused["active"] and "on foot" in refused["hint"], json.dumps(refused))
+        # step out at the beam: now it starts, and the title card says on foot
+        page.evaluate("""() => { const n = NEON, c = n.player.car; c.vx = c.vz = 0; n.tryEnterExit();
+            const at = n.mission.offer.at; n.player.x = at[0]; n.player.z = at[1]; }""")
         page.wait_for_timeout(500)
+        begun = page.evaluate("""() => ({ active: NEON.mission.active, name: NEON.mission.active ? NEON.mission.def.name : '',
+            card: document.querySelector('#banner span').textContent })""")
+        check("on foot at the beam the round starts, and the title card says on foot",
+              begun["active"] and begun["name"] == "Paper Round" and "On foot" in begun["card"], json.dumps(begun))
         money_before = page.evaluate("() => NEON.save.money")
+        # get back in mid-round: an envelope does not count from the driver's seat
+        page.evaluate("""() => { const n = NEON, p = n.player;
+            const car = n.vehicles.filter(v => v.driver !== 'ai' && !v.dead)
+              .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
+            p.x = car.x + 2.2; p.z = car.z; n.tryEnterExit(); }""")
+        page.wait_for_timeout(300)
         page.evaluate("""() => { const n = NEON, c = n.player.car, at = n.mission.def.steps[0].at;
             c.x = at[0]; c.z = at[1]; c.vx = c.vz = 0; }""")
         page.wait_for_timeout(600)
@@ -298,6 +332,118 @@ def run():
         check("four envelopes on foot finish the round and pay $550",
               steps_seen == [1, 2, 3, -1] and not paid["active"] and paid["money"] - money_before == 550 and not paid["car"],
               json.dumps({"steps": steps_seen, "paid": paid["money"] - money_before}))
+
+        # 14. (1.6) Shadow Run: follow a moving car, no clock and no marker. The follow time is cut from 40 s to 3 s
+        # for the check, and the player's car is held at a set distance behind the marked car.
+        def start_tail():
+            page.evaluate("""() => { const n = NEON, c = n.player.car; n.setWanted(0); n.player.hp = 100;
+                if (c) { c.vx = c.vz = 0; n.tryEnterExit(); } }""")
+            page.wait_for_timeout(300)
+            for _ in range(7):
+                if page.evaluate("() => !NEON.mission.active && NEON.mission.offer.kind") == "tail":
+                    break
+                page.keyboard.press("j")
+                page.wait_for_timeout(200)
+            told = page.evaluate("""() => { const n = NEON, o = n.mission.offer; o.steps[1].secs = 3;
+                n.player.x = o.at[0]; n.player.z = o.at[1];
+                return { name: o.name, kind: o.kind, reward: o.reward, steps: o.steps.map(s => s.t) }; }""")
+            page.wait_for_timeout(400)
+            page.evaluate("""() => { const n = NEON, p = n.player;
+                const car = n.vehicles.filter(v => v.driver !== 'ai' && v.driver !== 'cop' && !v.dead)
+                  .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
+                car.vx = car.vz = 0; p.x = car.x + 2.2; p.z = car.z; n.tryEnterExit(); }""")
+            page.wait_for_timeout(500)
+            return told
+
+        def hold_behind(metres, seconds):
+            page.evaluate("""(metres) => { clearInterval(window.__pin); window.__pin = setInterval(() => {
+                const n = NEON, c = n.player.car, t = n.mission.car;
+                if (!n.mission.active || !c || !t) return;
+                c.x = t.x - Math.sin(t.h) * metres; c.z = t.z - Math.cos(t.h) * metres; c.h = t.h; c.vx = c.vz = 0; c.hp = c.t.hp; }, 30); }""", metres)
+            page.wait_for_timeout(int(seconds * 1000))
+            page.evaluate("() => clearInterval(window.__pin)")
+            return page.evaluate("""() => ({ active: NEON.mission.active, money: NEON.save.money,
+                card: document.querySelector('#banner b').textContent + ' / ' + document.querySelector('#banner span').textContent })""")
+
+        told = start_tail()
+        check("Shadow Run is offered: get a car, then tail one, for $700",
+              told["name"] == "Shadow Run" and told["reward"] == 700 and told["steps"] == ["car", "tail"], json.dumps(told))
+        chase = page.evaluate("""() => { const n = NEON, m = n.mission, t = m.car, p = n.player;
+            return { active: m.active, step: m.step, driver: t ? t.driver : null, keep: t ? t.keep : null,
+                gap: t && p.car ? Math.round(Math.hypot(t.x - p.car.x, t.z - p.car.z)) : -1, near: n.TAIL.near, far: n.TAIL.far,
+                text: document.getElementById('objective').textContent }; }""")
+        check("the marked car is a driver in traffic, 26 to 130 m away, and the objective shows the gap",
+              chase["active"] and chase["step"] == 1 and chase["driver"] == "ai" and chase["keep"] and 20 <= chase["gap"] <= 135
+              and " m " in chase["text"] and "to go" in chase["text"], json.dumps(chase))
+        money_before = page.evaluate("() => NEON.save.money")
+        kept = hold_behind(25, 4.2)
+        check("staying 25 m behind for the full time passes and pays $700",
+              not kept["active"] and kept["money"] - money_before == 700 and "PASSED" in kept["card"], json.dumps(kept))
+        page.wait_for_timeout(400)
+        start_tail()
+        money_before = page.evaluate("() => NEON.save.money")
+        close = hold_behind(5, 4.0)
+        check("sitting 5 m behind gets you spotted: failed, no pay",
+              not close["active"] and close["money"] == money_before and "spotted" in close["card"], json.dumps(close))
+        page.wait_for_timeout(400)
+        start_tail()
+        page.evaluate("() => { NEON.mission.tail.age = NEON.TAIL.pickup; }")     # past the opening twenty seconds
+        far = hold_behind(100, 9.2)
+        check("after the opening, 100 m behind for eight seconds loses them: failed, no pay",
+              not far["active"] and far["money"] == money_before and "lost them" in far["card"], json.dumps(far))
+        page.wait_for_timeout(400)
+        start_tail()
+        slow = hold_behind(100, 12.0)         # a slow start: 100 m behind from the first second
+        slow["text"] = page.evaluate("() => document.getElementById('objective').textContent")
+        check("a slow start is allowed: 100 m behind for the first twelve seconds does not fail, and the line says catch up",
+              slow["active"] and "CATCH UP" in slow["text"] and page.evaluate("() => NEON.TAIL.pickup") == 20, json.dumps(slow))
+        gone = hold_behind(100, 17.5)
+        check("never closing up loses them once the opening twenty seconds and eight more are gone",
+              not gone["active"] and gone["money"] == money_before and "lost them" in gone["card"], json.dumps(gone))
+
+        # 15. (1.6) Borrowed Time: ten seconds of head start before the stars
+        page.evaluate("""() => { const n = NEON, c = n.player.car; n.setWanted(0); n.player.hp = 100; n.save.money = 1000;
+            if (c) { c.vx = c.vz = 0; n.tryEnterExit(); } n.save.mission = 3; n.offerMission(); }""")
+        page.wait_for_timeout(300)
+        page.evaluate("() => { const n = NEON, at = n.mission.offer.at; n.player.x = at[0]; n.player.z = at[1]; }")
+        page.wait_for_timeout(500)
+        page.evaluate("""() => { const n = NEON, p = n.player, car = n.mission.car; n.setWanted(0);
+            p.x = car.x + 2.2; p.z = car.z; n.tryEnterExit(); }""")
+        page.wait_for_timeout(700)
+        early = page.evaluate("""() => ({ job: NEON.mission.active ? NEON.mission.def.name : '', step: NEON.mission.step, stars: NEON.wanted.stars,
+            hint: document.getElementById('hint').textContent })""")
+        page.wait_for_timeout(10300)
+        late = page.evaluate("() => NEON.wanted.stars")
+        check("taking the marked car gives ten seconds before the two stars",
+              early["job"] == "Borrowed Time" and early["step"] == 1 and early["stars"] == 0 and "10 seconds" in early["hint"] and late >= 2,
+              json.dumps({"early": early, "stars_after_11s": late}))
+
+        # 16. (1.6) Heat Wave: while losing the heat the route leads to the respray, and the respray ends it
+        page.evaluate("() => { NEON.setWanted(0); NEON.player.hp = 100; NEON.save.money = 1000; }")
+        page.evaluate("""() => { const n = NEON, c = n.player.car, g = n.PLACES.garage;      // finish Borrowed Time the honest way: the car in the ring
+            c.x = g[0]; c.z = g[1]; c.vx = c.vz = 0; c.hp = c.t.hp; }""")
+        page.wait_for_timeout(700)
+        moved_on = page.evaluate("() => ({ done: NEON.save.mission, offer: NEON.mission.offer.name, active: NEON.mission.active })")
+        # stay in the same car: roll into the next beam, then to the bag outside the bank
+        page.evaluate("""() => { const n = NEON, c = n.player.car, at = n.mission.offer.at; n.setWanted(0); n.save.money = 1000;
+            c.x = at[0]; c.z = at[1]; c.vx = c.vz = 0; }""")
+        page.wait_for_timeout(500)
+        page.evaluate("() => { const n = NEON, c = n.player.car, at = n.PLACES.bank; c.x = at[0]; c.z = at[1]; c.vx = c.vz = 0; }")
+        page.wait_for_timeout(500)
+        heat = page.evaluate("""() => { const n = NEON, m = n.mission, g = n.PLACES.garage, r = n.route.points;
+            return { job: m.active ? m.def.name : '', step: m.step, stars: n.wanted.stars, blip_is_respray: !!m.blip && m.blip[0] === g[0] && m.blip[1] === g[1],
+                route_ends_there: r.length > 1 && Math.hypot(r[r.length - 1][0] - g[0], r[r.length - 1][1] - g[1]) < 0.2,
+                text: document.getElementById('objective').textContent }; }""")
+        check("with three stars on, the route leads to Mo's Respray and the objective says so",
+              moved_on["done"] == 4 and heat["job"] == "Heat Wave" and heat["step"] == 1 and heat["stars"] == 3 and heat["blip_is_respray"]
+              and heat["route_ends_there"] and "respray" in heat["text"], json.dumps({"after_job_4": moved_on, "heat": heat}))
+        money_before = page.evaluate("() => NEON.save.money")
+        page.evaluate("() => { const n = NEON, c = n.player.car, g = n.PLACES.garage; c.x = g[0]; c.z = g[1]; c.vx = c.vz = 0; }")
+        page.wait_for_timeout(800)
+        sprayed = page.evaluate("() => ({ stars: NEON.wanted.stars, done: NEON.save.mission, gain: NEON.save.money, in_car: !!NEON.player.car })")
+        sprayed["gain"] -= money_before
+        check("the respray clears the heat for $150 and the job pays $2200",
+              sprayed["in_car"] and sprayed["stars"] == 0 and sprayed["done"] == 5 and sprayed["gain"] == 2200 - 150, json.dumps(sprayed))
         check("no console errors", not problems, "; ".join(problems[:3]))
         browser.close()
 

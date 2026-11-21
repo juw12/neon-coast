@@ -1,0 +1,131 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 10.0,
+        "C2": 9.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "The first job 'First Wheels' finishes in 38.5 to 50.9 seconds per script, fitting the 'within a minute' anchor, and the 'learner phase' prevents early failure.",
+        "C2": "Distinct districts like 'Sol Beach (pastel hotels)' and 'Rustport (industry)' with a 'glow pass' create mood, though low-poly assets risk genericness.",
+        "C3": "Jobs, police, and money sinks 'feed each other' via perks (e.g., cab fares doubling tips), but secrets are limited to standard package collectibles.",
+        "C4": "Desktop HUD is 'quieter' with hidden stars/clock, but mobile screenshots show dense button clusters that may clutter the view.",
+        "C5": "Fact sheet plainly states limits: 'No real phone or tablet has run the game yet' and 'No real players have tried it yet'."
+      },
+      "fixes": [
+        "Test touch controls on real physical devices immediately; emulation cannot verify thumb reach, heat, or actual frame rate on phones.",
+        "Conduct human playtesting for difficulty and audio; scripts verify function but cannot confirm if jobs are 'fun' or music is 'pleasant'.",
+        "Refine the mobile HUD layout to reduce visual clutter; the current button array in screenshots risks obscuring the road during high-speed driving."
+      ],
+      "total": 9.2,
+      "seconds": 16.8
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen shows 'HOW TO PLAY' with WASD/Mouse/Shift/Space/F/M; first objective 'Get into the red car ahead [F]' is immediately visible; learner phase prevents early arrest; first job ends at the Sol Wheel landmark.",
+        "C2": "Screenshots show neon-lit night streets (BAKERY/PHARMACY signs), pastel Sol Beach with parasols and Ferris wheel, Rustport containers and cranes, Meridian tiered towers; 86 painted walls, lit windows, Coastliner airship, moon and clouds give distinct day/night mood.",
+        "C3": "Six story jobs ($250-$3,500), five odd-job types (Rush Order, Repo Run, Block Dash, Hot Parcel, Paper Round), cab fares with tip/streak system, four properties with rent, 15 hidden packages, Sol Wheel ride, harbor courier, three-stage Tune-up, and perks that cross-link systems (5 packages = 25% less damage, 10 fares = double tips).",
+        "C4": "HUD reduced to cash+health always, stars only when wanted, weapon line only 5s; perk card under cash; G8 passes no-overlap at 1024x640/1280x720/1920x1080; pause screen is three buttons + settings + perks; touch buttons are context-sensitive (USE/CAB appear when applicable).",
+        "C5": "All names original (Meridian, Sol Beach, Rustport, Tidal, Vanta GT, Ravager, Sol Wheel, Coastliner); title screen carries 'not affiliated' line; G9 own-names-only passes; fact sheet plainly states 'No real players have tried it yet', 'whether the music is pleasant is not known', and lists exactly which jobs are 'passed by script only'."
+      },
+      "fixes": [
+        "Run the game with real human players (even 3-5) to validate driving feel, job pacing, and whether the first job teaches the loop — the fact sheet admits 'a script is not a person' and 'nobody has listened to it'.",
+        "Test touch controls on at least one real phone and tablet — 1.5 'Pocket' is the headline change but 'no real phone or tablet has run the game yet, so thumb reach, heat and frame rate on a phone are not known'.",
+        "Measure the unmeasured jobs (races 3 and 6, getaway job 5, odd jobs, cab fares, courier shift) with timed human or scripted runs that respect the time limits, so difficulty and reward tuning can be verified rather than assumed."
+      ],
+      "total": 8.35,
+      "seconds": 14.9
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": null,
+        "C2": null,
+        "C3": null,
+        "C4": null,
+        "C5": null
+      },
+      "fixes": [],
+      "salvaged": true,
+      "total": 8.6,
+      "seconds": 51.7
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.6,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 8.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 2.0,
+    "C2": 1.0,
+    "C3": 0.0,
+    "C4": 0.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.35,
+    9.2
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Test touch controls on real physical devices immediately; emulation cannot verify thumb reach, heat, or actual frame rate on phones."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Conduct human playtesting for difficulty and audio; scripts verify function but cannot confirm if jobs are 'fun' or music is 'pleasant'."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Refine the mobile HUD layout to reduce visual clutter; the current button array in screenshots risks obscuring the road during high-speed driving."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Run the game with real human players (even 3-5) to validate driving feel, job pacing, and whether the first job teaches the loop — the fact sheet admits 'a script is not a person' and 'nobody has listened to it'."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Test touch controls on at least one real phone and tablet — 1.5 'Pocket' is the headline change but 'no real phone or tablet has run the game yet, so thumb reach, heat and frame rate on a phone are not known'."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Measure the unmeasured jobs (races 3 and 6, getaway job 5, odd jobs, cab fares, courier shift) with timed human or scripted runs that respect the time limits, so difficulty and reward tuning can be verified rather than assumed."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

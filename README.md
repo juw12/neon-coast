@@ -8,7 +8,7 @@
 |---|---|---|
 | ![Sol Beach and the Sol Wheel at dusk](docs/sol-wheel.jpg) | ![Meridian at night](docs/night-city.jpg) | ![Road arrows on the way to a job](docs/dusk-drive.jpg) |
 | ![Rolling up to a cab fare](docs/cab-fare.jpg) | ![The whole island on M](docs/whole-map.jpg) | ![Sol Beach by day with the Coastliner airship](docs/day-beach.jpg) |
-| ![A painted wall on Sol Beach](docs/mural.jpg) | ![The city from the Sol Wheel ride](docs/wheel-ride.jpg) | ![The Rustport quay: containers and gantry cranes](docs/rustport-quay.jpg) |
+| ![A painted wall on Sol Beach](docs/mural.jpg) | ![The city from the Sol Wheel ride](docs/wheel-ride.jpg) | ![The Rustport dock: the apron, containers and gantry cranes](docs/rustport-quay.jpg) |
 | ![Meridian crowns at dusk](docs/meridian-crowns.jpg) | ![Sol Beach hotels with balconies](docs/beach-balconies.jpg) | Screenshots are taken from the running game by `test/smoke.py` and `test/city_shots.py`. |
 
 An original single-player 3D island sandbox in one HTML file: steal cars, run jobs, drive a cab, buy
@@ -21,6 +21,31 @@ On a desktop, open NeonCoast.html in Chrome or Edge with WebGL. No server, netwo
 needed. Choose New Game or Continue. Walk up to a car and press F. Drive with WASD; Space is the handbrake.
 Follow the arrows on the road to the yellow J marker for the first of six jobs. Press M for the whole map
 and P to pause. Progress is stored in your browser, so use the same browser and file location to resume.
+
+## Version 1.6 · Tail Lights
+
+![Shadow Run: following the pink car through Meridian at dusk](docs/shadow-run.jpg)
+
+- **A sixth odd job that is not a race.** Shadow Run: Rico wants a car followed. Stay 12 to 60 m behind
+  the pink car for 40 seconds. Closer than that for three seconds and the driver spots you; further for
+  eight and you have lost them. For the first twenty seconds a gap does not count: catch up. No clock,
+  no marker to reach. It pays $700.
+- **The first job starts where you stand.** The yellow beam is now in the red car's own lane, 40 m ahead
+  of the start spot: get in, roll forward, the job begins. The whole first job is about 270 m instead of 470.
+- **Paper Round says it is on foot.** The beam is labelled ON FOOT, and the round does not start from a
+  driver's seat: a line tells you to leave the car first, before the clock runs.
+- **A head start in Borrowed Time.** Taking the marked car gives ten seconds before the two stars arrive
+  (eight seconds and one star in the Repo Run odd job).
+- **A marked way out of the heat.** In Heat Wave and Hot Parcel the road arrows lead to Mo's Respray while
+  you are wanted. Losing the police out of their sight still works as before.
+- **A working dock.** The shore in front of the Rustport quay is a concrete apron with a truck lane, a
+  crane rail and a hazard edge; the quay has mooring bollards, floodlight masts and yard tractors. Both
+  maps show it.
+- **See-through buttons on a phone.** The touch buttons are fainter, so the road shows behind them.
+- **All six story jobs are now played by key presses in the tests**, and so is Shadow Run. The Tests
+  section below says how often the script finished each one: the two police jobs are still the hard ones.
+
+Saves from 1.5 carry over.
 
 ## Version 1.5 · Pocket
 
@@ -148,34 +173,60 @@ Needs Python with Playwright and Chrome. Run from this folder after `python buil
 - `python test/gates.py` - ten pass/fail gates (offline single file, clean console, the core loop with 22
   checks, all six jobs pay, arrest, mouse look, frame rate, HUD overlap at three sizes, own names, clear first view).
 - `python test/harbor.py` - the harbor courier shift from start to payout, cancel and timeout.
-- `python test/city.py` - 39 checks on cab fares, property, perks, the helicopter, the route, the map,
+- `python test/city.py` - 54 checks on cab fares, property, perks, the helicopter, the route, the map,
   saves from older versions, the Sol Wheel ride, what the police stars switch off, the learner phase, the
-  **J** key, the Paper Round and the building outlines.
+  **J** key, the Paper Round and its ON FOOT start rule, the building outlines, the near first beam,
+  Shadow Run (seen, lost, a slow start, passed), the head start and the respray route.
 - `python test/radio.py` - 14 checks that record the three radio stations at the game's master output and
   measure them: loud enough, no clipping, the beat repeating at each station's own tempo, different tone.
   It cannot tell whether the music is pleasant.
-- `python test/drive.py 5` - plays the first story job five times with key presses only (W A S D, F and
+- `python test/drive.py 5` - plays the first story job five times with key presses only (W A S D, F, J and
   Space; nothing is moved by script) and reports how many runs finished. `python test/drive.py 3 2` plays
-  job 2 (Hot Delivery, against its 80 s clock) and `python test/drive.py 3 4` plays job 4 (Borrowed Time,
-  a car theft with the police after it); for those two the save file is first set to "earlier jobs done".
-  On the 1.4 build: job 1 finished 5 of 5 runs (38.5 to 50.9 s), job 2 finished 3 of 3 (110.2 to 132.0 s),
-  job 4 finished 2 of 3 (169.1 s, and 317.4 s after one arrest and a second try); in the third run the
-  script was arrested or taken out three times and ran out of its seven minutes. Traffic is random, so
-  results vary.
+  job 2 three times; jobs 3 to 6 and `tail` (Shadow Run) are asked for the same way. For every job but the
+  first the save file is first set to "earlier jobs done". On foot the script walks along the pavements to
+  the nearest parked car. A try that fails is tried again inside the run's time limit, and the result lists
+  the tries, the arrests and the reason the game gave. Traffic is random, so results vary.
+
+  On the 1.6 build, one run at a time:
+
+  | job | finished | time | what went wrong |
+  |---|---|---|---|
+  | 1 First Wheels | 3 of 3 | 29.7 to 47.9 s (1.4: 38.5 to 50.9 s) | |
+  | 2 Hot Delivery | 2 of 2 | 146.8 and 222.1 s | |
+  | 3 Midnight Sprint | 1 of 2 | 279.7 s, second try | other tries ran out of the race clock (measured with a second test running) |
+  | 4 Borrowed Time | 1 of 2 | 204.9 s, first try | the other run: stolen car wrecked by police cars, twice |
+  | 5 Heat Wave | 0 of 3 | - | arrested or taken out 8 times in 8 tries, up to five stars |
+  | 6 Coastline Run | 1 of 1 | 211.2 s, first try | |
+  | Shadow Run | 3 of 3 | 109.5 to 205.8 s | first try once, second try twice (spotted once, lost them once) |
+
+  The same script is much worse when the PC is busy. Earlier the same day, with two or three browsers
+  running at once and the frame rate down to 18 to 50 a second, job 2 finished 1 of 4 runs, job 5 0 of 4
+  and job 6 0 of 2; job 4 finished 0 of 8 (four of those with other browsers running, four before the
+  script learnt to walk along the pavements, when it could get stuck in an alley after an arrest). Two more
+  runs of job 3 did not finish and their result file was lost. Releases 1.5 and 1.4 were tried in the same
+  hour: 1.5 finished job 4 0 of 2 and job 2 0 of 1, 1.4 finished job 2 1 of 1. So run this test alone.
+
+  What it shows about the game: the two police jobs are the hard ones. At two stars a police car with a clear
+  view drives straight at the player at top speed, one head-on hit takes most of the Vanta GT's health, and
+  every such hit also counts as a crime, so the stars climb. The 10 s head start in 1.6 did not change that.
+  It is the first thing to tune next.
 
 - `python test/touch.py` - touch play in Chrome emulating a phone at four screen sizes, landscape and
   upright, with real touch events (two fingers where two thumbs are needed): every button, the stick, the
   look drag, the map, pause, the Sol Wheel; nothing overlapping or off screen; every hint naming a button
   and not a key; the desktop page unchanged; the manifest, icons and an offline reload from a local web
   server; and, if Playwright's WebKit is installed (`playwright install webkit`), a run on Safari's engine.
+  9 of 9 on the 1.6 build. On the Windows laptop the Safari-engine check sometimes loses its WebGL context
+  when other tests are running (it did once for 1.6 and once for 1.5); alone it passes.
 
 - `python test/fps_ab.py NeonCoast.html other-build.html` - frame rate of two builds measured in turn, for
   when the PC is busy and the frame-rate gate reads low.
 
-Apart from those three driven jobs, jobs are passed by script (the car or the player is moved between
-markers), so the tests do not measure how hard the two races, the three-star getaway, the odd jobs, the
-cab fares or the courier shift are for a person. Tested in Chrome on one Windows laptop and one Mac. The
-touch controls were tested in Chrome's phone emulation and Playwright's WebKit on a Mac, not yet on a real
+Apart from the six story jobs and Shadow Run, jobs are passed by script (the car or the player is moved
+between markers), so the tests do not measure how hard the other odd jobs, the cab fares or the courier
+shift are. A script is also not a person: it reads the game state and never gets lost, so even a job it
+finishes may be harder or easier for a player. Tested in Chrome on one Windows laptop and one Mac. The
+touch controls were tested in Chrome's phone emulation and Playwright's WebKit on both, not yet on a real
 iPhone or Android phone, so frame rate and feel in the hand are unknown. No gamepad controls. No real
 players have tried it yet; the scores in `hone/refine_log.md` come from AI judges reading
 a fact sheet and screenshots. `hone/rubric.md` holds the scoring rubric.

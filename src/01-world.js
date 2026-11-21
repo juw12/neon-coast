@@ -482,10 +482,11 @@ const trimBoxes = [];             // {x, y, z, sx, sy, sz, color}
 const trimWedges = [];            // {x, y, z, sx, sy, sz, rot, color}: upright side at -x before turning
 const trimDrums = [];             // {x, y, z, r, h, color}
 const tint = (col, k) => new T.Color(Math.min(1, col[0] * k), Math.min(1, col[1] * k), Math.min(1, col[2] * k));
+const DOCK = { x0: -HALF + 6, x1: roadC(4) - 8, z0: HALF + 1.5, z1: HALF + SHORE + 33 };   // Rustport dock apron and quay, as drawn on the maps
 const TRIM = {
   white: new T.Color('#f6f0e4'), chimney: new T.Color('#8a5546'), saw: new T.Color('#5d7f86'), glass: new T.Color('#9fd3dc'),
   tank: new T.Color('#b9b2a2'), wood: new T.Color('#8a5a3c'), concrete: new T.Color('#7d7f86'), crane: new T.Color('#e8b53a'),
-  hull: new T.Color('#27364f'), keel: new T.Color('#a8432f'),
+  hull: new T.Color('#27364f'), keel: new T.Color('#a8432f'), iron: new T.Color('#3b3d45'), tyre: new T.Color('#1d1d22'),
   deco: ['#ff7fb0', '#3fd6c8', '#ffb347', '#8f9bff'].map((hex) => new T.Color(hex)),
   crates: ['#c0503c', '#2f7fb8', '#e08a2e', '#3f9f68', '#e5c443', '#7d5aa8', '#d9d4c8', '#1f8f8f'].map((hex) => new T.Color(hex)),
 };
@@ -659,6 +660,85 @@ function yardTexture() {
   return new T.CanvasTexture(c);
 }
 
+// Rustport dock apron: one square of worked concrete, repeated along the shore in front of the quay.
+// The top of the picture is the city side, the bottom is the water's edge.
+function apronTexture() {
+  const c = mkCanvas(512, 512);
+  const g = c.getContext('2d');
+  g.fillStyle = '#595b62';
+  g.fillRect(0, 0, 512, 512);
+  for (let k = 0; k < 2600; k++) {
+    g.fillStyle = RO() < 0.5 ? `rgba(0,0,0,${RO() * 0.1})` : `rgba(255,235,205,${RO() * 0.06})`;
+    g.fillRect(RO() * 512, RO() * 512, 2 + RO() * 4, 2 + RO() * 4);
+  }
+  for (let k = 0; k < 9; k++) {
+    // oil and rust, kept clear of the left and right edges so the repeat does not show a seam
+    const x = 60 + RO() * 392;
+    const y = RO() * 512;
+    const stain = g.createRadialGradient(x, y, 2, x, y, 16 + RO() * 30);
+    stain.addColorStop(0, RO() < 0.5 ? 'rgba(150,72,38,0.4)' : 'rgba(16,16,22,0.45)');
+    stain.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = stain;
+    g.fillRect(x - 50, y - 50, 100, 100);
+  }
+  // slab joints
+  g.strokeStyle = 'rgba(0,0,0,0.3)';
+  g.lineWidth = 2;
+  for (let k = 0; k <= 512; k += 64) {
+    g.beginPath();
+    g.moveTo(k, 0);
+    g.lineTo(k, 512);
+    g.moveTo(0, k);
+    g.lineTo(512, k);
+    g.stroke();
+  }
+  // the truck lane: two yellow edges and a broken white middle
+  g.fillStyle = '#c9a233';
+  g.fillRect(0, 92, 512, 5);
+  g.fillRect(0, 196, 512, 5);
+  g.fillStyle = '#c9c6bc';
+  for (let x = 16; x < 512; x += 64) g.fillRect(x, 144, 32, 4);
+  // the rail track of the yard crane: sleepers, then two bright rails
+  g.fillStyle = '#2f2b29';
+  for (let x = 2; x < 512; x += 8) g.fillRect(x, 304, 3, 26);
+  g.fillStyle = '#c3c6cf';
+  g.fillRect(0, 308, 512, 3);
+  g.fillRect(0, 323, 512, 3);
+  // stencil, turned to read from the city side
+  g.save();
+  g.translate(256, 410);
+  g.rotate(Math.PI);
+  g.font = '900 44px "Segoe UI", Arial, sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillStyle = 'rgba(205,202,192,0.8)';
+  g.fillText('KEEP CLEAR', 0, 0);
+  g.restore();
+  // hazard band along the water's edge
+  g.save();
+  g.beginPath();
+  g.rect(0, 478, 512, 34);
+  g.clip();
+  g.fillStyle = '#d9b23c';
+  g.fillRect(0, 478, 512, 34);
+  g.strokeStyle = '#2a2a2e';
+  g.lineWidth = 9;
+  for (let x = -64; x < 576; x += 32) {
+    g.beginPath();
+    g.moveTo(x, 512);
+    g.lineTo(x + 34, 478);
+    g.stroke();
+  }
+  g.restore();
+  // a dark kerb where the apron meets the street
+  g.fillStyle = '#3d3e44';
+  g.fillRect(0, 0, 512, 7);
+  const texture = new T.CanvasTexture(c);
+  texture.wrapS = T.RepeatWrapping;
+  texture.anisotropy = 4;
+  return texture;
+}
+
 function buildOutlines() {
   // Rustport yards: stained concrete with a hazard border instead of the city's pavement
   const yardMat = new T.MeshLambertMaterial({ map: yardTexture() });
@@ -675,10 +755,38 @@ function buildOutlines() {
   }
 
   // Rustport quay: containers, gantry cranes and a freighter on the water south of the docks (out of reach)
-  const qx0 = -HALF + 6;
-  const qx1 = roadC(4) - 8;
+  const qx0 = DOCK.x0;
+  const qx1 = DOCK.x1;
   const qz0 = HALF + SHORE - 1;
   slab(qx0, qx1, qz0, qz0 + 34, -1.2, 1.9, TRIM.concrete, 0);
+  // the shore in front of it is a dock apron: lane, crane rail, stencils and a hazard edge under your feet
+  const apronZ0 = DOCK.z0;
+  const apronMap = apronTexture();
+  apronMap.repeat.set(Math.round((qx1 - qx0) / (qz0 - apronZ0)), 1);
+  const apron = new T.Mesh(new T.PlaneGeometry(qx1 - qx0, qz0 - apronZ0), new T.MeshLambertMaterial({ map: apronMap }));
+  apron.rotation.x = -Math.PI / 2;
+  apron.position.set((qx0 + qx1) / 2, 0.03, (apronZ0 + qz0) / 2);
+  apron.receiveShadow = true;
+  scene.add(apron);
+  // on the quay itself (out of reach): a painted edge, mooring bollards, crane rails, floodlight masts, yard tractors
+  trimBoxes.push({ x: (qx0 + qx1) / 2, y: 0.74, z: qz0 + 0.5, sx: qx1 - qx0, sy: 0.08, sz: 0.7, color: TRIM.crane });
+  for (const lz of [16, 30]) trimBoxes.push({ x: (qx0 + qx1) / 2, y: 0.78, z: qz0 + lz, sx: qx1 - qx0 - 8, sy: 0.16, sz: 0.5, color: TRIM.iron });
+  for (let x = qx0 + 5; x < qx1 - 3; x += 11) {
+    trimDrums.push({ x, y: 0.7 + 0.4, z: qz0 + 1.7, r: 0.4, h: 0.8, color: TRIM.iron });
+    trimDrums.push({ x, y: 0.7 + 0.86, z: qz0 + 1.7, r: 0.56, h: 0.16, color: TRIM.crane });
+  }
+  for (const x of [qx0 + 22, qx0 + 105, qx0 + 200, qx0 + 300]) {
+    trimBoxes.push({ x, y: 0.7 + 9, z: qz0 + 3.4, sx: 0.5, sy: 18, sz: 0.5, color: TRIM.iron });
+    trimBoxes.push({ x, y: 18.9, z: qz0 + 2.6, sx: 4.2, sy: 0.5, sz: 1.9, color: TRIM.white });
+  }
+  for (const [x, crate] of [[qx0 + 40, 1], [qx0 + 128, 4], [qx0 + 226, 2]]) {
+    // a yard tractor with a box on its trailer, parked along the front of the stacks
+    trimBoxes.push({ x: x - 5.4, y: 0.7 + 1.5, z: qz0 + 2.9, sx: 2.4, sy: 2.6, sz: 2.3, color: TRIM.crane });
+    trimBoxes.push({ x: x - 5.4, y: 0.7 + 2.2, z: qz0 + 1.72, sx: 2.0, sy: 0.9, sz: 0.1, color: TRIM.glass });
+    trimBoxes.push({ x: x + 1.2, y: 0.7 + 0.75, z: qz0 + 2.9, sx: 11.4, sy: 0.5, sz: 2.2, color: TRIM.iron });
+    trimBoxes.push({ x: x + 1.6, y: 0.7 + 1 + 1.3, z: qz0 + 2.9, sx: 10.2, sy: 2.6, sz: 2.4, color: TRIM.crates[crate] });
+    for (const wx of [-5.6, -1.8, 4.6, 6.2]) trimDrums.push({ x: x + wx, y: 0.7 + 0.5, z: qz0 + 2.9, r: 0.5, h: 2.5, color: TRIM.tyre, lie: true });
+  }
   for (let x = qx0 + 9; x < qx1 - 8; x += 13.2) {
     for (let row = 0; row < 2; row++) {
       const high = Math.floor(RO() * 4.4);
@@ -729,6 +837,7 @@ function buildOutlines() {
   });
   const drums = instanced(new T.CylinderGeometry(1, 1, 1, 14), tintable(), trimDrums, (o, b) => {
     o.position.set(b.x, b.y, b.z);
+    o.rotation.x = b.lie ? Math.PI / 2 : 0;
     o.scale.set(b.r, b.h, b.r);
   });
   for (const mesh of [boxes, wedges, drums]) {
@@ -1275,6 +1384,10 @@ function buildProps() {
     if (side === 0) palms.push({ x: -out, z: along, s: 0.9 + R() * 0.5 });
     if (side === 1) palms.push({ x: along, z: out, s: 0.9 + R() * 0.5 });
     if (side === 2) palms.push({ x: along, z: -out, s: 0.9 + R() * 0.5 });
+  }
+  // the Rustport dock apron is worked concrete: no palms grow there
+  for (let k = palms.length - 1; k >= 0; k--) {
+    if (palms[k].z > DOCK.z0 && palms[k].x > -HALF && palms[k].x < DOCK.x1) palms.splice(k, 1);
   }
   instanced(new T.CylinderGeometry(0.14, 0.26, 7, 6), mat('#7a5f43'), palms, (d, p) => {
     d.position.set(p.x, 3.5 * p.s, p.z);
