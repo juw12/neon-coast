@@ -27,14 +27,14 @@ function updatePopulation(dt) {
     if (v.driver === 'ai' || v.driver === 'cop') traffic++;
     else if (!v.driver && !v.dead) parked++;
   }
-  if (traffic < (save.quality ? 15 : 9)) spawnTraffic(95, 250, false);
-  if (parked < (save.quality ? 9 : 6)) spawnTraffic(95, 250, true);
+  if (traffic < (gfx.crowd ? 15 : 9)) spawnTraffic(95, 250, false);
+  if (parked < (gfx.crowd ? 9 : 6)) spawnTraffic(95, 250, true);
   for (let k = peds.length - 1; k >= 0; k--) {
     if (dist2(peds[k].x, peds[k].z, px, pz) < 190 * 190) continue;
     scene.remove(peds[k].mesh);
     peds.splice(k, 1);
   }
-  if (peds.length < (save.quality ? 26 : 14)) spawnWalker(45, 150);
+  if (peds.length < (gfx.crowd ? 26 : 14)) spawnWalker(45, 150);
 }
 
 // ---------- session control ----------
@@ -249,9 +249,95 @@ function update(dt, realDt) {
 // ---------- settings, menus ----------
 const SETTINGS = [
   ['Difficulty', 'difficulty', ['Easy', 'Normal', 'Hard']],
-  ['Graphics', 'quality', ['Fast', 'Pretty']],
+  ['Graphics', 'quality', ['Fast', 'Pretty', 'Auto']],
   ['Sound', 'sound', ['Off', 'On']],
+  ['Steering', 'steer', ['Stick', 'Arrows'], 'touch'],   // shown on a touch screen only
 ];
+
+// ---------- how much is drawn ----------
+// Fast and Pretty are fixed. Auto, where a phone starts, walks this ladder by the frame rate it measures.
+// Shadows go first, then the glow pass and half the crowd, and only then drawn pixels: never fewer than
+// 1.5 per point on a touch screen (a dense screen shows every stair-step below that), never under 1.
+const LADDER = [
+  { ratio: 2, shadows: true, glow: true, crowd: 1 },
+  { ratio: 2, shadows: false, glow: true, crowd: 1 },
+  { ratio: 2, shadows: false, glow: false, crowd: 0 },
+  { ratio: 1.75, shadows: false, glow: false, crowd: 0 },
+  { ratio: 1.5, shadows: false, glow: false, crowd: 0 },
+  { ratio: 1.25, shadows: false, glow: false, crowd: 0 },
+  { ratio: 1, shadows: false, glow: false, crowd: 0 },
+];
+const gfx = { ratio: 1, shadows: false, glow: false, crowd: 0 };
+const auto = { level: 1, settle: 4, time: 0, frames: 0, calm: 0, hold: 0, trial: null, useless: {}, forget: 0, manual: false };
+const lowestRung = () => (touch.on ? 4 : LADDER.length - 1);
+function setGfx() {
+  const rung = save.quality === 2 ? LADDER[Math.min(auto.level, lowestRung())]
+    : save.quality === 1 ? LADDER[0]
+    : touch.on ? LADDER[4] : LADDER[LADDER.length - 1];
+  Object.assign(gfx, rung, { ratio: Math.min(window.devicePixelRatio || 1, rung.ratio) });
+}
+function autoShift(level, settle) {
+  auto.level = level;
+  auto.settle = settle;              // the frames after a change compile shaders and do not count
+  auto.time = 0;
+  auto.frames = 0;
+  auto.calm = 0;
+  applySettings();
+}
+// called once a frame with the true time since the last one (seconds)
+function governor(seconds) {
+  if (save.quality !== 2 || state !== 'play') {
+    auto.time = 0;
+    auto.frames = 0;
+    auto.settle = Math.max(auto.settle, 2);
+    return;
+  }
+  if (auto.settle > 0) {
+    auto.settle -= seconds;
+    return;
+  }
+  auto.time += seconds;
+  auto.frames++;
+  if (auto.time < 2) return;
+  const fps = auto.frames / auto.time;
+  auto.hold = Math.max(0, auto.hold - auto.time);
+  auto.forget -= auto.time;
+  auto.time = 0;
+  auto.frames = 0;
+  if (auto.forget <= 0) {
+    auto.useless = {};                // what did not help two minutes ago may help in another street
+    auto.forget = 120;
+  }
+  const trial = auto.trial;
+  auto.trial = null;
+  if (trial && trial.down && fps < trial.fps * 1.12) {
+    // drawing less bought no frame rate (the phone is busy elsewhere): give the picture back
+    auto.useless[auto.level] = true;
+    autoShift(trial.from, 2);
+    return;
+  }
+  if (trial && !trial.down && fps < 45) {
+    autoShift(trial.from, 2);         // the step up was too much: back down, and wait a minute before trying again
+    auto.hold = 60;
+    return;
+  }
+  if (fps < 40) {
+    auto.calm = 0;
+    let next = auto.level + 1;
+    while (next <= lowestRung() && auto.useless[next]) next++;
+    if (next <= lowestRung()) {
+      auto.trial = { down: true, from: auto.level, fps };
+      autoShift(next, 2);
+    }
+  } else if (fps > 55) {
+    if (++auto.calm >= 3 && auto.level > 0 && auto.hold <= 0) {
+      auto.trial = { down: false, from: auto.level, fps };
+      autoShift(auto.level - 1, 2);
+    }
+  } else {
+    auto.calm = 0;
+  }
+}
 
 // ---------- glow pass (Pretty graphics): bright things bleed light, a soft vignette frames the view ----------
 const post = { on: false, scene: new T.Scene(), cam: new T.OrthographicCamera(-1, 1, 1, -1, 0, 1), full: null, a: null, b: null };
@@ -349,7 +435,7 @@ function resize() {
     camera.fov = lens;
   }
   camera.updateProjectionMatrix();
-  post.on = !!save.quality;
+  post.on = gfx.glow;
   sky.material.uniforms.solid.value = post.on ? 0 : 1;
   if (!post.on) return;
   const size = renderer.getDrawingBufferSize(new T.Vector2());
@@ -367,10 +453,10 @@ function resize() {
 }
 
 function applySettings() {
-  // Fast on a phone: 1.5 pixels per point, or the dense screen shows every stair-step
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, save.quality ? 2 : touch.on ? 1.5 : 1));
-  renderer.shadowMap.enabled = !!save.quality;
-  sun.castShadow = !!save.quality;
+  setGfx();
+  renderer.setPixelRatio(gfx.ratio);
+  renderer.shadowMap.enabled = gfx.shadows;
+  sun.castShadow = gfx.shadows;
   resize();
   applySound();
 }
@@ -378,7 +464,8 @@ function applySettings() {
 function renderSettings() {
   for (const box of document.querySelectorAll('.settings')) {
     box.innerHTML = '';
-    for (const [label, key, options] of SETTINGS) {
+    for (const [label, key, options, only] of SETTINGS) {
+      if (only === 'touch' && !touch.on) continue;
       const row = document.createElement('div');
       row.className = 'row';
       const name = document.createElement('span');
@@ -390,6 +477,7 @@ function renderSettings() {
         button.className = 'seg' + (save[key] === k ? ' on' : '');
         button.onclick = () => {
           save[key] = k;
+          if (key === 'quality') Object.assign(auto, { level: 1, settle: 4, trial: null, useless: {}, calm: 0, hold: 0 });
           persist();
           applySettings();
           renderSettings();
@@ -618,6 +706,7 @@ showScreen('title');
 let lastTime = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
+  if (!auto.manual) governor(Math.max(0, (now - lastTime) / 1000));
   const realDt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
   lastTime = now;
   frameNo++;
@@ -637,7 +726,7 @@ window.NEON = {
   startGame, pause, resume, setWanted, tryEnterExit, playerAttack, crime, hurt, landmarks,
   route, cab, heli, bigMap, PROPERTIES, PERKS, perk, cabDuty, interact, toggleBigMap, addMoney, persist,
   ride, checkPerks, packageSpots, damageVehicle, audio, radio, STATIONS, setStation, anotherJob, offerMission, blocks,
-  touch, say, keyAction, setTouchMode, view,
+  touch, say, keyAction, setTouchMode, view, gfx, auto, governor, LADDER, applySettings, renderSettings, aimAssist,
   setTime(hours) {
     tod = hours;
   },

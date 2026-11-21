@@ -22,6 +22,21 @@ needed. Choose New Game or Continue. Walk up to a car and press F. Drive with WA
 Follow the arrows on the road to the yellow J marker for the first of six jobs. Press M for the whole map
 and P to pause. Progress is stored in your browser, so use the same browser and file location to resume.
 
+## Version 1.6 · Sharp
+
+- **A picture as sharp as the screen.** Graphics has a third choice, **Auto**, and a phone starts on it.
+  1.5 started phones on Fast: 1.5 drawn pixels per point, no glow, no shadows. Auto starts at 2 pixels per
+  point with the neon glow and adds shadows when the frame rate allows.
+- **It measures while you play.** Below 40 frames a second it gives up shadows first, then the glow and
+  half the crowd, and drawn pixels last, never under 1.5 per point on a touch screen. A step that buys no
+  frame rate is given back. Above 55 for a while it climbs again. Fast and Pretty stay fixed choices.
+- **Shots find their target.** On a touch screen each shot first turns the view onto the nearest target
+  close to the crosshair (police first when you are wanted). Sliding the thumb on FIRE still aims by hand.
+- **Arrows to steer.** Settings, Steering: Stick or Arrows. Arrows puts two buttons under the left thumb
+  while you drive; on foot the stick stays.
+- **CAR lights up** when a car is close enough to take, and buttons tick under the thumb on Android.
+- A phone that played 1.5 is moved from Fast to Auto once; what you pick after that is kept.
+
 ## Version 1.5 · Pocket
 
 - **Touch controls.** A thumb stick on the left walks and steers; GAS, BRAKE, HAND BRAKE and the rest sit
@@ -44,11 +59,11 @@ Open <https://juw12.github.io/neon-coast/> in Safari (iPhone, iPad) or Chrome (A
 
 | Control | What it does |
 |---|---|
-| Left thumb, lower left | A stick appears under it. Walk, or steer the car. Push it right out to sprint |
+| Left thumb, lower left | A stick appears under it. Walk, or steer the car. Push it right out to sprint. Settings can give the car two arrows instead |
 | Drag the view | Look and aim |
 | CAR / EXIT | In or out of any car |
 | GAS, BRAKE, HAND BRAKE | Drive. BRAKE at a standstill reverses |
-| FIRE / PUNCH, SWAP | Shoot or punch; slide the thumb on FIRE to aim. SWAP changes pistol and fists |
+| FIRE / PUNCH, SWAP | Shoot or punch. Shots find a target near the crosshair; slide the thumb on FIRE to aim yourself. SWAP changes pistol and fists |
 | JUMP, HORN, RADIO | As named |
 | USE, CAB | Appear when they apply: in a property or Sol Wheel ring, in a City Cab |
 | The round map | Tap for the whole island, tap again to close |
@@ -59,7 +74,8 @@ or *Add to Home screen*. The icon opens the game full screen, and after that fir
 On an iPhone this is the only way to get rid of Safari's bars; on Android the game also goes full screen
 by itself when you start.
 
-**Good to know.** A phone starts on Fast graphics; Pretty is in the settings if yours can take it. On an
+**Good to know.** A phone starts on Auto graphics (see 1.6); Fast and Pretty are fixed choices in the
+settings. On an
 iPhone the ring/silent switch also silences the game. Progress is stored per browser, so Safari and the
 home-screen icon each keep their own save. A laptop with a touch screen switches to touch controls at the
 first finger; adding `?touch=1` to the address shows the phone layout with a mouse, `?touch=0` keeps

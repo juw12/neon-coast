@@ -275,7 +275,19 @@ SOFTWARE.
   .tb.act { border-color: var(--gold); }
   .tb.sys { width: 40px; height: 40px; top: calc(8px + var(--st)); right: calc(10px + var(--sr)); bottom: auto; font-size: 15px;
     letter-spacing: 2px; padding-left: 2px; }
-  #pad:not(.car) .in-car, #pad:not(.foot) .on-foot, #pad:not(.ride) .on-ride, #pad.ride #stick, .tb.ctx:not(.on) { display: none; }
+  #pad:not(.car) .in-car, #pad:not(.foot) .on-foot, #pad:not(.ride) .on-ride, #pad.ride #stick, .tb.ctx:not(.on),
+  #pad:not(.arrows) .tb.arrow, #pad.arrows #stick { display: none; }
+  .tb.arrow { left: calc(var(--l) * var(--u) + var(--sl)); right: auto; }
+  .tb.arrow::before { content: ''; border: calc(3.4 * var(--u)) solid transparent; }
+  .tb.arrow.go-left::before { border-right-color: #fff; margin-left: calc(-3.4 * var(--u)); }
+  .tb.arrow.go-right::before { border-left-color: #fff; margin-right: calc(-3.4 * var(--u)); }
+  .tb.near:not(.on) { opacity: .45; }
+  @media (orientation: landscape) { #pad.arrows ~ #hud #hint { left: calc(53 * var(--u) + var(--sl)); } }
+  @media (orientation: portrait) {
+    .tb.arrow { width: calc(17 * var(--u)); height: calc(17 * var(--u)); }
+    .tb.arrow.go-left { left: calc(3 * var(--u) + var(--sl)); }
+    .tb.arrow.go-right { left: calc(23 * var(--u) + var(--sl)); }
+  }
 
   /* menus on a small screen */
   body.touch .panel { max-height: 100%; padding: calc(10px + var(--st)) calc(8px + var(--sr)) calc(12px + var(--sb)) calc(8px + var(--sl));
@@ -306,6 +318,8 @@ SOFTWARE.
 <div id="pad" class="for-touch hidden">
   <div id="stick"><i></i></div>
   <div class="tb sys" data-tap="KeyP" aria-label="Pause">II</div>
+  <div class="tb in-car arrow go-left" data-hold="KeyA" aria-label="Steer left" style="--s:21;--l:4;--b:8"></div>
+  <div class="tb in-car arrow go-right" data-hold="KeyD" aria-label="Steer right" style="--s:21;--l:28;--b:8"></div>
   <div class="tb go in-car" data-hold="KeyW" style="--s:22;--r:4;--b:6">GAS</div>
   <div class="tb stop in-car" data-hold="KeyS" style="--s:19;--r:29;--b:3">BRAKE</div>
   <div class="tb in-car" data-hold="Space" style="--s:15;--r:27;--b:25">HAND<br>BRAKE</div>
@@ -316,7 +330,7 @@ SOFTWARE.
   <div class="tb act in-car ctx" id="tb-cab" data-tap="KeyT" style="--s:13;--r:37;--b:43">CAB</div>
   <div class="tb stop on-foot" id="tb-fire" data-fire style="--s:22;--r:4;--b:6">FIRE</div>
   <div class="tb on-foot" data-hold="Space" style="--s:17;--r:29;--b:3">JUMP</div>
-  <div class="tb act on-foot" data-tap="KeyF" style="--s:15;--r:27;--b:23">CAR</div>
+  <div class="tb act on-foot near" id="tb-car" data-tap="KeyF" style="--s:15;--r:27;--b:23">CAR</div>
   <div class="tb on-foot" data-tap="KeyQ" style="--s:12;--r:5;--b:31">SWAP</div>
   <div class="tb act on-foot ctx" id="tb-use" data-tap="KeyE" style="--s:15;--r:22;--b:41">USE</div>
   <div class="tb act on-ride" data-tap="KeyF" style="--s:20;--r:6;--b:8">GET<br>OFF</div>
@@ -391,11 +405,11 @@ SOFTWARE.
       <div class="card">
         <h2>HOW TO PLAY</h2>
         <div class="keys touchkeys for-touch">
-          <kbd>Left thumb</kbd><span>Walk, or steer the car. Push it right out to sprint</span>
+          <kbd>Left thumb</kbd><span>Walk, or steer the car. Push it right out to sprint. Settings can give the car two arrows instead</span>
           <kbd>Drag the view</kbd><span>Look and aim</span>
           <kbd>CAR / EXIT</kbd><span>In or out of any car</span>
           <kbd>GAS · BRAKE</kbd><span>Drive. BRAKE at a standstill reverses</span>
-          <kbd>FIRE</kbd><span>Shoot or punch. Slide the thumb on it to aim. SWAP changes pistol and fists</span>
+          <kbd>FIRE</kbd><span>Shoot or punch. Shots find a target near the crosshair; slide the thumb on FIRE to aim yourself. SWAP changes pistol and fists</span>
           <kbd>Round map</kbd><span>Tap it for the whole island</span>
           <kbd>II</kbd><span>Pause: settings, courier shift, odd jobs</span>
         </div>
@@ -425,8 +439,9 @@ SOFTWARE.
       </div>
     </div>
     <details class="news">
-      <summary><strong>Version 1.5 · Pocket</strong> — play on a phone or tablet: thumb stick, on-screen buttons, landscape or upright, and an icon for the home screen. What changed, release by release</summary>
+      <summary><strong>Version 1.6 · Sharp</strong> — on a phone the picture is as sharp as the screen, with glow and shadows where the phone can carry them; shots find their target; arrows can steer. What changed, release by release</summary>
       <ul>
+        <li><strong>1.6 · Sharp</strong> — Graphics has a third choice, Auto, and a phone starts on it: twice the drawn pixels of 1.5, the neon glow, and shadows when the frame rate allows. It measures as you play, gives up shadows first and sharpness last, and takes back what it gave up when the phone is smooth again. On a touch screen each shot turns onto a target near the crosshair, the CAR button lights up when a car is in reach, and Settings can swap the steering stick for two arrows.</li>
         <li><strong>1.5 · Pocket</strong> — Touch controls for phones and tablets: a thumb stick to walk and steer, GAS and BRAKE, drag the view to look, tap the round map for the whole island. The screen rearranges itself for landscape and for upright. On a web address it can be added to the home screen, where it opens full screen and plays offline. Keyboard and mouse play as before.</li>
         <li><strong>1.4 · Skyline</strong> — Roof edges, crowns and fins on the Meridian towers, balconies on the Sol Beach hotels, saw-tooth factory roofs and tanks in Rustport, and a quay with cranes, containers and a freighter off the docks. Until your first job is done the police let you off. After the story, J picks the kind of odd job, and a new one is done on foot. The three radio stations now differ in drums, bass and tune, not only in speed. Smoother edges on Pretty graphics.</li>
         <li><strong>1.3 · Clear Day</strong> — The first job is a short run down the beach road to the Sol Wheel. Ride the wheel for $25: it rests you and marks hidden packages on the map. Stars, pistol and clock leave the screen when they do not matter; perks report their progress as you play. Police heat now shuts the tune-up shop and keeps cab fares out of the car, and a property you own hides you from two stars. By day: murals, an airship, gulls, a warmer sky and sea.</li>
@@ -532,7 +547,7 @@ const headingOf = (d) => Math.atan2(DX[d], DZ[d]);
 
 // ---------- save data ----------
 const SAVE_KEY = 'neon-coast-save-v1';
-const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], difficulty: 1, quality: 1, sound: 1 };
+const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], difficulty: 1, quality: 1, sound: 1, steer: 0 };
 const save = Object.assign({}, SAVE_DEFAULTS);
 try {
   Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'));
@@ -3982,6 +3997,7 @@ function playerAttack() {
   }
   player.ammo--;
   player.fireT = 0.2;
+  if (touch.on) aimAssist();      // a thumb cannot aim like a mouse
   const cp = Math.cos(cam.pitch);
   const dx = Math.sin(cam.yaw) * cp;
   const dy = Math.sin(cam.pitch);
@@ -5251,15 +5267,12 @@ const touchAsked = /[?&]touch=([01])/.exec(location.search);     // ?touch=1 tri
 const coarsePointer = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
 if (touchAsked ? touchAsked[1] === '1' : coarsePointer) setTouchMode(true);
 if (!touchAsked) window.addEventListener('touchstart', () => setTouchMode(true), { passive: true });
-if (coarsePointer) {
-  // a phone starts on Fast graphics; whatever the player picks afterwards is kept
-  let stored = null;
-  try {
-    stored = localStorage.getItem(SAVE_KEY);
-  } catch (err) {
-    // storage blocked
-  }
-  if (stored === null) save.quality = 0;
+if (coarsePointer && !save.auto16) {
+  // a phone starts on Auto graphics (part 4 measures the frame rate and draws what the phone can carry).
+  // Release 1.5 started phones on Fast, so a phone that met 1.5 is moved over once; a choice made after
+  // that is kept, because the mark is saved with it
+  save.quality = 2;
+  save.auto16 = 1;
 }
 
 // ---------- the stick: it appears under the left thumb wherever that lands ----------
@@ -5313,6 +5326,7 @@ function lookBy(dx, dy) {
 // ---------- buttons ----------
 function buttonDown(el) {
   el.classList.add('down');
+  if (navigator.vibrate) navigator.vibrate(8);     // a tick under the thumb where the phone can (Android)
   if (el.dataset.hold) keys[el.dataset.hold] = true;
   else if (el.dataset.tap) keyAction(el.dataset.tap);
   else firing = true;
@@ -5348,7 +5362,8 @@ canvas.addEventListener('pointerdown', (e) => {
   }
   if (touchPoints.has(e.pointerId)) return;
   let kind = null;
-  if (ride.t <= 0 && !hasPoint('stick') && inStickZone(e.clientX, e.clientY)) kind = 'stick';
+  const stickShown = !(player.car && save.steer === 1);       // Arrows steer the car instead
+  if (ride.t <= 0 && stickShown && !hasPoint('stick') && inStickZone(e.clientX, e.clientY)) kind = 'stick';
   else if (!hasPoint('look')) kind = 'look';
   if (!kind) return;
   try {
@@ -5427,20 +5442,62 @@ function padSet(id, on, label) {
 }
 function refreshPad() {
   if (!touch.on) return;
-  const mode = state !== 'play' ? '' : ride.t > 0 ? 'ride' : player.car ? 'car' : 'foot';
+  const mode = state !== 'play' ? '' : ride.t > 0 ? 'ride' : player.car ? (save.steer === 1 ? 'car arrows' : 'car') : 'foot';
   if (mode !== padMode) {
     // buttons that leave the screen let go of their keys; the stick stays under the thumb from foot to car
     if (mode === 'car' || mode === 'foot') releaseButtons();
-    else releaseTouch();
+    else releaseTouch();                // also when the stick leaves the screen for the arrows
     padMode = mode;
     pad.className = 'for-touch ' + (mode || 'hidden');
   }
   if (!mode) return;
   const armed = player.gun && player.ammo > 0;
   padSet('tb-fire', true, armed ? 'FIRE' : 'PUNCH');
-  padSet('tb-carfire', mode === 'car' && armed);
-  padSet('tb-cab', mode === 'car' && player.car.type === 'taxi');
+  padSet('tb-carfire', !!player.car && armed);
+  padSet('tb-cab', !!player.car && player.car.type === 'taxi');
+  padSet('tb-car', mode === 'foot' && carInReach());        // bright when a car is close enough to take
   padSet('tb-use', mode === 'foot' && (wheelGate.inside || PROPERTIES.some((p) => p.marker.inside)));
+}
+
+function carInReach() {
+  for (const v of vehicles) {
+    if (!v.dead && v.hp > 0 && dist2(v.x, v.z, player.x, player.z) < 18) return true;
+  }
+  return false;
+}
+
+// ---------- aiming with a thumb ----------
+// Each shot on a touch screen first turns the view onto the nearest target that is already close to the
+// crosshair: within 0.4 rad and 70 m, a police car before anything else. A mouse needs none of this.
+function aimAssist() {
+  const [px, pz] = focus();
+  const eye = player.car ? 1.6 : 1.55 + player.y;      // the height the camera looks along (updateCamera)
+  const shoulder = player.car ? 0 : 0.55;              // on foot the view sits over the right shoulder
+  let best = null;
+  let bestScore = 0.4;
+  const consider = (x, y, z, bonus, skip) => {
+    if (skip) return;
+    const dx = x - px;
+    const dz = z - pz;
+    const far = Math.hypot(dx, dz);
+    if (far < 2.5 || far > 70) return;
+    const off = Math.abs(wrapPi(Math.atan2(dx, dz) - cam.yaw));
+    if (off - bonus < bestScore) {
+      bestScore = off - bonus;
+      const rough = Math.atan2(dx, dz);
+      const ox = px - Math.cos(rough) * shoulder;      // where the line of sight passes the player
+      const oz = pz + Math.sin(rough) * shoulder;
+      best = { yaw: Math.atan2(x - ox, z - oz), pitch: Math.atan2(y - eye, far) };
+    }
+  };
+  // parked cars are left alone (one of them is yours), and with stars on you only the police count
+  for (const v of vehicles) consider(v.x, 0.8, v.z, v.driver === 'cop' ? 0.25 : 0, v === player.car || v.dead || !v.driver || (v.driver !== 'cop' && wanted.stars > 0));
+  for (const ped of peds) consider(ped.x, 1.0, ped.z, 0, ped.state === 'down' || wanted.stars > 0);
+  if (!best) return false;
+  cam.yaw = best.yaw;
+  cam.pitch = clamp(best.pitch, -1.2, 0.3);
+  cam.lastMouse = performance.now();
+  return true;
 }
 
 // ---------- full screen ----------
@@ -5506,14 +5563,14 @@ function updatePopulation(dt) {
     if (v.driver === 'ai' || v.driver === 'cop') traffic++;
     else if (!v.driver && !v.dead) parked++;
   }
-  if (traffic < (save.quality ? 15 : 9)) spawnTraffic(95, 250, false);
-  if (parked < (save.quality ? 9 : 6)) spawnTraffic(95, 250, true);
+  if (traffic < (gfx.crowd ? 15 : 9)) spawnTraffic(95, 250, false);
+  if (parked < (gfx.crowd ? 9 : 6)) spawnTraffic(95, 250, true);
   for (let k = peds.length - 1; k >= 0; k--) {
     if (dist2(peds[k].x, peds[k].z, px, pz) < 190 * 190) continue;
     scene.remove(peds[k].mesh);
     peds.splice(k, 1);
   }
-  if (peds.length < (save.quality ? 26 : 14)) spawnWalker(45, 150);
+  if (peds.length < (gfx.crowd ? 26 : 14)) spawnWalker(45, 150);
 }
 
 // ---------- session control ----------
@@ -5728,9 +5785,95 @@ function update(dt, realDt) {
 // ---------- settings, menus ----------
 const SETTINGS = [
   ['Difficulty', 'difficulty', ['Easy', 'Normal', 'Hard']],
-  ['Graphics', 'quality', ['Fast', 'Pretty']],
+  ['Graphics', 'quality', ['Fast', 'Pretty', 'Auto']],
   ['Sound', 'sound', ['Off', 'On']],
+  ['Steering', 'steer', ['Stick', 'Arrows'], 'touch'],   // shown on a touch screen only
 ];
+
+// ---------- how much is drawn ----------
+// Fast and Pretty are fixed. Auto, where a phone starts, walks this ladder by the frame rate it measures.
+// Shadows go first, then the glow pass and half the crowd, and only then drawn pixels: never fewer than
+// 1.5 per point on a touch screen (a dense screen shows every stair-step below that), never under 1.
+const LADDER = [
+  { ratio: 2, shadows: true, glow: true, crowd: 1 },
+  { ratio: 2, shadows: false, glow: true, crowd: 1 },
+  { ratio: 2, shadows: false, glow: false, crowd: 0 },
+  { ratio: 1.75, shadows: false, glow: false, crowd: 0 },
+  { ratio: 1.5, shadows: false, glow: false, crowd: 0 },
+  { ratio: 1.25, shadows: false, glow: false, crowd: 0 },
+  { ratio: 1, shadows: false, glow: false, crowd: 0 },
+];
+const gfx = { ratio: 1, shadows: false, glow: false, crowd: 0 };
+const auto = { level: 1, settle: 4, time: 0, frames: 0, calm: 0, hold: 0, trial: null, useless: {}, forget: 0, manual: false };
+const lowestRung = () => (touch.on ? 4 : LADDER.length - 1);
+function setGfx() {
+  const rung = save.quality === 2 ? LADDER[Math.min(auto.level, lowestRung())]
+    : save.quality === 1 ? LADDER[0]
+    : touch.on ? LADDER[4] : LADDER[LADDER.length - 1];
+  Object.assign(gfx, rung, { ratio: Math.min(window.devicePixelRatio || 1, rung.ratio) });
+}
+function autoShift(level, settle) {
+  auto.level = level;
+  auto.settle = settle;              // the frames after a change compile shaders and do not count
+  auto.time = 0;
+  auto.frames = 0;
+  auto.calm = 0;
+  applySettings();
+}
+// called once a frame with the true time since the last one (seconds)
+function governor(seconds) {
+  if (save.quality !== 2 || state !== 'play') {
+    auto.time = 0;
+    auto.frames = 0;
+    auto.settle = Math.max(auto.settle, 2);
+    return;
+  }
+  if (auto.settle > 0) {
+    auto.settle -= seconds;
+    return;
+  }
+  auto.time += seconds;
+  auto.frames++;
+  if (auto.time < 2) return;
+  const fps = auto.frames / auto.time;
+  auto.hold = Math.max(0, auto.hold - auto.time);
+  auto.forget -= auto.time;
+  auto.time = 0;
+  auto.frames = 0;
+  if (auto.forget <= 0) {
+    auto.useless = {};                // what did not help two minutes ago may help in another street
+    auto.forget = 120;
+  }
+  const trial = auto.trial;
+  auto.trial = null;
+  if (trial && trial.down && fps < trial.fps * 1.12) {
+    // drawing less bought no frame rate (the phone is busy elsewhere): give the picture back
+    auto.useless[auto.level] = true;
+    autoShift(trial.from, 2);
+    return;
+  }
+  if (trial && !trial.down && fps < 45) {
+    autoShift(trial.from, 2);         // the step up was too much: back down, and wait a minute before trying again
+    auto.hold = 60;
+    return;
+  }
+  if (fps < 40) {
+    auto.calm = 0;
+    let next = auto.level + 1;
+    while (next <= lowestRung() && auto.useless[next]) next++;
+    if (next <= lowestRung()) {
+      auto.trial = { down: true, from: auto.level, fps };
+      autoShift(next, 2);
+    }
+  } else if (fps > 55) {
+    if (++auto.calm >= 3 && auto.level > 0 && auto.hold <= 0) {
+      auto.trial = { down: false, from: auto.level, fps };
+      autoShift(auto.level - 1, 2);
+    }
+  } else {
+    auto.calm = 0;
+  }
+}
 
 // ---------- glow pass (Pretty graphics): bright things bleed light, a soft vignette frames the view ----------
 const post = { on: false, scene: new T.Scene(), cam: new T.OrthographicCamera(-1, 1, 1, -1, 0, 1), full: null, a: null, b: null };
@@ -5828,7 +5971,7 @@ function resize() {
     camera.fov = lens;
   }
   camera.updateProjectionMatrix();
-  post.on = !!save.quality;
+  post.on = gfx.glow;
   sky.material.uniforms.solid.value = post.on ? 0 : 1;
   if (!post.on) return;
   const size = renderer.getDrawingBufferSize(new T.Vector2());
@@ -5846,10 +5989,10 @@ function resize() {
 }
 
 function applySettings() {
-  // Fast on a phone: 1.5 pixels per point, or the dense screen shows every stair-step
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, save.quality ? 2 : touch.on ? 1.5 : 1));
-  renderer.shadowMap.enabled = !!save.quality;
-  sun.castShadow = !!save.quality;
+  setGfx();
+  renderer.setPixelRatio(gfx.ratio);
+  renderer.shadowMap.enabled = gfx.shadows;
+  sun.castShadow = gfx.shadows;
   resize();
   applySound();
 }
@@ -5857,7 +6000,8 @@ function applySettings() {
 function renderSettings() {
   for (const box of document.querySelectorAll('.settings')) {
     box.innerHTML = '';
-    for (const [label, key, options] of SETTINGS) {
+    for (const [label, key, options, only] of SETTINGS) {
+      if (only === 'touch' && !touch.on) continue;
       const row = document.createElement('div');
       row.className = 'row';
       const name = document.createElement('span');
@@ -5869,6 +6013,7 @@ function renderSettings() {
         button.className = 'seg' + (save[key] === k ? ' on' : '');
         button.onclick = () => {
           save[key] = k;
+          if (key === 'quality') Object.assign(auto, { level: 1, settle: 4, trial: null, useless: {}, calm: 0, hold: 0 });
           persist();
           applySettings();
           renderSettings();
@@ -6097,6 +6242,7 @@ showScreen('title');
 let lastTime = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
+  if (!auto.manual) governor(Math.max(0, (now - lastTime) / 1000));
   const realDt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
   lastTime = now;
   frameNo++;
@@ -6116,7 +6262,7 @@ window.NEON = {
   startGame, pause, resume, setWanted, tryEnterExit, playerAttack, crime, hurt, landmarks,
   route, cab, heli, bigMap, PROPERTIES, PERKS, perk, cabDuty, interact, toggleBigMap, addMoney, persist,
   ride, checkPerks, packageSpots, damageVehicle, audio, radio, STATIONS, setStation, anotherJob, offerMission, blocks,
-  touch, say, keyAction, setTouchMode, view,
+  touch, say, keyAction, setTouchMode, view, gfx, auto, governor, LADDER, applySettings, renderSettings, aimAssist,
   setTime(hours) {
     tod = hours;
   },
