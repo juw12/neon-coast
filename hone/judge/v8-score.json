@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 10.0,
+        "C2": 9.0,
+        "C3": 10.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "The 'learner phase' (invincible car, no stars until first job done) guarantees a stranger completes the first job without frustration, and prompts like 'Get into the red car ahead [F]' are unambiguous.",
+        "C2": "Strong mood with neon/glow pass and distinct districts (Sol Beach vs Rustport), but geometry remains simple blocks; Screenshot 8 (Sol Wheel at dusk) is recognizable, but day shots are plainer.",
+        "C3": "Six story jobs, five odd job types, cab fares, property, perks, and police helicopters all feed into money sinks and progression, creating high variety for a browser sandbox.",
+        "C4": "Desktop HUD is minimal ('cash and health'), but mobile touch layout (Screenshot 15) is dense with 8+ buttons overlaying the view, potentially obscuring driving lines.",
+        "C5": "The 'Not covered by the tests' section explicitly admits 'No real phone or tablet has run the game yet' and 'No real players have tried it yet', stating limits plainly."
+      },
+      "fixes": [
+        "Test touch controls on real mobile devices immediately; v1.5 relies on them but they are currently only emulated, risking usability issues with thumb reach and heat.",
+        "Tune Job 4 ('Borrowed Time') difficulty or police AI; the test script failed 1 of 3 runs due to arrests, suggesting a difficulty spike that may frustrate human players.",
+        "Reduce mobile HUD button density or opacity; Screenshot 15 shows large buttons covering significant screen real estate which could obscure obstacles during high-speed driving."
+      ],
+      "total": 9.6,
+      "seconds": 21.5
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen shows 'HOW TO PLAY' with key bindings; learner phase prevents stars until first job done; first job ends at Sol Wheel landmark; 'A new player who stands still for 3.5 seconds is shown the walking keys'; route arrows on road and minimap guide player. Slight density on title screen keeps it from a 10.",
+        "C2": "Four districts with distinct looks (Meridian towers, Sol Beach pastels, Rustport industry, suburbs); day/night cycle with lit windows, neon trim, moon; 86 painted walls; detailed building features (slanted crowns, balcony bands, saw-tooth roofs); Pretty graphics adds glow pass and vignette. Screenshots show recognizable mood but some elements remain blocky.",
+        "C3": "Six story jobs, five odd job types (Rush Order, Repo Run, Block Dash, Hot Parcel, Paper Round), cab fares, property buying, hidden packages, harbor courier, police with helicopter at 4 stars, Tune-up shop in three stages; perks tie activities together (5 packages = 25% less damage, 10 fares = double tips, all jobs = +50% rent). Rich interlocking systems.",
+        "C4": "'A quieter screen': HUD is cash and health; stars only when wanted; weapon line only 5s after change; clock moved to map/pause; pause screen is three buttons plus settings/perks; G8 passed no overlaps at 3 sizes; perk card shows progress ('Body armour 4/5'). Clean and contextual but not exceptional.",
+        "C5": "Own city and names (Meridian, Sol Beach, Rustport, Sol Wheel, Coastliner); G9 passed own names only; title screen states 'not affiliated with the publisher or the series it is often compared to'; fact sheet honestly states 'No real players have tried it yet', 'No real phone or tablet has run the game yet', and what script tests cannot measure."
+      },
+      "fixes": [
+        "Get real player testing to validate difficulty curves and fun factor — script tests show job 4 (Borrowed Time) failed 1 of 3 runs and the 1.5 run of job 1 broke with a browser hang; a script cannot say whether a job is fun.",
+        "Test touch controls on real phones/tablets — fact sheet admits 'No real phone or tablet has run the game yet, so thumb reach, heat and frame rate on a phone are not known'; this is a major untested surface for the 1.5 'Pocket' release.",
+        "Simplify the title screen to reduce information density for first-time players — the current screen packs settings, controls list, release history link, and not-affiliated line into one view, which could overwhelm a stranger in the first minute."
+      ],
+      "total": 8.35,
+      "seconds": 15.1
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 9.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "'Get into the red car ahead [F]' with 'JOB 335 m', road arrows and a landmark ending; learner phase means 'crimes bring no stars' and the car 'cannot be wrecked'. But job 1 takes '38.5 to 50.9 s' even for a script, so a stranger likely exceeds 60 s, and the title HOW TO PLAY panel must be read first.",
+        "C2": "The Sol Wheel dusk shot (neon wheel, palms, pink sky) and the night light pools are distinctive, and districts have own palettes; but the Rustport quay is flat 'container stacks' and the downtown facades stay generic, so not every single screenshot is recognisable as this world.",
+        "C3": "Perks 'tie the side activities together' (packages to damage/respray, fares to tips, jobs to rent), the wheel ride 'marks the three nearest unfound packages', heat closes shops and refuses fares. Residual: secrets are only 15 packages, and the races/getaway 'difficulty and their time limits are not measured'.",
+        "C4": "'the HUD is cash and health; the stars appear only when you are wanted'; G8 'no overlaps at 3 sizes'; pause is 'three buttons, settings and perks'. Residual: the always-on perk card ('Body armour 4 / 5') and the denser stacked phone HUD are the only clutter.",
+        "C5": "'Own city, names and art' plus the one not-affiliated line; limits stated plainly: 'No real players have tried it yet. The scores are from AI judges.' Residual: the neon-Miami look is genre-familiar rather than wholly its own."
+      },
+      "fixes": [
+        "Re-run test/drive.py on 1.5 - the job 1 run 'broke with a browser hang and gave no result' - then human-time a real stranger through the first job to prove the sub-60-second first minute.",
+        "Test the new touch controls on a real phone or tablet (thumb reach, heat, frame rate); so far only an emulated phone has run it and the WebKit check was skipped.",
+        "Give the plainer views (Rustport quay's flat container stacks, generic downtown facades) the same signature identity as the Sol Wheel dusk shot so any one screenshot reads as Neon Coast."
+      ],
+      "total": 8.5,
+      "seconds": 64.8
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.5,
+  "criterion_median": {
+    "C1": 8.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 9.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 2.0,
+    "C2": 1.0,
+    "C3": 1.0,
+    "C4": 1.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.35,
+    9.6
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Test touch controls on real mobile devices immediately; v1.5 relies on them but they are currently only emulated, risking usability issues with thumb reach and heat."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Tune Job 4 ('Borrowed Time') difficulty or police AI; the test script failed 1 of 3 runs due to arrests, suggesting a difficulty spike that may frustrate human players."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Reduce mobile HUD button density or opacity; Screenshot 15 shows large buttons covering significant screen real estate which could obscure obstacles during high-speed driving."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Get real player testing to validate difficulty curves and fun factor — script tests show job 4 (Borrowed Time) failed 1 of 3 runs and the 1.5 run of job 1 broke with a browser hang; a script cannot say whether a job is fun."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Test touch controls on real phones/tablets — fact sheet admits 'No real phone or tablet has run the game yet, so thumb reach, heat and frame rate on a phone are not known'; this is a major untested surface for the 1.5 'Pocket' release."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Simplify the title screen to reduce information density for first-time players — the current screen packs settings, controls list, release history link, and not-affiliated line into one view, which could overwhelm a stranger in the first minute."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Re-run test/drive.py on 1.5 - the job 1 run 'broke with a browser hang and gave no result' - then human-time a real stranger through the first job to prove the sub-60-second first minute."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Test the new touch controls on a real phone or tablet (thumb reach, heat, frame rate); so far only an emulated phone has run it and the WebKit check was skipped."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Give the plainer views (Rustport quay's flat container stacks, generic downtown facades) the same signature identity as the Sol Wheel dusk shot so any one screenshot reads as Neon Coast."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

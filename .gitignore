@@ -1,3 +1,4 @@
 test/shots/
 test/*-result.json
+test/drive-result-*.json
 __pycache__/

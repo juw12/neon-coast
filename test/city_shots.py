@@ -1,10 +1,11 @@
 """Screenshots for the judges: the 1.2 city systems (cab fare, whole map, helicopter, property) and the
-1.3 day look, Sol Wheel ride and perk card, and the 1.4 skyline, Rustport quay, Paper Round and radio dial.
+1.3 day look, Sol Wheel ride and perk card, the 1.4 skyline, Rustport quay, Paper Round and radio dial,
+and the 1.7 dock apron and Shadow Run.
 
 State is set through window.NEON to reach each scene quickly (time of day, where you stand, where the
 airship is on its lap); the pictures are the real game.
 
-    python test/city_shots.py       # writes test/shots/11-cab-fare.png ... 25-radio-dial.png
+    python test/city_shots.py       # writes test/shots/11-cab-fare.png ... 27-shadow-run.png
 """
 import math
 from pathlib import Path
@@ -149,9 +150,31 @@ def run():
             n.cam.lastMouse = performance.now() + 60000; }""")
         page.wait_for_timeout(1700)
         page.screenshot(path=str(OUT / "24-paper-round.png"))
+
+        # ---------- version 1.7: the dock apron, and the Shadow Run (follow a car unseen) ----------
+        page.wait_for_timeout(19000)            # the round runs out of time; the next kind on offer is the tail job
+        stand(11.5, -214, 447, 0.8, 0.26, 4.2)
+        page.screenshot(path=str(OUT / "26-dock-apron.png"))
+        page.evaluate("""() => { const n = NEON, p = n.player; n.setTime(18.4); n.setWanted(0);
+            for (let k = 0; k < 7 && n.mission.offer.kind !== 'tail'; k++) n.anotherJob();
+            const at = n.mission.offer.at; p.x = at[0]; p.z = at[1]; }""")
+        page.wait_for_timeout(600)
+        page.evaluate("""() => { const n = NEON, p = n.player;
+            const car = n.vehicles.filter(v => v.driver !== 'ai' && v.driver !== 'cop' && !v.dead)
+              .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
+            car.vx = car.vz = 0; p.x = car.x + 2.2; p.z = car.z; n.tryEnterExit(); }""")
+        page.wait_for_timeout(400)
+        # hold the player's car 24 m behind the marked car, in its lane, for the picture
+        page.evaluate("""() => { window.__pin = setInterval(() => { const n = NEON, c = n.player.car, t = n.mission.car;
+            if (!c || !t) return;
+            c.x = t.x - Math.sin(t.h) * 24; c.z = t.z - Math.cos(t.h) * 24; c.h = t.h; c.vx = t.vx; c.vz = t.vz;
+            n.cam.yaw = t.h; n.cam.pitch = 0.16; n.cam.lastMouse = performance.now() + 60000; }, 16); }""")
+        page.wait_for_timeout(4300)
+        page.screenshot(path=str(OUT / "27-shadow-run.png"))
+        page.evaluate("() => clearInterval(window.__pin)")
         browser.close()
 
 
 if __name__ == "__main__":
     run()
-    print("wrote 16 shots to", OUT)
+    print("wrote 18 shots to", OUT)

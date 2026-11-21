@@ -305,3 +305,184 @@ of the ask cannot be met by a one-file browser game and is not claimed.
 - Portfolio: catalog `juw12/projects` `5922bfe`, card sync run passed. Landing page `juw12/juw12.github.io`
   `359852e`.
 - Not done: the frame rate on a real phone is still not measured (Auto decides on the phone). No judges, no score.
+
+## Run 5 (2026-11-21, `/hone` again, from the shipped 1.5 build)
+
+Ask: check that the MacBook Pro edit is finished and, if so, hone again. It was finished: PR 8 merged, release
+v1.5.0 out, no open PR, the Mac hand-over closed. On the ASUS `build.py` gave the committed bytes again
+(861,360) and the suites passed (gates 10/10, city 39/39, harbor, radio 14/14, touch 8/8 with WebKit not
+yet installed).
+
+The Mac was not finished for the day. At 17:16 it started another edit and at 17:53 it shipped release 1.6
+"Sharp" (PR 9, see the section above), while this run was testing a build made from 1.5 that it also called
+1.6. Found by `git fetch` just before shipping. So: main was merged into the branch, this run's release became
+1.7 "Tail Lights", and every suite was run again on the merged build. Below, "Tail Lights on the 1.5 base"
+is the build measured before the merge (`NeonCoast.html` 872,677 bytes) and "1.7" is the merged one.
+
+Goal beyond the goal, unchanged: a stranger opens one link, knows what to do within a minute and has something
+worth doing for ten, now also on a phone. The open asks of the run-4 judges are the queue, plus the first
+judged pass of the phone version. Score to beat: the 1.5 build scored in this session, plus 0.3, with a blind
+pair win.
+
+### Run queue (run 5)
+
+- [x] R5-0 Check the Mac edit is done; rebuild 1.5 on the ASUS and run its suites
+- [x] R5-1 Queue from the open asks of the run-4 judges
+- [x] R5-2 Baseline: score 1.5 in this session; first judged pass of the phone version (two phone pictures)
+- [x] R5-3 A shorter way to the first job beam (asked in run 4, C1)
+- [x] R5-4 An odd job that is not a timed marker run: Shadow Run, tail a car without being seen (asked in run 4, C3)
+- [x] R5-5 Say "on foot" more loudly when a Paper Round is offered (asked in run 4, C1)
+- [x] R5-6 Job 4: a head start before the stars and a route to the respray. Done, but it did not make the
+      key-press script finish job 4; see the test runs
+- [x] R5-7 Ground detail on the Rustport quay: the dock apron (asked in run 4, C2)
+- [x] R5-8 Key-press tests for the two races, the three-star getaway and Shadow Run (asked in run 4)
+- [x] R5-9 See-through touch buttons, so the road shows through them on a phone
+- [x] R5-10 Suites, council score, blind pair, keep or drop, ship, Sync
+- [x] R5-13 Merge the Mac's 1.6 Sharp into the branch, rename to 1.7, run every suite again on the merged
+      build, score it against 1.6 Sharp
+- [ ] R5-11 A real person plays it, and a real iPhone and Android phone run it: cannot be produced by the
+      agent, reported as `needs you`
+
+- [ ] R5-12 Police chase balance, so that Borrowed Time and Heat Wave can be finished (found by the
+      key-press runs of this run and asked by all three judges): not done, see the Handoff below
+
+### Assumptions (run 5)
+
+- Assumed: `/hone it again` means Loop mode on the game, starting from the shipped 1.5 build.
+- Assumed: the frozen rubric v1 stays; proposed changes go in the final message only.
+- Assumed: the judged picture set gains the two phone pictures 1.5 added (16 pictures); for Tail Lights the Shadow Run
+  picture takes the place of the Meridian crowns picture, so both versions are judged on 16.
+- Assumed: moving the first job beam, the head start, the respray route, the rule that a Paper Round cannot
+  be started from a car, and Shadow Run's opening 20 s and its car appearing ahead are design changes, not
+  test fixes.
+- Assumed: city check 13 was rewritten to the new first-beam rule, and the "route longer than 50 m" check was
+  moved to a far target, so it is as strict as before. The Shadow Run checks shorten 40 s to 3 s and set the
+  state, as the other city checks do.
+- Assumed: the drive numbers on the 1.5 fact sheet are the 1.4 measurements (1.5 did not change the driving).
+  For the blind pair the 1.5 sheet also carries the 1.5 and 1.4 runs made in the same hour as the Tail Lights runs
+  (`hone/judge/v8b.md`), so both sheets show what a busy PC does to the script.
+- Assumed: release name 1.7 "Tail Lights" (it was 1.6 until the Mac's 1.6 "Sharp" took that number).
+- Assumed: Playwright's WebKit may be installed on the ASUS (`playwright install webkit`) to run the Safari check.
+- Assumed: in `test/drive.py` the walk along the pavements, counting a crashed run as a failed sample and
+  writing the result file after every run are script fixes; what counts as a pass did not change.
+- Assumed: job 4 and job 5 runs made through a wrapper that also records the game state every 2 s count as
+  samples; the wrapper calls the same `run()`.
+- Assumed: the police were left as they are. Changing how hard they ram changes every chase in the game, and
+  on a busy PC the effect could not be measured well enough to decide; it is the first open ask.
+- Assumed: the official drive numbers of Tail Lights are the runs made one at a time with the final script; every
+  other run is listed under the test runs and on the fact sheet (`hone/drive-notes-v9.md`).
+- Assumed: 1.7 ships although its score did not move, because all three judges preferred it to 1.6 Sharp
+  in both orders of the blind pair and it removes nothing; runs 2 and 3 set that precedent.
+- Assumed: the Shadow Run and head-start checks in `test/city.py` may wait on the game's own clock
+  (`mission.tail.age`, `mission.heat`) instead of a fixed time. What has to be true to pass is the same or
+  stricter (the head start must have 8 to 10 s left when it is read).
+- Assumed: the Safari-engine check failing on the ASUS for 1.7 is a limit of this laptop and not of the
+  build, because the released 1.6 fails it the same way here (2 of 2 runs each) and passed on the Mac.
+- Assumed: both judged sheets (v10 for 1.6 Sharp, v11 for 1.7) carry the same radio numbers, measured once
+  on 1.7 in a quieter hour, because the radio code is the same and 1.6 was only measured on the busiest hour.
+- Assumed: on the v11 sheet jobs 2 to 6 are the runs made before the merge (the driving, police and job
+  code did not change in the merge) and the sheet says so; job 1 and Shadow Run were played again on 1.7.
+
+| round | change | gates | judge score | pairwise win | kept? | note |
+|---|---|---|---|---|---|---|
+| 0 (v8, release 1.5 Pocket) | none: the shipped build, scored twice in this session as the baseline; first judged pass of the phone version | 10/10 | 8.50 and 8.60, mean 8.55 (V 9.6 / 9.2, T 8.35 / 8.35, G 8.5 / 8.6) | - | baseline | the sheet carried the 1.4 drive numbers |
+| 8 (v9, Tail Lights on the 1.5 base) | first job beam 40 m ahead; Shadow Run; Paper Round ON FOOT; head start in Borrowed Time and Repo Run; route to the respray; Rustport dock apron; see-through touch buttons; key-press tests for all six jobs and Shadow Run | 10/10 | 8.75 and 8.45, mean 8.60 (V 9.6 / 9.35, T 8.35 / 8.35, G 8.75 / 8.2) | 3-0, every judge in both orders | kept on the branch, then merged with 1.6 Sharp (round 9); not a new best | the gain of 0.05 is noise (two readings of one sheet differ by 0.3); needed 8.85 |
+| 0b (v10, release 1.6 Sharp) | none: the build the Mac shipped at 17:53, rebuilt byte for byte on the ASUS and scored twice as the new baseline | 10/10 | 8.50 and 8.60, mean 8.55 (V 9.6 / 9.1, T 8.5 / 8.6, G 8.1 / 8.6) | - | baseline | sheet: drive numbers of 1.4, touch 10/10 on the Mac and 7/10 on the busy ASUS |
+| 9 (v11, release 1.7 Tail Lights) | round 8 merged with 1.6 Sharp: everything in Sharp plus everything in round 8 | 10/10 | 8.20 and 8.70, mean 8.45 (V 8.7 / 9.85, T 8.35 / 8.35, G 8.2 / 8.45) | 3-0 against 1.6 Sharp, every judge in both orders | shipped as the superset build; not a new best | needed 8.85; two readings of this one sheet differ by 0.5, so 8.45 against 8.55 is noise. The sheet lists every failed suite run of the busy evening and the job 5 result, which the 1.6 sheet does not have. Two judges gave 82 against 72 fps as a reason: that is the PC, not the build |
+
+Test runs on Tail Lights on the 1.5 base (`NeonCoast.html` 872,677 bytes, sha256 `9072f227`), every one. The PC was busy
+with other work all day, and for part of the afternoon two or three of these suites ran at once.
+
+- `test/gates.py` 10/10 (frame-rate gate 144 fps). `test/city.py` 54/54. `test/harbor.py` pass. `test/smoke.py` pass.
+- `test/radio.py` 12/14 in the chain of suites (two timing checks), then 14/14 twice alone; the 1.5 build
+  also read 14/14 alone.
+- `test/touch.py` 7/9 in the chain (the WebKit check lost its WebGL context, which also failed the
+  clean-console check), then 9/9 alone. WebKit alone, upright and landscape: Tail Lights passed 2 of 2, 1.5 passed 1 of 2.
+- `test/drive.py`, one run at a time, final script: job 1 3 of 3 (29.7, 47.9, 35.9 s); job 2 2 of 2 (222.1,
+  146.8 s); job 4 1 of 2 (204.9 s on the first try; the other run lost the stolen car twice, "The car was
+  destroyed."); job 5 0 of 3 (8 tries, taken out or arrested 8 times, up to five stars; one of the three
+  runs stopped at 271 s because no parked car was left to walk to); job 6 1 of 1 (211.2 s, first try);
+  Shadow Run 3 of 3 (109.5, 205.8, 161.8 s; tries 1, 2, 2; "They spotted you in the mirror." once, "You
+  lost them." once). Job 3, with one other test running: 1 of 2 (279.7 s on the second try; three tries ran
+  out of the race clock).
+- `test/drive.py` with two or three browsers at once (frame rate 18 to 50 a second in the worst runs): job 2
+  1 of 4 (232.2 s); job 4 0 of 4; job 5 0 of 4; job 6 0 of 2 (five tries, all out of the race clock); job 3
+  two runs without a pass whose result file was lost when the suite hit its own time limit.
+- Job 4 before the script walked along the pavements: 0 of 4 (three in the chain, one traced alone at 140
+  frames a second). In one run the script spent 270 s walking into the walls of a dead-end alley by the
+  hospital. With the pavement walk the same walk took 43 to 66 s (three times measured).
+- Other builds in the same busy hour, same script: 1.5 finished job 4 0 of 2 (the stolen car wrecked 9 to 13 s
+  after the stars came on) and job 2 0 of 1; 1.4 finished job 2 1 of 1 (146.4 s). A 1.4 run of job 4 was
+  stopped by the agent before it ended.
+- Earlier builds of this run, before the final one: city 51/52 (the new check read a field that does not
+  exist; the check was fixed), 52/52, then 52/54 (the first version of Shadow Run's opening rule was wrong and
+  was redesigned as a plain 20 s window), then 54/54. Shadow Run's first version passed 3 of 3 but took 3, 2
+  and 4 tries, which is why it was tuned. Several chains of suites were stopped by the agent to rebuild.
+
+Test runs on the merged 1.7 build (`NeonCoast.html` 880,315 bytes, sha256 `a6853497`), every one, 18:40 to 21:05.
+The PC was busier than in the afternoon (65 to 85% of its eight cores taken by other work the whole time); the
+frame rate of the same build read anything from 7 to 137 a second.
+
+- `test/gates.py`: the first run broke on a click that timed out, the second read 9/10 (G3, the respawn check
+  of the smoke test), the third 10/10 (82 fps). `test/smoke.py` alone: pass. `test/harbor.py`: pass.
+  `test/radio.py`: 14/14.
+- `test/city.py`: 52/54, 51/54, 51/54, 49/54 and one run that crashed. The failures were always checks that
+  wait a fixed time while the game, held to a longest step of 0.05 s, runs slower than the clock under 20
+  frames a second. After the Shadow Run and head-start checks were moved to the game's own clock: 52/54 (a
+  cab fare paid $0, the next fare not offered), 52/54 (the helicopter had not left, the property did not
+  hide the player yet), then 54/54.
+- `test/touch.py` (ten checks since 1.6): 7/10, 9/10, 7/10. In the 9/10 run every Chrome check passed and
+  only the Safari-engine check failed (4 frames in 1.5 s). In the others the small-phone checks timed out and
+  the aim-assist check failed once. The Safari-engine check alone, two runs each: released 1.6 failed both (7
+  frames, then a lost WebGL context), 1.7 failed both the same way (7 and 3 frames, context lost). The whole
+  suite on released 1.6 in the same hour: 7/10 (two phone sizes timed out, WebKit 9 and 3 frames).
+- `test/drive.py 3` on 1.7: job 1 3 of 3 (56.4, 80.8, 187.0 s). `test/drive.py 3 tail`: Shadow Run 2 of 3
+  (211.5 s on the second try after "They spotted you in the mirror.", 199.0 s on the first try; in the third
+  run the player was taken out on the way to the job beam and did not reach it in 421 s, so the job never
+  started). Jobs 2 to 6 were not played again on 1.7.
+- Released 1.6 on the ASUS for its sheet: gates 10/10 on the first run (72 fps); radio 11, 9, 12 and 10 of 14
+  in the busiest half hour (the radio code is the same as in 1.7, which read 14/14 two hours earlier).
+- Frame rate of 1.7, 1.6 and the build before the merge, measured in turn: 7 to 121 for every one of them,
+  in no order. The merge did not change the frame rate that this PC could show.
+
+What the failed runs say about the game, not the script: the two police jobs are the hard ones. At two or
+more stars a police car with a clear line inside 50 m drives at the player at 47 m/s. Crash damage is
+(0.8 x closing speed - 4) x 1.7, so one head-on hit costs up to about 78 of the Vanta GT's 90 points. Every
+police hit above 5 m/s also adds 1.3 wanted points even when the police did the ramming, so two stars become
+five within about 12 s. The code is the same since 1.4; the head start of Tail Lights gives ten quiet seconds and then
+the same chase. No timer and no police rule was changed in this run.
+
+stop: blocked on a quiet PC for the one queue item an agent can still do (R5-12). 1.7 shipped. Round 9 did not
+reach the 8.85 it needed to count as a gain (8.45 against a baseline of 8.55 for 1.6 Sharp; best ever stays
+9.00, release 1.4 in run 4), but won the blind pair against 1.6 Sharp 3-0 in both orders, and the build
+before the merge won 3-0 against 1.5. The score did not move for a reason the judges gave themselves: the 1.7
+sheet is the first to say that the script cannot finish Heat Wave and finishes Borrowed Time only half the
+time. That was just as true of 1.4, 1.5 and 1.6; nobody had measured it. A 10 is not claimed: the judges read
+a fact sheet and screenshots, and nobody has played it.
+
+Open asks from the run-5 judges: police chase balance (all three, first, both times; R5-12); a real person and
+a real phone (all three; R5-11); job clocks tuned to human times; less text on the title screen; lift the
+plainest views (the grey dock apron, dark night roads). One judge asked that the game keep its speed under 20
+frames a second (today it slows down instead of skipping, by design, so timed jobs get harder on a slow
+machine): worth a look together with R5-12.
+
+## Handoff (run 5)
+
+- Done: R5-0 to R5-10 and R5-13. Release 1.7 "Tail Lights" is out and synced (see Sync below).
+- In progress: nothing.
+- Left: R5-12, police chase balance. What is known: `src/02-entities.js`, the police drive at the player at
+  47 m/s from two stars; crash damage (0.8 x closing speed - 4) x 1.7; each police hit above 5 m/s adds 1.3
+  wanted points to the player (near line 762). Three changes to try, one at a time: (1) a police hit counts
+  as a crime only when the player drove into them; (2) at two stars police box the player in and match speed,
+  and ram only from three stars; (3) cap the damage of one crash. Measure each with
+  `python test/drive.py 3 4` and `python test/drive.py 3 5`, alone on a quiet PC (about 7 minutes a run);
+  today's numbers to beat are job 4 1 of 2 and job 5 0 of 3. Then all suites, a new sheet, score and pair.
+  Blocked today: on this PC the same build read 7 to 137 frames a second within an hour, and the drive
+  script's result follows the frame rate, so a before/after could not be told from noise.
+- Left: one clean run of `python test/touch.py` and `python test/city.py` for 1.7 on a quiet PC or on the Mac
+  (the Safari-engine check has not passed for 1.7 anywhere yet; it fails for 1.6 too on the ASUS).
+- Left: `test/city.py` still has about sixty fixed waits (`page.wait_for_timeout`). Idea, not done: count the
+  game clock in the page (`Math.min(0.05, frame time)` per frame) and wait until it has moved by the same
+  amount, so a slow PC cannot fail a timer check.
+- Left: R5-11, a real person plays ten minutes and a real iPhone and Android phone open the link (needs Juwen).
+- Next command: `/hone neon-coast` (run 6 starts from the 1.7 build; first item R5-12, on a quiet PC).

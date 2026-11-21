@@ -1,0 +1,51 @@
+{
+  "mode": "pair",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "judges": {
+    "Pega-Vision": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Version 2 improves the critical 'First minute' experience (C1) by placing the first objective marker directly in the starting view (40m away) and adding clearer instructional text for jobs, while also expanding content with a new job type and environmental details (C3) without breaking any hard gates.",
+        "Version 1 (v9) surpasses Version 2 (v8) by including additional verified content (the 'Shadow Run' job), more comprehensive automated testing (54 city checks vs 39), and specific onboarding refinements that better satisfy the 'first minute' criterion."
+      ]
+    },
+    "Pega-Thinking": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "VERSION 2 adds a genuinely new activity (Shadow Run tailing mechanic), improves the first minute by placing the job beam in the player's initial view, adds atmospheric dock detail, and is more transparent about test limitations—all meaningful gains across C1, C2, C3, and C5 while matching VERSION 1 on all hard gates.",
+        "VERSION 1 (v9) improves on VERSION 2 (v8) across multiple soft criteria: the first job beam now stands 40m ahead in the player's lane instead of round two corners (C1), a sixth odd job (Shadow Run) plus head-start timers and respray route guidance add meaningful variety (C3), and the new Rustport dock apron plus more transparent touch buttons enhance atmosphere and HUD (C2/C4). Both pass all 10 hard gates identically."
+      ]
+    },
+    "GLM-5.3-Flash": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both pass all 10 gates, but Version 2 (v9) improves several soft criteria over Version 1 (v8): a shorter first job with the beam visible in the very first view (C1), a sixth varied activity in Shadow Run plus clearer in-job guidance like head-start timers and respray routing (C3), a more detailed dock front (C2), and equally thorough—arguably more candid—test disclosure including a known unfixed police-ramming issue (C5), with no regressions against the rubric.",
+        "Both pass all 10 hard gates, but Version 1 (v9) improves the highest-weighted criteria: the first job beam now sits 40 m ahead in the first view (C1), it adds a sixth, non-timed odd job (Shadow Run) plus the walkable Rustport dock apron (C3/C2), and it reports more current-version test evidence while staying equally honest (C5). Version 2 is essentially the same game one release earlier with a farther first objective and less content."
+      ]
+    }
+  },
+  "votes": {
+    "A": 0,
+    "B": 3,
+    "tie": 0
+  },
+  "quorum": 3,
+  "b_wins": true,
+  "label": "council-judged (3 judges)"
+}

@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 10.0,
+        "C2": 9.0,
+        "C3": 9.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "script now finishes it in 29.7 to 47.9 s; beam stands 40 m ahead in own lane",
+        "C2": "Four districts with their own look... 86 painted walls... Pretty graphics adds a glow pass",
+        "C3": "Six story jobs... six kinds [of odd jobs]... Property... Perks... Police heat now reaches the other systems",
+        "C4": "Gate G8 passed... HUD is cash and health; the stars appear only when you are wanted",
+        "C5": "No real players have tried it yet... No real phone or tablet has run the game yet"
+      },
+      "fixes": [
+        "Tune police aggression in Job 5 (Heat Wave); script failed 0/3 runs due to head-on ram damage",
+        "Optimize performance under load; FPS drops to 18-50 when other browsers are open",
+        "Test touch controls on real devices; currently only emulated ('No real phone or tablet has run the game yet')"
+      ],
+      "total": 9.35,
+      "seconds": 23.2
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen shows needed keys; first job beam stands 40m ahead in the car's own lane; learner phase prevents stars until first job done; first job is 270m ending at Sol Wheel pier landmark; car cannot be wrecked during first job",
+        "C2": "Four districts with distinct looks (Meridian towers, Sol Beach pastels, Rustport industry, suburbs); 86 painted walls; neon trim, lit windows, day/night cycle; screenshots show recognizable neon-lit city with Ferris wheel, sunset skies, varied building colors",
+        "C3": "Six story jobs ($250-$3,500), six odd job kinds (Rush Order, Repo Run, Block Dash, Hot Parcel, Paper Round, Shadow Run), cab fares with streak bonuses, four properties with rent, 15 hidden packages, police 1-5 stars with helicopter, Tune-up shop, perks tying activities together",
+        "C4": "HUD reduced to cash and health; stars only when wanted; weapon line only 5s; clock moved to map/pause; G8 passed no overlaps at 3 sizes; perk card shows progress; pause screen is three buttons plus settings and perks",
+        "C5": "Own city and names (G9 passed); title screen states 'not affiliated with the publisher or the series it is often compared to'; fact sheet plainly states 'No real players have tried it yet', 'No real phone or tablet has run the game yet', and reports failed test runs (job 5: 0 of 3)"
+      },
+      "fixes": [
+        "Fix police ramming behavior: 'at two stars a police car with a clear view drives straight at the player at top speed; one head-on hit takes most of the stolen car's health and also counts as a crime, so the stars climb' — this made Heat Wave finish 0 of 3 and Borrowed Time 1 of 2 in scripted runs",
+        "Get real human playtesting: 'No real players have tried it yet. The scores are from AI judges reading this sheet and the screenshots' — scripted runs cannot judge whether jobs are fun or whether the first minute actually guides a stranger",
+        "Test on real mobile hardware: 'No real phone or tablet has run the game yet, so thumb reach, heat and frame rate on a phone are not known' — touch controls are a major feature (release 1.5) but only emulated"
+      ],
+      "total": 8.35,
+      "seconds": 11.2
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 8.0,
+        "C4": 8.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "First view shows 'Get into the red car ahead [F]' with 'JOB 40 m' and the car in-lane; 'the script now finishes it in 29.7 to 47.9 s'; learner phase means the first minute 'cannot end in a burning car' or arrest. Falls short of 10 only because no stranger has actually played it and the chain needs three read prompt lines plus the title key list.",
+        "C2": "Screenshots show a consistent readable style: 'Meridian towers are aqua, coral, cream and lilac', neon Sol Wheel at dusk, lit windows and light pools at night, distinct districts. Not a 10: the low-poly pastel-neon look is a familiar idiom and some night streets (screenshot 7) remain plain dark blocks.",
+        "C3": "'Perks (release 1.2) tie the side activities together'; the wheel ride 'marks the three nearest unfound packages'; six job kinds plus cab, property, packages, tune-up. Held back by the police pillar: Heat Wave 'finished 0 of 3 runs', head-on rams take most health and raise stars, 'Not fixed in this version'.",
+        "C4": "G8 'no overlaps at 3 sizes'; in-car HUD is 'cash and health' plus prompt, minimap and speed - reads at a glance on desktop. Not a 10: the phone screen stacks map, speed, radio, car name, district, perk card, objective and hint over the view, and the perk card sits mid-screen while driving.",
+        "C5": "'Own city, names and art' with the not-affiliated line (G9 pass); limits stated plainly: 'No real players have tried it yet', 'nobody has listened to it', 'Not fixed in this version', failed run counts reported as-is."
+      },
+      "fixes": [
+        "Rework police chase balance: at 2+ stars patrols ram head-on at top speed, one hit takes most of the car's health and counts as a crime so stars climb; Heat Wave finished 0 of 3 even by script and it is listed as 'Not fixed in this version'.",
+        "Get real humans and real hardware on it: no player has tried it and 'no real phone or tablet has run the game yet', so the first-minute promise and thumb reach, heat and frame rate on phones are unverified.",
+        "Measure job difficulty and time limits with a person: jobs 3-5, the odd jobs, cab fares and courier shift are script-checked only, and several time out or end in arrest even for the script under load."
+      ],
+      "total": 8.2,
+      "seconds": 76.3
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.45,
+  "criterion_median": {
+    "C1": 8.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 8.0,
+    "C5": 10.0
+  },
+  "criterion_spread": {
+    "C1": 2.0,
+    "C2": 1.0,
+    "C3": 1.0,
+    "C4": 1.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.2,
+    9.35
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Tune police aggression in Job 5 (Heat Wave); script failed 0/3 runs due to head-on ram damage"
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Optimize performance under load; FPS drops to 18-50 when other browsers are open"
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Test touch controls on real devices; currently only emulated ('No real phone or tablet has run the game yet')"
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Fix police ramming behavior: 'at two stars a police car with a clear view drives straight at the player at top speed; one head-on hit takes most of the stolen car's health and also counts as a crime, so the stars climb' — this made Heat Wave finish 0 of 3 and Borrowed Time 1 of 2 in scripted runs"
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Get real human playtesting: 'No real players have tried it yet. The scores are from AI judges reading this sheet and the screenshots' — scripted runs cannot judge whether jobs are fun or whether the first minute actually guides a stranger"
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Test on real mobile hardware: 'No real phone or tablet has run the game yet, so thumb reach, heat and frame rate on a phone are not known' — touch controls are a major feature (release 1.5) but only emulated"
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Rework police chase balance: at 2+ stars patrols ram head-on at top speed, one hit takes most of the car's health and counts as a crime so stars climb; Heat Wave finished 0 of 3 even by script and it is listed as 'Not fixed in this version'."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Get real humans and real hardware on it: no player has tried it and 'no real phone or tablet has run the game yet', so the first-minute promise and thumb reach, heat and frame rate on phones are unverified."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Measure job difficulty and time limits with a person: jobs 3-5, the odd jobs, cab fares and courier shift are script-checked only, and several time out or end in arrest even for the script under load."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

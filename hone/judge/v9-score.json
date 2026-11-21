@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 10.0,
+        "C2": 9.0,
+        "C3": 10.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "The first job beam now stands in the red car's own lane, 40 m ahead... the script now finishes it in 29.7 to 47.9 s",
+        "C2": "Meridian towers are aqua, coral, cream and lilac... Pretty graphics adds a glow pass",
+        "C3": "Perks... tie the side activities together... 10 cab fares double tips, all six story jobs raise rent",
+        "C4": "HUD boxes do not overlap at 1024 x 640... the stars appear only when you are wanted",
+        "C5": "No real players have tried it yet. The scores are from AI judges reading this sheet"
+      },
+      "fixes": [
+        "Police AI aggression at 2 stars is too high; one head-on hit destroys the car, causing 0/3 script success on Job 5",
+        "Performance drops to 18-50 fps under load, causing job failures that do not occur on a quiet PC",
+        "Touch controls have not been tested on real devices, only emulation, leaving thumb reach and heat unknown"
+      ],
+      "total": 9.6,
+      "seconds": 13.9
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen lists controls and settings; first job beam now 40m ahead in the car's own lane; learner phase prevents early arrest; first job is short (270m) and ends at a landmark (Sol Wheel pier); standing still 3.5s shows walking keys. Some text density on title screen remains.",
+        "C2": "Four districts with distinct looks (Meridian towers, Sol Beach pastels, Rustport industry, suburbs); 86 painted walls; day/night cycle with lit windows and neon; Sol Wheel and Coastliner airship as landmarks; Pretty graphics adds glow pass. Screenshots show consistent neon aesthetic but style leans on familiar open-city tropes.",
+        "C3": "Six story jobs ($250-$3,500), six odd job kinds (Rush Order, Repo Run, Block Dash, Hot Parcel, Paper Round, Shadow Run), cab fares with tip/streak system, four properties with rent, 15 hidden packages, police 1-5 stars with helicopter at 4, Sol Wheel ride, Tune-up shop upgrades, perks that cross-feed (packages/fares/jobs). Rich interlocking systems.",
+        "C4": "G8 passed at 3 resolutions; HUD reduced to cash+health with stars/weapon line only when relevant; clock moved to map/pause; pause screen is three buttons plus settings and perks; perk card shows progress ('Body armour 4/5'); minimap round with markers. Clean and readable while driving.",
+        "C5": "G9 passed (own names only); title screen states 'An original open city sandbox in one file... not affiliated with Rockstar Games'; own city, names and art; fact sheet plainly states limits (no real players, no real phone tested, no gamepad, police ramming issue not fixed)."
+      },
+      "fixes": [
+        "Fix police ramming at 2 stars: 'a police car with a clear view drives straight at the player at top speed; one head-on hit takes most of the stolen car's health and also counts as a crime, so the stars climb' — this makes Heat Wave 0/3 and Borrowed Time 1/2 by script and is the single biggest blocker to the getaway loop.",
+        "Rebalance Job 5 (Heat Wave) so it is completable: the script finished 0 of 3 runs with 8 arrests across attempts; a core story job that cannot be finished by an automated player signals the difficulty curve or the head-start mechanic needs work.",
+        "Reduce title-screen text density or stage the onboarding: the title screen lists settings, controls, release history link and a long disclaimer in one view, which works against the 'stranger understands within a minute' goal even though the in-game first minute is strong."
+      ],
+      "total": 8.35,
+      "seconds": 11.5
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 9.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "First view shows 'Get into the red car ahead [F]' with the car and job beam 40 m ahead; 'A new player who stands still for 3.5 seconds is shown the walking keys'; script finishes job 1 in 29.7-47.9 s - but 'No real players have tried it yet', so the stranger-in-60s claim is unverified by a human.",
+        "C2": "Screenshots show a consistent pastel-neon style: Sol Wheel at dusk under a pink sky, lit windows and headlight pools at night, CAFE/PAWN/SCRAP neon, pastel hotels by day. But the dock apron and night streets read as plain grey/dark, and the mood is genre-familiar low-poly rather than singular from one shot.",
+        "C3": "Six story jobs, six odd-job kinds ('Rush Order... Repo Run... Shadow Run'), cab fares, property, Tune-up, 15 packages, and 'Perks (release 1.2) tie the side activities together'. Docked because Heat Wave 'finished 0 of 3 runs' even by script - police heat breaks the loop the systems feed.",
+        "C4": "'the HUD is cash and health; the stars appear only when you are wanted'; G8 'no overlaps at 3 sizes'; pause is 'three buttons, settings and perks'. Reserve: the phone top edge stacks perk card, radio line, district and job lines, and the CAR CONDITION bar is unexplained.",
+        "C5": "'An original game with its own city, names and art. Not affiliated...' plus an unusually candid 'Not covered by the tests' section ('Not fixed in this version', 'No real players have tried it yet'). Reserve: the system set (1-5 stars, respray, hidden packages, taxi, property rent) closely mirrors the compared series' skeleton."
+      },
+      "fixes": [
+        "Retune police pursuits: cap head-on ram damage and stop stars climbing when you are the victim, so Heat Wave (0/3 even by script) and Borrowed Time are winnable by an ordinary player, not only a perfect run.",
+        "Lift the plainest views (grey dock apron, dark night roads) to the same colour and lighting standard as the beach and downtown, and push one recognisable signature so a single screenshot says Neon Coast.",
+        "Put it in front of real people and a real phone: watch a stranger's first minute, tune job clocks to human times, and check thumb reach, heat and frame rate - script passes measure none of these."
+      ],
+      "total": 8.75,
+      "seconds": 73.5
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.75,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 9.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 2.0,
+    "C2": 1.0,
+    "C3": 1.0,
+    "C4": 1.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.35,
+    9.6
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Police AI aggression at 2 stars is too high; one head-on hit destroys the car, causing 0/3 script success on Job 5"
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Performance drops to 18-50 fps under load, causing job failures that do not occur on a quiet PC"
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Touch controls have not been tested on real devices, only emulation, leaving thumb reach and heat unknown"
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Fix police ramming at 2 stars: 'a police car with a clear view drives straight at the player at top speed; one head-on hit takes most of the stolen car's health and also counts as a crime, so the stars climb' — this makes Heat Wave 0/3 and Borrowed Time 1/2 by script and is the single biggest blocker to the getaway loop."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Rebalance Job 5 (Heat Wave) so it is completable: the script finished 0 of 3 runs with 8 arrests across attempts; a core story job that cannot be finished by an automated player signals the difficulty curve or the head-start mechanic needs work."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Reduce title-screen text density or stage the onboarding: the title screen lists settings, controls, release history link and a long disclaimer in one view, which works against the 'stranger understands within a minute' goal even though the in-game first minute is strong."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Retune police pursuits: cap head-on ram damage and stop stars climbing when you are the victim, so Heat Wave (0/3 even by script) and Borrowed Time are winnable by an ordinary player, not only a perfect run."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Lift the plainest views (grey dock apron, dark night roads) to the same colour and lighting standard as the beach and downtown, and push one recognisable signature so a single screenshot says Neon Coast."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Put it in front of real people and a real phone: watch a stranger's first minute, tune job clocks to human times, and check thumb reach, heat and frame rate - script passes measure none of these."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

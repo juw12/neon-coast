@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 10.0,
+        "C2": 9.0,
+        "C3": 10.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "'Get into the red car ahead [F]' prompt guides immediately; 'learner phase' prevents early arrest/wreck.",
+        "C2": "'Sol Wheel... turning Ferris wheel'; 'neon trim'; distinct districts (Sol Beach vs Rustport).",
+        "C3": "'Perks... tie the side activities together'; 'jobs, police, money sinks and secrets that feed each other'.",
+        "C4": "'HUD is cash and health; the stars appear only when you are wanted'; Mobile view has 8 action buttons.",
+        "C5": "'No real players have tried it yet'; 'No real phone or tablet has run the game yet'."
+      },
+      "fixes": [
+        "Test touch controls on real mobile devices (currently only emulated, with failures on busy laptop).",
+        "Optimize performance for busy CPU conditions (radio timing checks failed, script failed Job 4 on busy day).",
+        "Tune police aggression in Job 4 (script failed 0/2 runs on busy hardware due to car wreck)."
+      ],
+      "total": 9.6,
+      "seconds": 34.6
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 8.0,
+        "C4": 9.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen shows controls (WASD, Mouse, Space, F, M) and 'New Game' button; first job objective 'Get into the red car ahead [F]' is immediately clear; learner phase prevents early arrest; first job ends at Sol Wheel landmark",
+        "C2": "Distinct districts (Meridian towers, Sol Beach palms, Rustport industry), day/night cycle with lit windows and neon, Sol Wheel sunset is iconic; but player character is a simple block figure ('a pink shirt on a box') that doesn't match the atmospheric city",
+        "C3": "Six story jobs, five odd job types, cab fares, property, harbor courier, 15 hidden packages, perks tying activities together; however job 4 (Borrowed Time) finished 0 of 2 runs on busy days because police wrecked the stolen car within 9-13 seconds",
+        "C4": "G8 passes at 3 resolutions; HUD reduced to cash and health with stars only when wanted; weapon line only for 5 seconds; pause screen is three buttons plus settings/perks; minimap and district name clearly placed",
+        "C5": "G9 passes (own names only); title screen states 'not affiliated with the publisher or the series it is often compared to'; fact sheet plainly states 'No real players have tried it yet', 'No real phone or tablet has run the game yet', 'No gamepad controls'"
+      },
+      "fixes": [
+        "Rebalance police aggression during timed jobs: job 4 (Borrowed Time) failed 0 of 2 runs on a busy day because police wrecked the stolen car 9-13 seconds after 2 stars came on, making the job unwinnable in practice",
+        "Add gamepad controls: currently keyboard and touch only, which excludes a common input method and is explicitly listed as missing",
+        "Upgrade the player character model from a simple block figure to something that matches the atmospheric detail of the city, so the avatar doesn't undermine the mood established by the neon, lighting and architecture"
+      ],
+      "total": 8.5,
+      "seconds": 17.0
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 8.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "First view shows 'Get into the red car ahead [F]' with 'JOB 135 m' and a minimap route; 'The first job... is shorter and ends at a landmark'; 'until the first job is done, crimes bring no stars'; idle 3.5 s shows walking keys. Not 10: the first minute needs three sequential banners ('Get into the red car ahead' -> 'Drive into the yellow beam to meet Mo' -> 'Follow the beach road to the Sol Wheel pier') and 'No real players have tried it yet'.",
+        "C2": "'86 painted walls', 'Day and night cycle with lit windows', Sol Wheel pier at dusk and neon shopfronts read as a consistent style with real mood. Not 10: the night downtown shot is dominated by a large flat grey facade with plain windows, and the Rustport day shot shows simple blocky containers on flat pale ground.",
+        "C3": "'Six story jobs', 'odd jobs come in five kinds', cab fares, property rent, 15 packages, and 'Perks... tie the side activities together' plus heat refusals ('the Sol Wheel will not sell a ticket'). Not 10: 'Passed by script only... their difficulty and their time limits are not measured', and 'job 4 finished 0 of 2 runs (the stolen car was wrecked by police cars 9 to 13 s after the two stars came on)'.",
+        "C4": "'the HUD is cash and health; the stars appear only when you are wanted', 'PASS G8 HUD overlap: no overlaps at 3 sizes', pause is 'three buttons, settings and perks'. Not 10: the portrait phone shot stacks perk card, radio line, car name, district and objective banner at once, and the objective appears three ways simultaneously (banner, JOB marker, minimap route).",
+        "C5": "'Own city, names and art. One line on the title screen says it is an original game and is not affiliated'; limits are stated plainly ('No real players have tried it yet', 'No gamepad controls', 'no real phone or tablet has run the game yet'). Not 10: the loop structure (5 wanted stars, BUSTED, respray, hidden packages, hospital fee as 10% of cash) still maps one-to-one onto the series it is 'often compared to'."
+      },
+      "fixes": [
+        "Retune Borrowed Time (job 4): police wreck the stolen car 9-13 s after two stars on a loaded machine (0/2 runs on 1.5), so give a workable window (later heat, tougher car, escape-friendly route) and measure the script-only jobs' time limits at human pace.",
+        "Lift the night look: large blank grey facades dominate the night downtown view; vary lit windows, signage and wall shading so night reads as richly as the dusk shots.",
+        "Playtest on a real phone and slim the portrait HUD stack (perk card + radio + car + district + objective), extending the no-overlap check beyond the three desktop sizes."
+      ],
+      "total": 8.1,
+      "seconds": 60.9
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.5,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 8.0,
+    "C4": 9.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 2.0,
+    "C2": 1.0,
+    "C3": 2.0,
+    "C4": 1.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.1,
+    9.6
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Test touch controls on real mobile devices (currently only emulated, with failures on busy laptop)."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Optimize performance for busy CPU conditions (radio timing checks failed, script failed Job 4 on busy day)."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Tune police aggression in Job 4 (script failed 0/2 runs on busy hardware due to car wreck)."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Rebalance police aggression during timed jobs: job 4 (Borrowed Time) failed 0 of 2 runs on a busy day because police wrecked the stolen car 9-13 seconds after 2 stars came on, making the job unwinnable in practice"
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Add gamepad controls: currently keyboard and touch only, which excludes a common input method and is explicitly listed as missing"
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Upgrade the player character model from a simple block figure to something that matches the atmospheric detail of the city, so the avatar doesn't undermine the mood established by the neon, lighting and architecture"
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Retune Borrowed Time (job 4): police wreck the stolen car 9-13 s after two stars on a loaded machine (0/2 runs on 1.5), so give a workable window (later heat, tougher car, escape-friendly route) and measure the script-only jobs' time limits at human pace."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Lift the night look: large blank grey facades dominate the night downtown view; vary lit windows, signage and wall shading so night reads as richly as the dusk shots."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Playtest on a real phone and slim the portrait HUD stack (perk card + radio + car + district + objective), extending the no-overlap check beyond the three desktop sizes."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

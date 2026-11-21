@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 10.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "'A new player who stands still for 3.5 seconds is shown the walking keys' and 'learner phase' prevents early arrest, but 'No real phone or tablet has run the game yet' and touch tests failed in emulation.",
+        "C2": "'86 painted walls... every building has a separate ground floor' and neon glow create mood, but the blocky, untextured player character in screenshots clashes with the detailed city.",
+        "C3": "'Perks... tie the side activities together... 5 packages give 25% less damage, 10 packages halve the respray price', creating a loop of jobs, police, and money sinks.",
+        "C4": "'HUD is cash and health; the stars appear only when you are wanted' is clean, but touch screenshots show a dense overlay of 8+ buttons plus stick and map.",
+        "C5": "'No real players have tried it yet. The scores are from AI judges' and 'Own names only: no Rockstar game... names anywhere' demonstrates radical honesty and originality."
+      },
+      "fixes": [
+        "Test and optimize touch controls on real iOS/Android devices; emulation failed Safari checks and no real phone has run the game, risking the 'first minute' experience on mobile.",
+        "Refine the player character model to match the city's lighting and texture fidelity; the current blocky avatar detracts from the atmospheric mood in third-person views.",
+        "Decouple audio timing and job logic from the main render loop; radio tests failed under load, threatening the atmosphere and timed job fairness during stutter."
+      ],
+      "total": 9.1,
+      "seconds": 22.2
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 9.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen shows 'How to play' with WASD/Mouse/Shift/Space/F/J/M/H; first view shows 'Get into the red car ahead [F]' with JOB 135m indicator; first job shortened to end at Sol Wheel pier landmark; learner phase prevents early arrest",
+        "C2": "Distinct districts (Meridian towers, Sol Beach pastel hotels, Rustport industry); day/night cycle with lit windows and neon trim; 86 painted walls; recognizable landmarks (Sol Wheel, Meridian Spire, Coastliner airship); Pretty graphics adds glow pass",
+        "C3": "Six story jobs ($250-$3,500), five odd job types, cab fares with progression, four properties with rent, 15 hidden packages, harbor courier, Sol Wheel ride, tune-up shop in three stages, perks tying systems together, police 1-5 stars with helicopter at 4",
+        "C4": "HUD reduced to cash and health; stars only when wanted; weapon line only 5s after change; clock moved to map/pause; pause screen has three buttons plus settings and perks; perk card shows progress ('Body armour 4/5')",
+        "C5": "'Own city, names and art'; title screen states 'not affiliated with the publisher or the series it is often compared to'; 'Not covered by the tests' section honestly lists untested areas (driving feel, real phones, no real players)"
+      },
+      "fixes": [
+        "Conduct real human playtesting to verify driving feel and job difficulty match design intent — fact sheet notes 'How the driving feels to a person' is unknown and script-only testing shows jobs failing on busy days",
+        "Test touch controls on real phones and tablets — fact sheet states 'No real phone or tablet has run the game yet' and emulated testing had timing failures on the busy laptop",
+        "Add more visual detail to the player character and pedestrian models — screenshots show a notably blocky/plain protagonist compared to the detailed city environment"
+      ],
+      "total": 8.6,
+      "seconds": 13.3
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "First view shows 'Get into the red car ahead [F]' with 'JOB 335 m' and a minimap route; 'A new player who stands still for 3.5 seconds is shown the walking keys'; learner phase means 'crimes bring no stars' and the car 'cannot be wrecked'. Only gap: never observed with a real stranger ('No real players have tried it yet').",
+        "C2": "Dusk Sol Wheel shot (lit wheel, palms, pink sky) is recognisable from one screenshot; '86 painted walls', 'Meridian towers are aqua, coral, cream and lilac'. But the night street shot is a flat grey wall with a pole mid-frame, and the container-yard/beach shots show large bare ground planes.",
+        "C3": "'Six story jobs from three contacts', 'odd jobs come in five kinds', cab fares, property rent, 15 hidden packages, perks ('10 packages halve the respray price'), heat refusals ('the Sol Wheel will not sell a ticket'). Not 10: odd-job kinds are mostly timed go-to variants, and most activities are 'passed by script only', so variety over ten minutes is unverified by a person.",
+        "C4": "'the HUD is cash and health; the stars appear only when you are wanted'; G8 'no overlaps at 3 sizes'; pause is 'three buttons, settings and perks'. Not higher: the phone screenshots stack cash, health, perk card, radio line, district, hint and objective on the top edge at once, which strains 'reads at a glance'.",
+        "C5": "'An original game and is not affiliated with the publisher or the series it is often compared to'; own names throughout (Sol Beach, Rustport, Meridian, North Maren); limits stated plainly: 'No real players have tried it yet', 'No real phone or tablet has run the game yet', 'nobody has listened to it'."
+      },
+      "fixes": [
+        "Rebalance job 4 and police aggression with human play-testers: the stolen car was 'wrecked by police cars 9 to 13 s after the two stars came on' on a busy machine (0/2 runs), and the races, getaway, odd jobs, cab fares and courier shift have only been 'passed by script', so their difficulty and time limits are unmeasured.",
+        "Run the game on real phones and tablets ('No real phone or tablet has run the game yet') to tune the Auto graphics ladder, thumb reach and heat; the emulated checks already time out on the test laptop (7/10, and the WebKit check 'failed 2 of 2 more runs').",
+        "Lift the weakest views so the whole city matches the strong dusk shots: the night street screenshot reads grey and murky and the container yard / beach ground planes are bare; add ground and street detail and a stronger night identity (C2 carries weight 0.25)."
+      ],
+      "total": 8.6,
+      "seconds": 64.5
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.6,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 8.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 1.0,
+    "C2": 1.0,
+    "C3": 1.0,
+    "C4": 1.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.6,
+    9.1
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Test and optimize touch controls on real iOS/Android devices; emulation failed Safari checks and no real phone has run the game, risking the 'first minute' experience on mobile."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Refine the player character model to match the city's lighting and texture fidelity; the current blocky avatar detracts from the atmospheric mood in third-person views."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Decouple audio timing and job logic from the main render loop; radio tests failed under load, threatening the atmosphere and timed job fairness during stutter."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Conduct real human playtesting to verify driving feel and job difficulty match design intent — fact sheet notes 'How the driving feels to a person' is unknown and script-only testing shows jobs failing on busy days"
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Test touch controls on real phones and tablets — fact sheet states 'No real phone or tablet has run the game yet' and emulated testing had timing failures on the busy laptop"
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Add more visual detail to the player character and pedestrian models — screenshots show a notably blocky/plain protagonist compared to the detailed city environment"
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Rebalance job 4 and police aggression with human play-testers: the stolen car was 'wrecked by police cars 9 to 13 s after the two stars came on' on a busy machine (0/2 runs), and the races, getaway, odd jobs, cab fares and courier shift have only been 'passed by script', so their difficulty and time limits are unmeasured."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Run the game on real phones and tablets ('No real phone or tablet has run the game yet') to tune the Auto graphics ladder, thumb reach and heat; the emulated checks already time out on the test laptop (7/10, and the WebKit check 'failed 2 of 2 more runs')."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Lift the weakest views so the whole city matches the strong dusk shots: the night street screenshot reads grey and murky and the container yard / beach ground planes are bare; add ground and street detail and a stronger night identity (C2 carries weight 0.25)."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}
