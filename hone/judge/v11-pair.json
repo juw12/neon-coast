@@ -1,0 +1,51 @@
+{
+  "mode": "pair",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "judges": {
+    "Pega-Vision": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Version 2 improves the 'First Minute' experience (C1) with clearer objective placement and UI cues, adds variety with a new job type (C3), and achieves a higher frame rate (82 fps vs 72 fps).",
+        "Version 1 (v11/1.7) is a strict improvement over Version 2 (v10/1.6), offering additional content (Shadow Run job, drivable Rustport dock), better onboarding for the first minute (closer job start, clearer hints), and more comprehensive automated testing coverage while maintaining higher frame rates and passing all hard gates."
+      ]
+    },
+    "Pega-Thinking": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both pass all 10 hard gates, but VERSION 2 improves on VERSION 1 across the soft criteria: the first job beam is now visible from the start (shorter, clearer first minute), a new Shadow Run odd job adds genuine activity variety beyond clocks and chases, the Rustport dock front adds atmosphere, and touch buttons are more see-through. These are meaningful, not negligible, improvements.",
+        "Version 1 (v11) improves on Version 2 (v10) across nearly every soft criterion: the first job beam is now 40m ahead in the car's own lane with a shorter route, Paper Round is properly labeled ON FOOT, head starts are announced, and the respray route is pointed out (C1); a new dock front adds atmosphere (C2); Shadow Run adds a sixth odd-job type that is neither a clock nor a chase, expanding variety (C3); touch buttons are more transparent (C4); and frame rate is higher (82 vs 72 fps) with more test coverage (54 vs 39 city checks, all 6 jobs + Shadow Run played by script)."
+      ]
+    },
+    "GLM-5.3-Flash": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Version 2 passes the same 10/10 hard gates and keeps everything in Version 1 while directly improving rubric criteria: a shorter first job with the beam in the first view and clearer in-play guidance (C1), a new non-timer activity in Shadow Run plus head starts and respray routing (C3), dock-front detail (C2), more transparent touch buttons (C4), and plainer disclosure of limits including a known unfixed issue (C5). The disclosed test flakiness occurs on an overloaded PC and reflects the same driving/police code Version 1 shipped, so it does not offset these gains.",
+        "Both versions pass all 10 gates and share the same city, look and core systems, but Version 1 (v11) improves the rubric-weighted areas: a shorter first job with the beam 40 m ahead in the first view plus head-start and lose-the-police guidance (C1), a sixth distinct activity in Shadow Run (C3), more transparent touch HUD buttons (C4), and expanded test coverage with equally candid disclosure of limits (C5), with the dock apron adding a little atmosphere (C2)."
+      ]
+    }
+  },
+  "votes": {
+    "A": 0,
+    "B": 3,
+    "tie": 0
+  },
+  "quorum": 3,
+  "b_wins": true,
+  "label": "council-judged (3 judges)"
+}

@@ -356,11 +356,20 @@ def run():
             return told
 
         def hold_behind(metres, seconds):
+            # seconds are counted on the game's own clock (the tail's age): under 20 frames a second the game
+            # runs slower than the wall clock, and a wall-clock wait would end before the game's timer does
             page.evaluate("""(metres) => { clearInterval(window.__pin); window.__pin = setInterval(() => {
                 const n = NEON, c = n.player.car, t = n.mission.car;
                 if (!n.mission.active || !c || !t) return;
-                c.x = t.x - Math.sin(t.h) * metres; c.z = t.z - Math.cos(t.h) * metres; c.h = t.h; c.vx = c.vz = 0; c.hp = c.t.hp; }, 30); }""", metres)
-            page.wait_for_timeout(int(seconds * 1000))
+                c.x = t.x - Math.sin(t.h) * metres; c.z = t.z - Math.cos(t.h) * metres; c.h = t.h; c.vx = c.vz = 0; c.hp = c.t.hp; }, 30);
+                window.__age0 = n_age(); function n_age() { const t = NEON.mission.tail; return t ? t.age : 0; } }""", metres)
+            try:
+                page.wait_for_function(
+                    "(s) => !NEON.mission.active || !NEON.mission.tail || NEON.mission.tail.age - window.__age0 >= s",
+                    arg=seconds, polling=50, timeout=int(seconds * 6000) + 10000)
+            except Exception:
+                pass          # the checks below read the state and fail on their own terms
+            page.wait_for_timeout(200)
             page.evaluate("() => clearInterval(window.__pin)")
             return page.evaluate("""() => ({ active: NEON.mission.active, money: NEON.save.money,
                 card: document.querySelector('#banner b').textContent + ' / ' + document.querySelector('#banner span').textContent })""")
@@ -411,12 +420,18 @@ def run():
             p.x = car.x + 2.2; p.z = car.z; n.tryEnterExit(); }""")
         page.wait_for_timeout(700)
         early = page.evaluate("""() => ({ job: NEON.mission.active ? NEON.mission.def.name : '', step: NEON.mission.step, stars: NEON.wanted.stars,
-            hint: document.getElementById('hint').textContent })""")
-        page.wait_for_timeout(10300)
+            hint: document.getElementById('hint').textContent, left: NEON.mission.heat ? NEON.mission.heat.t : -1 })""")
+        # the ten seconds are the game's (mission.heat.t counts them down); wait for that clock, not the wall clock
+        try:
+            page.wait_for_function("() => !NEON.mission.heat", polling=50, timeout=70000)
+        except Exception:
+            pass
+        page.wait_for_timeout(300)
         late = page.evaluate("() => NEON.wanted.stars")
         check("taking the marked car gives ten seconds before the two stars",
-              early["job"] == "Borrowed Time" and early["step"] == 1 and early["stars"] == 0 and "10 seconds" in early["hint"] and late >= 2,
-              json.dumps({"early": early, "stars_after_11s": late}))
+              early["job"] == "Borrowed Time" and early["step"] == 1 and early["stars"] == 0 and "10 seconds" in early["hint"]
+              and 8.0 <= early["left"] <= 10 and late >= 2,
+              json.dumps({"early": early, "stars_when_the_ten_seconds_are_up": late}))
 
         # 16. (1.7) Heat Wave: while losing the heat the route leads to the respray, and the respray ends it
         page.evaluate("() => { NEON.setWanted(0); NEON.player.hp = 100; NEON.save.money = 1000; }")

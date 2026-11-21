@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 10.0,
+        "C2": 10.0,
+        "C3": 10.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "Objective 'Get into the red car ahead [F]' is visible immediately in the first view, 40m away in the player's lane.",
+        "C2": "Distinct districts (Sol Beach pastel hotels, Rustport industry) with day/night cycles and lit windows create a recognizable mood.",
+        "C3": "Perks tie activities together (e.g., 10 cab fares double tips), and six job types plus police create varied ten-minute loops.",
+        "C4": "HUD boxes do not overlap at 3 sizes, but mobile touch layout requires 11 buttons plus a stick, which is dense.",
+        "C5": "Fact sheet explicitly states 'No real players have tried it yet' and details exactly what was not covered by tests."
+      },
+      "fixes": [
+        "Tune police aggression at 2 stars: currently one head-on hit destroys the player's car, causing 0% completion on Job 5.",
+        "Test touch controls on real devices: currently only emulated, so thumb reach, heat, and frame rate on phones are unknown.",
+        "Fix performance scaling on busy CPUs: game logic slows down below 20fps, causing timed jobs to fail on lower-end hardware."
+      ],
+      "total": 9.85,
+      "seconds": 30.1
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen shows 'HOW TO PLAY' with WASD/Mouse/Shift/Space/F/J/M keys; first view shows 'Get into the red car ahead [F]' and 'JOB 40 m' marker; first job shortened to 270m ending at Sol Wheel pier; learner phase prevents early arrest.",
+        "C2": "Distinctive neon-lit night scenes with glow pass, pastel Sol Beach with Ferris wheel, painted walls (86 across districts), day/night cycle with lit windows, Coastliner airship, district-specific palettes (aqua/coral Meridian, rust/ochre Rustport).",
+        "C3": "Six story jobs ($250-$3,500), six odd job kinds including Shadow Run, cab fares with streak bonuses, four properties with rent, 15 hidden packages, Tune-up shop upgrades, perks tying activities together (5 packages = 25% less damage, 10 fares = double tips).",
+        "C4": "HUD reduced to cash and health; stars only when wanted; weapon line only 5s after change; clock moved to map/pause; G8 passed with no overlaps at 3 resolutions; pause screen has Resume/Restart/Main Menu plus settings and perks with progress bars.",
+        "C5": "Own names (Neon Coast, Sol Beach, Meridian, Rustport, Mo's); title screen states 'not affiliated with the publisher or the series it is often compared to'; 'Not covered by the tests' section plainly states no real players, radio not listened to, no real phone tested, busy evening affected results."
+      },
+      "fixes": [
+        "Fix police ramming at 2 stars: 'a police car with a clear view drives straight at the player at top speed; one head-on hit takes most of the stolen car's health and also counts as a crime, so the stars climb. The ten-second head start did not change that. Not fixed in this version.' This makes getaway jobs (Heat Wave, Borrowed Time) nearly uncompletable.",
+        "Rebalance Job 5 Heat Wave which the script finished 0 of 3 runs (8 arrests/takeouts across attempts) — likely tied to the police ramming issue but also needs its own tuning since it is a core story job.",
+        "Get real human playtesting before shipping: the fact sheet explicitly states 'No real players have tried it yet' and 'whether the music is pleasant is not known' — the radio, driving feel, and difficulty curve are all unvalidated by humans."
+      ],
+      "total": 8.35,
+      "seconds": 12.8
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 8.0,
+        "C4": 8.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "First view shows 'Get into the red car ahead [F]' with 'JOB 40 m' and the car visible; first job cut to 270 m (script 29.7-47.9 s); learner phase means 'crimes bring no stars' and the car 'cannot be wrecked'. Not a 10: the title screen front-loads several text panels and the job needs three separate hints, so a stranger reads more than the minimum.",
+        "C2": "Dusk Sol Wheel shot is distinctive: neon wheel, pastel hotels, palms, painted walls ('a SOL BEACH postcard'), and night shots show 'lit windows and shop fronts' with lamp pools. Not a 10: daytime street and dock screenshots are still mostly extruded boxes with window grids, and the pink/teal palette is a familiar synthwave look rather than unmistakably its own.",
+        "C3": "Six story jobs, 'odd jobs come in six kinds', cab fares, property, 15 packages, wheel ride, and perks that tie them ('5 packages give 25% less damage... 10 cab fares double tips'). Not a 10: the police feed is rough - Heat Wave finished 0 of 3, 'arrested or taken out 8 times', and the ram problem is marked 'Not fixed in this version'; fun and difficulty are unverified by humans.",
+        "C4": "'the HUD is cash and health; the stars appear only when you are wanted'; G8 'no overlaps at 3 sizes'; pause is three buttons plus settings and perks. Not a 10: the phone screenshots stack perk card, radio line, district name, objective and speed in one corner, and the Shadow Run line ('Tail the pink Ravager | 24 m - good: keep this distance - 34 s to go') is long for a glance at speed.",
+        "C5": "'One line on the title screen says it is an original game and is not affiliated'; own names throughout (Sol Beach, Rustport, Mo's Respray, Coastliner); limits stated plainly: 'No real players have tried it yet', 'No real phone or tablet has run the game yet', 'nobody has listened to it', 'A script is not a person'."
+      },
+      "fixes": [
+        "Rebalance police aggression at 2-3 stars: 'one head-on hit takes most of the stolen car's health and also counts as a crime, so the stars climb' and 'The ten-second head start did not change that' - Heat Wave finished 0 of 3; make low-star rams weaker or stop counting being rammed as a crime.",
+        "Run the game on real phones and tablets and fix the failing Safari-engine touch check (touch tests read 7, 9 and 7 of 10 on the emulated phone); while there, thin the stacked phone HUD (perk card, radio, district, objective).",
+        "Get a human to play the first hour and listen to the radio: driving feel, job difficulty and 'whether the music is pleasant is not known' - every fun-related claim currently rests on script runs."
+      ],
+      "total": 8.45,
+      "seconds": 66.6
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.7,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 8.0,
+    "C5": 10.0
+  },
+  "criterion_spread": {
+    "C1": 2.0,
+    "C2": 2.0,
+    "C3": 2.0,
+    "C4": 1.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.35,
+    9.85
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Tune police aggression at 2 stars: currently one head-on hit destroys the player's car, causing 0% completion on Job 5."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Test touch controls on real devices: currently only emulated, so thumb reach, heat, and frame rate on phones are unknown."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Fix performance scaling on busy CPUs: game logic slows down below 20fps, causing timed jobs to fail on lower-end hardware."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Fix police ramming at 2 stars: 'a police car with a clear view drives straight at the player at top speed; one head-on hit takes most of the stolen car's health and also counts as a crime, so the stars climb. The ten-second head start did not change that. Not fixed in this version.' This makes getaway jobs (Heat Wave, Borrowed Time) nearly uncompletable."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Rebalance Job 5 Heat Wave which the script finished 0 of 3 runs (8 arrests/takeouts across attempts) — likely tied to the police ramming issue but also needs its own tuning since it is a core story job."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Get real human playtesting before shipping: the fact sheet explicitly states 'No real players have tried it yet' and 'whether the music is pleasant is not known' — the radio, driving feel, and difficulty curve are all unvalidated by humans."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Rebalance police aggression at 2-3 stars: 'one head-on hit takes most of the stolen car's health and also counts as a crime, so the stars climb' and 'The ten-second head start did not change that' - Heat Wave finished 0 of 3; make low-star rams weaker or stop counting being rammed as a crime."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Run the game on real phones and tablets and fix the failing Safari-engine touch check (touch tests read 7, 9 and 7 of 10 on the emulated phone); while there, thin the stacked phone HUD (perk card, radio, district, objective)."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Get a human to play the first hour and listen to the radio: driving feel, job difficulty and 'whether the music is pleasant is not known' - every fun-related claim currently rests on script runs."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

@@ -192,7 +192,10 @@ Needs Python with Playwright and Chrome. Run from this folder after `python buil
 - `python test/city.py` - 54 checks on cab fares, property, perks, the helicopter, the route, the map,
   saves from older versions, the Sol Wheel ride, what the police stars switch off, the learner phase, the
   **J** key, the Paper Round and its ON FOOT start rule, the building outlines, the near first beam,
-  Shadow Run (seen, lost, a slow start, passed), the head start and the respray route.
+  Shadow Run (seen, lost, a slow start, passed), the head start and the respray route. The Shadow Run and
+  head-start checks wait on the game's own clock. Other checks still wait a fixed time, so on a busy PC a
+  timer check can fail: on 1.7 it read 52, 52 and 54 of 54 in three runs in a row (a cab fare paid late,
+  the helicopter not yet gone), and before the two checks used the game clock 52, 51, 51 and 49.
 - `python test/radio.py` - 14 checks that record the three radio stations at the game's master output and
   measure them: loud enough, no clipping, the beat repeating at each station's own tempo, different tone.
   It cannot tell whether the music is pleasant.
@@ -203,7 +206,9 @@ Needs Python with Playwright and Chrome. Run from this folder after `python buil
   the nearest parked car. A try that fails is tried again inside the run's time limit, and the result lists
   the tries, the arrests and the reason the game gave. Traffic is random, so results vary.
 
-  On the 1.6 build, one run at a time:
+  Tail Lights before it was merged with 1.6 Sharp (the driving, police, job and keyboard code is the same
+  in 1.7: Sharp changed the graphics settings, the touch aim and steering and one save default), one run
+  at a time:
 
   | job | finished | time | what went wrong |
   |---|---|---|---|
@@ -222,9 +227,14 @@ Needs Python with Playwright and Chrome. Run from this folder after `python buil
   runs of job 3 did not finish and their result file was lost. Releases 1.5 and 1.4 were tried in the same
   hour: 1.5 finished job 4 0 of 2 and job 2 0 of 1, 1.4 finished job 2 1 of 1. So run this test alone.
 
+  On the merged 1.7 build, on the same busy PC in the evening: job 1 finished 3 of 3 (56.4, 80.8 and
+  187.0 s; the game runs slower than the clock when the frame rate drops under 20 a second) and Shadow Run
+  2 of 3 (199.0 s on the first try, 211.5 s on the second; in the third run the player was taken out on the
+  way to the job beam and did not reach it in 421 s). Jobs 2 to 6 were not played again on 1.7.
+
   What it shows about the game: the two police jobs are the hard ones. At two stars a police car with a clear
   view drives straight at the player at top speed, one head-on hit takes most of the Vanta GT's health, and
-  every such hit also counts as a crime, so the stars climb. The 10 s head start in 1.6 did not change that.
+  every such hit also counts as a crime, so the stars climb. The 10 s head start in 1.7 did not change that.
   It is the first thing to tune next.
 
 - `python test/touch.py` - touch play in Chrome emulating a phone at four screen sizes, landscape and
@@ -232,8 +242,13 @@ Needs Python with Playwright and Chrome. Run from this folder after `python buil
   look drag, the map, pause, the Sol Wheel; nothing overlapping or off screen; every hint naming a button
   and not a key; the desktop page unchanged; the manifest, icons and an offline reload from a local web
   server; and, if Playwright's WebKit is installed (`playwright install webkit`), a run on Safari's engine.
-  9 of 9 on the 1.6 build. On the Windows laptop the Safari-engine check sometimes loses its WebGL context
-  when other tests are running (it did once for 1.6 and once for 1.5); alone it passes.
+  Release 1.6 has ten checks and read 10 of 10 on the Mac. On the Windows laptop 1.7 read 7, 9 and 7 of 10
+  on a busy evening: in the best run every Chrome check passed and only the Safari-engine check failed
+  (4 frames in 1.5 s, then a lost WebGL context); in the other two the small-phone checks timed out and
+  the aim-assist check failed once. That Safari-engine check alone fails the same way for the released 1.6
+  (2 of 2 runs) and for 1.7 (2 of 2) on this laptop, whose software WebKit cannot keep up with the Auto
+  graphics of 1.6 while other work is running. Before the merge, Tail Lights read 9 of 9 alone. A clean 1.7
+  run on the Mac is still to do.
 
 - `python test/fps_ab.py NeonCoast.html other-build.html` - frame rate of two builds measured in turn, for
   when the PC is busy and the frame-rate gate reads low.

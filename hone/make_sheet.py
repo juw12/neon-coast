@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 version = sys.argv[1]
+number = int("".join(ch for ch in version[1:3] if ch.isdigit()) or 0)   # "v11" sorts after "v9"
 changes = sys.argv[2:]
 result = json.loads((ROOT / "test" / "gates-result.json").read_text(encoding="utf-8"))
 features = (ROOT / "hone" / "features.md").read_text(encoding="utf-8").strip()
@@ -16,15 +17,15 @@ lines = [
     "A browser game in one offline HTML file (about 0.8 MB, three.js inlined). The judges see this sheet and",
     "screenshots taken from the running game by the test script: title screen, first view after New Game,",
     "driving, a job in progress, the Sol Wheel at dusk, a police chase, night, pause menu."
-    + (" From v4 also: a cab fare, the whole map, the helicopter at four stars, a property by day." if version >= "v4" else "")
+    + (" From v4 also: a cab fare, the whole map, the helicopter at four stars, a property by day." if number >= 4 else "")
     + (" From v5 also: Sol Beach by day, painted walls in three districts, the view from the Sol Wheel ride,"
-       " the perk card." if version >= "v5" else "")
+       " the perk card." if number >= 5 else "")
     + (" From v7 also: the Rustport quay, the Meridian crowns at dusk, the beach hotel balconies, the Rustport"
-       " roofs, a Paper Round in progress and the radio dial." if version >= "v7" else "")
+       " roofs, a Paper Round in progress and the radio dial." if number >= 7 else "")
     + (" From v8 also: the game on a phone held on its side and upright (an emulated phone in Chrome)."
-       if version >= "v8" else "")
-    + (" From v9 also: the Rustport dock apron and a Shadow Run in progress." if version >= "v9" else "")
-    if version != "v0" and version != "v1"
+       if number >= 8 else "")
+    + (" From v9 also: the Rustport dock apron and a Shadow Run in progress." if number >= 9 else "")
+    if number >= 2
     else "driving, a police chase, night, pause menu.",
     "",
     features,
@@ -109,12 +110,12 @@ else:
     lines += ["- Jobs are passed by script (the car is moved between markers), so their difficulty is not measured."]
 lines += [
     "- Tested in Chrome on one Windows laptop and (release 1.5) on one Mac. Since 1.5 there are touch controls for"
-    if version >= "v8" else "- Only tested in Chrome on one Windows laptop; no phone or gamepad controls.",
+    if number >= 8 else "- Only tested in Chrome on one Windows laptop; no phone or gamepad controls.",
 ] + ([
     "  phones and tablets; test/touch.py checks them on an emulated phone in Chrome (" + os.environ.get("TOUCH_NOTE", "result not recorded") + ").",
     "  No real phone or tablet has run the game yet, so thumb reach, heat and frame rate on a phone are not known.",
     "  No gamepad controls.",
-] if version >= "v8" else []) + [
+] if number >= 8 else []) + [
     "- No real players have tried it yet. The scores are from AI judges reading this sheet and the screenshots.",
 ]
 (ROOT / "hone" / f"{version}.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
