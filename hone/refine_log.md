@@ -253,3 +253,33 @@ foot" more loudly when a Paper Round is offered; a shorter way to the first job 
 - Landing page: `juw12/juw12.github.io` `24fcef5` (text) and `1482de1` (picture, the Meridian
   crowns shot), https://juw12.github.io/p/neon-coast/ shows the 1.4 text and the new picture.
 - Obsidian: `GitHub/neon-coast.md` and `Update Log/2026-11-20 2034 neon-coast hone.md`, vault commit `81554415`.
+
+## Release 1.5 "Pocket" (2026-11-21, from the MacBook Pro; not a hone run, no judges)
+
+Ask: a phone version for iPhone and Android, landscape or upright or both. Built as one web version with touch
+controls and a home-screen install; see the README for what it does.
+
+- GitHub repo: [PR 8](https://github.com/juw12/neon-coast/pull/8) squash-merged, main `4292e34`; release
+  [v1.5.0](https://github.com/juw12/neon-coast/releases/tag/v1.5.0) with `NeonCoast.html` (861,360 bytes).
+- Live check: https://juw12.github.io/neon-coast/NeonCoast.html has the same bytes as the local build. Opened as a
+  phone in Chrome it turns touch on, finds the manifest and icons, and starts a game after a reload with the
+  network off. It also starts a game on Playwright WebKit as an iPhone 13.
+- `test/touch.py` 9/9.
+- Desktop suites on the MacBook Pro, which was running several other jobs (load average 30 to 120) and whose
+  frame rate swung between 60 and 6 fps for 1.4 and 1.5 alike:
+  - `gates.py` 8/10, as 1.4 scores there. G6: headless Chrome on macOS grants no pointer lock; with the lock
+    stood in for, a mouse move of 100 px turned the view by 0.240 rad as it should and a left click fired.
+    G7: 12 to 60 fps depending on the minute.
+  - `harbor.py` pass, `radio.py` 14/14, `drive.py 3` 3 of 3 (106 to 113 s, slow motion at that frame rate).
+  - `city.py` 35/39 as written; 1.4 scored 36 and 34 in the same hour. The checks that miss wait a fixed time
+    while the game, which counts at most 0.05 s per frame, runs slower than the clock. With every fixed wait
+    three times as long: 38/39, and the one miss is made by the longer wait itself (the idle hint replaces the
+    hint the check reads).
+- Found and fixed: on Fast graphics Safari drew the sky black (the sky wrote alpha 0 straight to the page).
+- Profile README: `juw12/juw12` `50035ec`.
+- Portfolio: catalog `juw12/projects` `e4b8440` (text, tag PWA) and `5f34de6` (card label and alt text), card
+  picture `juw12/portfolio` `bf35d1b` (house style, touch play), card sync runs passed, live at
+  https://juwenlie.pages.dev/.
+- Landing page: `juw12/juw12.github.io` `99881a0` (text and picture), https://juw12.github.io/p/neon-coast/.
+- Cairn: `GitHub/neon-coast.md` and `Update Log/2026-11-21 0958 neon-coast 1.5 pocket.md`.
+- Not done: no real iPhone or Android phone has run it. Not scored by the judges.

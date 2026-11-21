@@ -96,5 +96,14 @@
   tempo, different tone) and `test/drive.py`, which plays with key presses only (W A S D, F and Space,
   nothing moved by script). Since 1.4 it plays three story jobs instead of one: job 1 First Wheels, job 2
   Hot Delivery (against the 80 s clock) and job 4 Borrowed Time (a car theft with the police after it).
+- Phones and tablets (release 1.5): the page switches to touch by itself when a touch screen is the main
+  pointer. A thumb stick appears under the left thumb (walk, steer, a full push sprints); buttons on the
+  right press the same keys as the keyboard (GAS, BRAKE, HAND BRAKE, CAR / EXIT, FIRE / PUNCH, SWAP, JUMP,
+  HORN, RADIO; USE and CAB appear when they apply); a drag on the view turns the camera; a tap on the round
+  map opens the whole island. The HUD moves to the top edge and the menus fit a 360 point wide screen, in
+  landscape and upright (upright widens the lens from 62 to up to 88 degrees). On a web address the game
+  can be added to the home screen, where it opens full screen and plays offline after one visit. Hints name
+  the buttons instead of keys. `test/touch.py` checks all of this on an emulated phone and on WebKit; no
+  real phone has run it yet.
 - Own city, names and art. One line on the title screen says it is an original game and is not affiliated
   with the publisher or the series it is often compared to.
