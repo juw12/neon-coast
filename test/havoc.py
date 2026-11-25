@@ -448,6 +448,38 @@ RAMP_JS = """(setup) => new Promise(done => {""" + TOOLS + """
     requestAnimationFrame(tick);
 })"""
 
+# A tip that is said once must not take the hint line from a job. The car stands 15 m in front of a ramp it has
+# never been near, with a hint on the line: the hint stays and the tip is not spent. Then the line is let go,
+# as its own timer does, and the tip is said.
+TIP_JS = """() => new Promise(done => {""" + TOOLS + """
+    fresh();
+    empty([]); noPeople([]);
+    if (!n.hint) return done({ error: 'no hint on the test handle' });
+    const line = document.getElementById('hint');
+    const r = n.ramps[5];
+    put(c, r.x - r.fx * 15, r.z - r.fz * 15, r.h, 0);
+    n.save.havocTold = 0;
+    n.hint('Take the van to the dock.', 60);
+    const out = { busy: '', busyShown: false, busyTold: -1, free: '', freeShown: false, freeTold: -1, waited: 0 };
+    let phase = 0, mark = 0;
+    const tick = () => {
+        step();
+        empty([]); noPeople([]);
+        press([]); c.vx = c.vz = 0;
+        if (phase === 0 && clock > 1) {
+            out.busy = line.textContent; out.busyShown = line.classList.contains('show'); out.busyTold = n.save.havocTold;
+            line.classList.remove('show');
+            phase = 1; mark = clock;
+        } else if (phase === 1 && ((n.save.havocTold & 2) || clock - mark > 2)) {
+            out.waited = clock - mark;
+            out.free = line.textContent; out.freeShown = line.classList.contains('show'); out.freeTold = n.save.havocTold;
+            return done(out);
+        }
+        requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+})"""
+
 # The nitro, on the open sand with the car held in one place (a treadmill: its speed is its own).
 #   1. from 12 m/s, 0.6 s of throttle, then the same with the nitro: how much speed each gives, how fast the tank drains
 #   2. throttle alone for 4 s from near top speed: the car's own top speed
@@ -834,6 +866,12 @@ def run(target):
         check("the ramp on the Rustport dock throws a car over the barrel row as well, and the nitro does not burn in the air",
               lambda: other["flew"] and other["far"] > 20 and other["jumps"] == [11] and not other["burned"] and other["lost"] == 0, brief(other))
         page.evaluate(REST_JS, 5.0)
+
+        tip = ask(page, TIP_JS)
+        check("a tip said once waits for the hint line: with a job hint on screen 15 m from a ramp never seen the hint stays, and the tip comes once the line is free",
+              lambda: tip["busyShown"] and tip["busy"] == "Take the van to the dock." and tip["busyTold"] == 0
+              and tip["freeShown"] and "stunt ramp" in tip["free"] and tip["freeTold"] == 2, brief(tip))
+        page.evaluate(REST_JS, 1.0)
 
         # 7. nitro
         nitro = ask(page, NITRO_JS)

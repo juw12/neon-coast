@@ -293,13 +293,17 @@ function heard(x, z, reach) {
 }
 
 // ---------- props: knocked over ----------
+// a tip said once (what breaks, what a ramp is) waits until the hint line is free: it never takes the line
+// from a job, a fare or the police
+const lineFree = () => !$('hint').classList.contains('show');
+
 function paySmash(p) {
   if (style.crashT > 0 || state !== 'play') return;      // ploughing on after a crash is not style
   save.smashed = (save.smashed || 0) + 1;
   if (p.k.trick) styleTrick(p.k.trick, p.k.pay);
   else styleSmash(p.k.pay);
   nitroGain(NITRO.smash);
-  if (!(save.havocTold & 1) && !intro.on) {
+  if (!(save.havocTold & 1) && !intro.on && lineFree()) {
     save.havocTold |= 1;
     persist();
     hint('Whatever stands on the street can be knocked over, and pays. Tricks, smashes and jumps fill the nitro: [Shift] fires the nitro.', 8);
@@ -642,7 +646,7 @@ function stuntJump(id, metres) {
       addMoney(RAMP.all);
       banner('pass', 'ALL STUNT JUMPS', ramps.length + ' of ' + ramps.length + '   +' + dollars(RAMP.all), 5);
       sfx.pass();
-    } else {
+    } else if (lineFree()) {
       hint('Stunt jump ' + save.jumps.length + ' of ' + ramps.length + '. M shows the whole map. The orange marks are the others.', 6);
     }
   }
@@ -705,8 +709,8 @@ function updateHavoc(dt, realDt) {
       $('boom').style.opacity = shown * 0.6;
     }
   }
-  // said once, the first time a ramp is close
-  if (car && state === 'play' && !(save.havocTold & 2) && !intro.on) {
+  // said once, the first time a ramp is close and the hint line is free
+  if (car && state === 'play' && !(save.havocTold & 2) && !intro.on && lineFree()) {
     for (const r of ramps) {
       if (dist2(r.x, r.z, car.x, car.z) > 45 * 45) continue;
       save.havocTold |= 2;

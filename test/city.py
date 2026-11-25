@@ -399,7 +399,9 @@ def run():
         money_before = page.evaluate("() => NEON.save.money")
         kept = hold_behind(25, 4.2)
         check("staying 25 m behind for the full time passes and pays $700",
-              not kept["active"] and kept["money"] - money_before == 700 and "PASSED" in kept["card"], json.dumps(kept))
+              not kept["active"] and kept["money"] - money_before == 700 and "PASSED" in kept["card"],
+              json.dumps(dict(kept, before=money_before, counts=page.evaluate(
+                  "() => ({ tricks: NEON.save.tricks, smashed: NEON.save.smashed, getaways: NEON.save.getaways, jumps: (NEON.save.jumps || []).length })"))))
         page.wait_for_timeout(400)
         start_tail()
         money_before = page.evaluate("() => NEON.save.money")

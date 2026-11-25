@@ -759,7 +759,7 @@ window.NEON = {
   addVehicle, removeVehicle, snapLane,
   props, ramps, fallen, jets, PROP_KINDS, PROP_HIT, PROP_BACK, BLAST, SPIN, RAMP, NITRO, AHEAD, LOOSE_MASS, nitro, warp, kerbTaken, worksAt,
   knockProp, blast, shootProps, rampAt, rampHeight, kerbBusy, nearPlace, stuntJump, resetHavoc, spawnTraffic, roadStop, downPed,
-  addPed, insideBox, lampMesh, lamps, FERRY, START, styleSmash,
+  addPed, insideBox, lampMesh, lamps, FERRY, START, styleSmash, hint,
   style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, carSound, updateStyle, honk,
   get honks() {
     return honkCount;
