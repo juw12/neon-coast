@@ -439,8 +439,9 @@ SOFTWARE.
       </div>
     </div>
     <details class="news">
-      <summary><strong>Version 1.7 · Tail Lights</strong> — a new odd job with no clock: follow a car without being noticed. The first job now starts 40 m from where you stand. What changed, release by release</summary>
+      <summary><strong>Version 1.8 · Fair Cop</strong> — at two stars the police chase you but no longer ram, a cruiser that does ram you adds nothing to your stars, and officers shoot worse at a moving car. What changed, release by release</summary>
       <ul>
+        <li><strong>1.8 · Fair Cop</strong> — At two stars the police chase you without ramming: a cruiser slows down as it reaches your car and stays on your bumper. From three stars they ram, as before. A crash with a police car adds to your stars only when you drove into it: when the cruiser rams you, it does not. One crash with a cruiser, however hard, takes at most 40% of your car's health on Normal, also when it shoves you into a wall. Officers hit a moving car less often: the faster you drive, the worse they shoot, and from 30 m/s (108 km/h) they hit less than half as often as they hit a standing car. Driving into the police yourself counts as before, and so does every other crash.</li>
         <li><strong>1.7 · Tail Lights</strong> — Shadow Run, a sixth odd job with no clock and no marker: stay 12 to 60 m behind a pink car for 40 seconds. The first job beam stands in the red car's own lane, 40 m ahead. Paper Round says ON FOOT on its beam and waits until you leave the car. Ten seconds of head start when you take the marked car in Borrowed Time. While you lose the police in a job, the road arrows lead to Mo's Respray. The shore in front of the Rustport quay is a dock apron with a lane, a crane rail and bollards. On a phone the buttons are more see-through, so the road shows behind them.</li>
         <li><strong>1.6 · Sharp</strong> — Graphics has a third choice, Auto, and a phone starts on it: twice the drawn pixels of 1.5, the neon glow, and shadows when the frame rate allows. It measures as you play, gives up shadows first and sharpness last, and takes back what it gave up when the phone is smooth again. On a touch screen each shot turns onto a target near the crosshair, the CAR button lights up when a car is in reach, and Settings can swap the steering stick for two arrows.</li>
         <li><strong>1.5 · Pocket</strong> — Touch controls for phones and tablets: a thumb stick to walk and steer, GAS and BRAKE, drag the view to look, tap the round map for the whole island. The screen rearranges itself for landscape and for upright. On a web address it can be added to the home screen, where it opens full screen and plays offline. Keyboard and mouse play as before.</li>
@@ -2995,6 +2996,9 @@ function blockedAhead(v, range) {
   return false;
 }
 
+const PURSUIT_CLOSE = 4;     // m/s: how much faster than the player's car a two-star cruiser arrives
+const PURSUIT_GAP = 8;       // m between car centres at which it has slowed to that (bumpers meet at about 5)
+const PURSUIT_BRAKE = 18;    // m/s2 of the 30 its brakes can do: it starts to slow down about 60 m out
 function aiDrive(v, dt) {
   const a = v.ai;
   let tx;
@@ -3022,6 +3026,14 @@ function aiDrive(v, dt) {
       tx = a.cx;
       tz = a.cz;
       want = a.want;
+    }
+    if (wanted.stars === 2 && player.car) {
+      // two stars: pursue, do not ram. The cruiser brakes on its way in, seen or not, so that it reaches the
+      // player's car no more than PURSUIT_CLOSE m/s faster than the car drives away from it, and then holds
+      // that speed. From three stars it rams at full speed, as before.
+      const away = (player.car.vx * (px - v.x) + player.car.vz * (pz - v.z)) / (d || 1);
+      const room = Math.max(0, d - PURSUIT_GAP);
+      want = Math.min(want, Math.max(0, away + (room > 0 ? PURSUIT_CLOSE : 0) + Math.sqrt(2 * PURSUIT_BRAKE * room)));
     }
   } else {
     if (a.wasDirect) {
@@ -3070,9 +3082,25 @@ function damageVehicle(v, amount) {
   if (v.driver === 'player' && save.mission === 0 && v.hp < LEARNER_HP) v.hp = LEARNER_HP;
 }
 
-function impact(v, speed) {
+// One crash with a police car, however hard, costs the player's car at most CRASH_SHARE of its full health.
+// Every hit in the CRASH_WINDOW seconds after the first one is the same crash, also the wall the car is
+// shoved into. Crashes without a police car are not capped.
+const CRASH_SHARE = 0.4;
+const CRASH_WINDOW = 0.6;
+function impact(v, speed, police) {
   if (speed < 4) return;
-  damageVehicle(v, (speed - 4) * 1.7);
+  let amount = (speed - 4) * 1.7;
+  if (v.driver === 'player') {
+    if (police && !(v.crashT > 0)) {
+      v.crashT = CRASH_WINDOW;
+      v.crashSum = 0;
+    }
+    if (v.crashT > 0) {
+      amount = Math.min(amount, Math.max(0, v.t.hp * CRASH_SHARE - v.crashSum));
+      v.crashSum += amount;
+    }
+  }
+  damageVehicle(v, amount);
   const [px, pz] = focus();
   const d = Math.hypot(v.x - px, v.z - pz);
   if (d < 60) sfx.crash(clamp((speed / 30) * (1 - d / 60), 0.03, 0.6));
@@ -3099,6 +3127,7 @@ function updateVehicle(v, dt) {
     steer = v.input.st;
   }
   if (v.hp <= 0) throttle = 0;
+  if (v.crashT > 0) v.crashT -= dt;
 
   v.steer += clamp(steer - v.steer, -dt * 6, dt * 6);
   let fx = Math.sin(v.h);
@@ -3254,15 +3283,28 @@ function collideVehicles() {
           B.h += clamp((((nz * Math.sin(B.h) - nx * Math.cos(B.h)) * pen) / ob) * 0.5, -0.06, 0.06);
           const rel = (A.vx - B.vx) * nx + (A.vz - B.vz) * nz;
           if (rel >= 0) continue;
+          // how fast each car was driving at the other one (the two add up to -rel)
+          const closeA = -(A.vx * nx + A.vz * nz);
+          const closeB = B.vx * nx + B.vz * nz;
           const push = -rel * 0.6;
           A.vx += nx * push;
           A.vz += nz * push;
           B.vx -= nx * push;
           B.vz -= nz * push;
-          impact(A, -rel * 0.8);
-          impact(B, -rel * 0.8);
+          const police = A.type === 'police' || B.type === 'police';
+          impact(A, -rel * 0.8, police);
+          impact(B, -rel * 0.8, police);
           const mine = A.driver === 'player' ? B : B.driver === 'player' ? A : null;
-          if (mine && -rel > 5) crime(mine.type === 'police' ? 1.3 : mine.driver ? 0.3 : 0);
+          if (mine && -rel > 5) {
+            if (mine.type === 'police') {
+              // hitting a police car is a crime only when the player drove into it, not when it rammed the player
+              const own = mine === B ? closeA : closeB;
+              const theirs = mine === B ? closeB : closeA;
+              if (own > 5 && own >= theirs) crime(1.3);
+            } else {
+              crime(mine.driver ? 0.3 : 0);
+            }
+          }
         }
       }
     }
@@ -4009,7 +4051,9 @@ function updateWanted(dt) {
       v.ai.fire -= dt;
       if (v.ai.fire <= 0) {
         v.ai.fire = rand(0.5, 1.1);
-        const hit = Math.random() < diff().aim * (d < 15 ? 1.4 : 1);
+        // a moving car is harder to hit: the chance falls with its speed, to 40% of the standing chance from 30 m/s
+        const moving = player.car ? 1 - 0.6 * clamp(Math.hypot(player.car.vx, player.car.vz) / 30, 0, 1) : 1;
+        const hit = Math.random() < diff().aim * (d < 15 ? 1.4 : 1) * moving;
         const ex = px + (hit ? 0 : rand(-2.5, 2.5));
         const ez = pz + (hit ? 0 : rand(-2.5, 2.5));
         tracer(v.x, 1.4, v.z, ex, 1.1, ez);
@@ -6487,6 +6531,7 @@ window.NEON = {
   route, cab, heli, bigMap, PROPERTIES, PERKS, perk, cabDuty, interact, toggleBigMap, addMoney, persist,
   ride, checkPerks, packageSpots, damageVehicle, audio, radio, STATIONS, setStation, anotherJob, offerMission, blocks, TAIL,
   touch, say, keyAction, setTouchMode, view, gfx, auto, governor, LADDER, applySettings, renderSettings, aimAssist,
+  addVehicle, removeVehicle,
   setTime(hours) {
     tod = hours;
   },

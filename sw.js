@@ -1,6 +1,6 @@
 // Neon Coast service worker: after one visit on a web address the game opens without a network.
 // The network is asked first, so a new release arrives on the next visit; the stored copy is the fallback.
-const CACHE = 'neon-coast-1.7.0';
+const CACHE = 'neon-coast-1.8.0';
 const FILES = [
   './',
   './index.html',

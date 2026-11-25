@@ -594,7 +594,9 @@ function updateWanted(dt) {
       v.ai.fire -= dt;
       if (v.ai.fire <= 0) {
         v.ai.fire = rand(0.5, 1.1);
-        const hit = Math.random() < diff().aim * (d < 15 ? 1.4 : 1);
+        // a moving car is harder to hit: the chance falls with its speed, to 40% of the standing chance from 30 m/s
+        const moving = player.car ? 1 - 0.6 * clamp(Math.hypot(player.car.vx, player.car.vz) / 30, 0, 1) : 1;
+        const hit = Math.random() < diff().aim * (d < 15 ? 1.4 : 1) * moving;
         const ex = px + (hit ? 0 : rand(-2.5, 2.5));
         const ez = pz + (hit ? 0 : rand(-2.5, 2.5));
         tracer(v.x, 1.4, v.z, ex, 1.1, ez);

@@ -22,6 +22,41 @@ needed. Choose New Game or Continue. Walk up to a car and press F. Drive with WA
 Follow the arrows on the road to the yellow J marker for the first of six jobs. Press M for the whole map
 and P to pause. Progress is stored in your browser, so use the same browser and file location to resume.
 
+## Version 1.8 · Fair Cop
+
+The police chase is fairer. Nothing else changed.
+
+- **Two stars is a chase, three is a ramming.** At two stars a cruiser now slows down as it reaches your
+  car and stays on your bumper; officers still shoot, and they still arrest you when you stop. Before, a
+  cruiser with a clear view drove into you at its top speed from two stars on. From three stars it still does.
+- **Being rammed is not your crime.** A crash with a police car adds to your stars only when you drove
+  into it: your own speed towards the cruiser must be over 5 m/s and at least the cruiser's speed towards
+  you. Before, every crash with a police car added 1.3 wanted points, also when a cruiser hit you from
+  behind while you stood still, so a chase raised its own stars.
+- **One crash cannot take the whole car.** One crash with a cruiser costs your car at most 40% of its full
+  health on Normal, counting every hit in the 0.6 s after the first one, also the wall you are shoved into.
+  Before, one head-on ram took about three quarters of a car. Crashes without a police car are as before.
+- **A moving car is harder to shoot.** Officers hit a standing car as often as before. The faster the car,
+  the fewer shots hit: from 30 m/s (108 km/h), 40% as many.
+- **Two new tests.** `test/chase.py` sets up crashes, gunfire and a pursuit and checks the four rules.
+  `test/chase_bench.py` measures how long a car lasts in a chase. The numbers are in the Tests section.
+
+Measured, 1.7 against 1.8 (the tables are in the Tests section):
+
+- **In a set chase the car lasts.** A Vanta GT held at 21 m/s (76 km/h) for 30 s of game time with the
+  other traffic removed. At two stars on 1.7, every run the police found (4 of 7) ended with the car
+  wrecked, after 12.7 to 23 s, and the stars rose to three in 4 of the 7 runs. On 1.8, 5 of 6 runs were
+  found and all five cars were still driving at 30 s, with no crash damage at all; the stars stayed at two.
+  At three stars 1.7 wrecked the car in 3 of 3 runs and the stars rose to four; 1.8 wrecked it in 3 of 11
+  and the stars stayed at three.
+- **What it did not do.** The script that plays the jobs with key presses finishes the two police jobs
+  about as often as before: Borrowed Time 3 of 6 runs on 1.7 and 2 of 3 on 1.8, Heat Wave 0 of 3 on both.
+  Three runs are too few to tell those apart. Gunfire is now what wears the car down: in the two-star
+  bench it took 48 to 84 of the car's 90 health in 30 s. That is the next thing to look at.
+- **No person has played 1.8.** The rules are checked by script only.
+
+Saves from 1.7 carry over.
+
 ## Version 1.7 · Tail Lights
 
 ![Shadow Run: following the pink car through Meridian at dusk](docs/shadow-run.jpg)
@@ -196,6 +231,31 @@ Needs Python with Playwright and Chrome. Run from this folder after `python buil
   head-start checks wait on the game's own clock. Other checks still wait a fixed time, so on a busy PC a
   timer check can fail: on 1.7 it read 52, 52 and 54 of 54 in three runs in a row (a cab fare paid late,
   the helicopter not yet gone), and before the two checks used the game clock 52, 51, 51 and 49.
+- `python test/chase.py` - 13 checks on the police chase rules of 1.8, all waiting on the game's own
+  clock: a cruiser ramming a standing car adds no wanted points, driving into a cruiser still does, one
+  crash with a cruiser takes at most 40% of the car (also when it shoves the car into a wall), a crash with
+  no police car is as before, officers hit a standing car as often as before and a fast one less, at two
+  stars a cruiser with a clear road slows down and stays behind the car, at three stars it rams. The 1.7
+  build fails 4 of the first 8 checks.
+- `python test/chase_bench.py NeonCoast.html 2 21` - how long a car lasts in a chase. It holds a Vanta GT
+  at a set speed (here 21 m/s) at a set number of stars (here two) for 30 s of game time, with the other
+  traffic removed, and reports whether the car was wrecked, the stars at the end and the damage from
+  crashes and from gunfire. Police arrive at random, so some runs are never found; those are listed, not
+  counted as survived.
+
+  | stars | build | runs | never found | chased and wrecked | stars at the end |
+  |---|---|---|---|---|---|
+  | 2 | 1.7 | 7 | 3 | 4 of 4 (12.7, 15.5, 20.4, 23 s) | three in 4 of 7 runs |
+  | 2 | 1.8 | 6 | 1 | 0 of 5 (health left 47, 19, 7, 47, 13%) | two in all |
+  | 3 | 1.7 | 3 | 0 | 3 of 3 (20.7, 27.4, 29.2 s) | four in all |
+  | 3 | 1.8 | 11 | 0 | 3 of 11 | three in all |
+
+  Crash damage at two stars on 1.8 was 0 in every run; gunfire took 48 to 84 of the car's 90 health.
+  Without the two-star pursuit rule (the other three rules only) 3 of 8 two-star runs were wrecked and
+  one was never found. At three stars gunfire took about 55 health on 1.7, in runs that ended after 21
+  to 29 s, and about 41 in 30 s on 1.8; one of the eight 1.8 cars that lasted had under 1% health left.
+  Eight of the eleven three-star 1.8 runs were made on a build without the two-star rule, which does
+  not act at three stars (3 of those 8 wrecked; 0 of the 3 on the final build).
 - `python test/radio.py` - 14 checks that record the three radio stations at the game's master output and
   measure them: loud enough, no clipping, the beat repeating at each station's own tempo, different tone.
   It cannot tell whether the music is pleasant.
@@ -232,10 +292,24 @@ Needs Python with Playwright and Chrome. Run from this folder after `python buil
   2 of 3 (199.0 s on the first try, 211.5 s on the second; in the third run the player was taken out on the
   way to the job beam and did not reach it in 421 s). Jobs 2 to 6 were not played again on 1.7.
 
-  What it shows about the game: the two police jobs are the hard ones. At two stars a police car with a clear
-  view drives straight at the player at top speed, one head-on hit takes most of the Vanta GT's health, and
-  every such hit also counts as a crime, so the stars climb. The 10 s head start in 1.7 did not change that.
-  It is the first thing to tune next.
+  What it showed about the game on 1.7: the two police jobs are the hard ones. At two stars a police car
+  with a clear view drove straight at the player at top speed, one head-on hit took most of the Vanta GT's
+  health, and every such hit also counted as a crime, so the stars climbed. The 10 s head start in 1.7 did
+  not change that. Release 1.8 changes those three rules and the gunfire against a moving car.
+
+  The two police jobs again on 1.8, 1.7 and 1.8 playing at the same time on a busy PC, three runs each:
+
+  | job | 1.7 | 1.8 | what went wrong |
+  |---|---|---|---|
+  | 4 Borrowed Time | 3 of 6 (most stars 5, 2, 4 and 4, 5, 3) | 2 of 3 (stars stayed at 2) | on 1.8 the stolen car was still destroyed 4 times in the three runs |
+  | 5 Heat Wave | 0 of 3 (five stars in all) | 0 of 3 (most stars 3, 4, 3) | arrested or taken out on every try |
+
+  So the stars no longer climb on their own, and the script finishes the two jobs about as often as
+  before. Three runs cannot tell 2 of 3 from 3 of 6. Two things are left: gunfire, which is now what
+  destroys the car at two stars, and the script itself, which stops for traffic while it is chased and
+  never tries to get out of sight. The Heat Wave runs on 1.8 were made on a build without the two-star
+  pursuit rule (Heat Wave is a three-star job, where that rule does not act); why the player dies on foot
+  there was not looked into. Jobs 1 to 3, 6 and Shadow Run were not played again on 1.8.
 
 - `python test/touch.py` - touch play in Chrome emulating a phone at four screen sizes, landscape and
   upright, with real touch events (two fingers where two thumbs are needed): every button, the stick, the
