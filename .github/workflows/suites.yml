@@ -1,0 +1,100 @@
+name: suites
+
+# Every suite of test/ on a GitHub computer, for the build of this commit and for the last release.
+# The last release runs its own suites from its own tag: a check that fails there too says something about
+# this computer (no graphics card, two to four processors), not about the change.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: suites-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  suites:
+    name: ${{ matrix.name }}
+    runs-on: windows-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: this commit
+            ref: ""
+          - name: release 1.9 (for comparison)
+            ref: v1.9.0
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Playwright (Chrome is on the runner; WebKit is for test/touch.py)
+        run: |
+          python -m pip install --quiet playwright
+          python -m playwright install webkit
+
+      - name: The committed NeonCoast.html is what build.py makes from src/
+        if: matrix.ref == ''
+        shell: pwsh
+        run: |
+          python build.py
+          git diff --stat --exit-code -- NeonCoast.html
+          if ($LASTEXITCODE -ne 0) { Write-Error "NeonCoast.html is not the build of src/"; exit 1 }
+
+      - name: Run every suite
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Continue"
+          $PSNativeCommandUseErrorActionPreference = $false
+          New-Item -ItemType Directory -Force logs | Out-Null
+          $suites = "havoc", "thrill", "gates", "chase", "city", "harbor", "smoke", "radio", "touch"
+          $failed = @()
+          $summary = @("### ${{ matrix.name }}", "")
+          foreach ($suite in $suites) {
+            if (-not (Test-Path "test/$suite.py")) {
+              $summary += "- ``$suite``: not in this release"
+              continue
+            }
+            "::group::$suite"
+            $started = Get-Date
+            python "test/$suite.py" *>&1 | Tee-Object -FilePath "logs/$suite.txt"
+            $code = $LASTEXITCODE
+            "::endgroup::"
+            $seconds = [int]((Get-Date) - $started).TotalSeconds
+            $count = (Select-String -Path "logs/$suite.txt" -Pattern "\d+ ?/ ?\d+ checks|GATES \d+/\d+|TOUCH \d+/\d+|^PASS .*offline" | Select-Object -Last 1).Line
+            $summary += "- ``$suite``: exit $code, $seconds s. $count"
+            foreach ($line in (Select-String -Path "logs/$suite.txt" -CaseSensitive -Pattern "FAIL|Error|Traceback" | Select-Object -First 12)) {
+              $text = $line.Line
+              if ($text.Length -gt 300) { $text = $text.Substring(0, 300) }
+              $summary += "    - $text"
+            }
+            if ($code -ne 0) { $failed += $suite }
+          }
+          $summary += ""
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          $summary
+          if ($failed.Count) {
+            "Suites with a failing check: $($failed -join ', ')"
+            exit 1
+          }
+
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.ref || 'head' }}
+          path: |
+            logs/
+            test/*-result*.json
+          if-no-files-found: ignore

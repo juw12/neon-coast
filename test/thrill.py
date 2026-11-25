@@ -251,6 +251,9 @@ CALL_JS = """(setup) => new Promise(done => {""" + TOOLS + """
     empty([]);
     c.x = -3.2; c.z = -42; c.h = 0; c.vx = c.vz = 0;
     const cop = n.addVehicle('police', 3.2, 30, Math.PI, 'cop');
+    // a car made here has no lane yet and picked its first direction by chance: two times in four it turned
+    // into the wall beside it (1.9 and 2.0 alike). Since 2.0 the handle can put it in the lane it stands in.
+    if (n.snapLane) n.snapLane(cop);
     const out = { siren: false, call: 0, top: 0, starsAfter: 0, quietSpeed: 0 };
     const tick = () => {
         step();
@@ -280,7 +283,9 @@ HONK_JS = """(setup) => new Promise(done => {""" + TOOLS + """
     const moving = n.vehicles.filter(v => v.driver === 'ai' && !v.dead && Math.abs(v.vf) > 6
         && Math.abs(Math.sin(2 * v.h)) < 0.1);            // driving straight along a street, not turning at a crossing
     if (!moving.length) return done({ honks: 0, first: -1, found: 0 });
-    const behind = moving[0];
+    // one that has not yet picked its turn at the next crossing (it does so some 20 m before it): a car about to
+    // turn there turned away before it reached the player's car, and the check read "never stopped"
+    const behind = moving.find(v => v.ai.nd < 0) || moving[0];
     const fx = Math.round(Math.sin(behind.h)), fz = Math.round(Math.cos(behind.h));
     const park = () => { c.h = Math.atan2(fx, fz); c.vx = c.vz = 0; };
     c.x = behind.x + fx * 15; c.z = behind.z + fz * 15;
@@ -364,14 +369,19 @@ JOBS_JS = """(done) => {
 CROWD_JS = """(seconds) => new Promise(done => {
     const n = NEON;
     let last = performance.now(), clock = 0;
+    const seen = [];
     const tick = () => {
         const now = performance.now();
         clock += Math.min(0.05, (now - last) / 1000); last = now;
         n.gfx.crowd = 1;                       // the full crowd, whatever this PC's frame rate made of the graphics
+        // counted on every frame of the last four seconds, and the middle value taken: a car that drives out of
+        // reach is replaced a moment later, and one look at that moment read 18 where the street holds 20
+        if (clock >= seconds - 4) seen.push([n.vehicles.filter(v => v.driver === 'ai' || v.driver === 'cop').length,
+            n.vehicles.filter(v => !v.driver && !v.dead).length, n.peds.length]);
         if (clock < seconds) return requestAnimationFrame(tick);
-        done({ traffic: n.vehicles.filter(v => v.driver === 'ai' || v.driver === 'cop').length,
-               parked: n.vehicles.filter(v => !v.driver && !v.dead).length,
-               walkers: n.peds.length, aim: n.CROWD || null });
+        const middle = (k) => seen.map(row => row[k]).sort((a, b) => a - b)[seen.length >> 1];
+        done({ traffic: middle(0), parked: middle(1), walkers: middle(2),
+               least: Math.min(...seen.map(row => row[0])), looks: seen.length, aim: n.CROWD || null });
     };
     requestAnimationFrame(tick);
 })"""

@@ -756,7 +756,7 @@ window.NEON = {
   route, cab, heli, bigMap, PROPERTIES, PERKS, perk, cabDuty, interact, toggleBigMap, addMoney, persist,
   ride, checkPerks, packageSpots, damageVehicle, audio, radio, STATIONS, setStation, anotherJob, offerMission, blocks, TAIL,
   touch, say, keyAction, setTouchMode, view, gfx, auto, governor, LADDER, applySettings, renderSettings, aimAssist,
-  addVehicle, removeVehicle,
+  addVehicle, removeVehicle, snapLane,
   props, ramps, fallen, jets, PROP_KINDS, PROP_HIT, PROP_BACK, BLAST, SPIN, RAMP, NITRO, AHEAD, LOOSE_MASS, nitro, warp, kerbTaken, worksAt,
   knockProp, blast, shootProps, rampAt, rampHeight, kerbBusy, nearPlace, stuntJump, resetHavoc, spawnTraffic, roadStop, downPed,
   addPed, insideBox, lampMesh, lamps, FERRY, START, styleSmash,
