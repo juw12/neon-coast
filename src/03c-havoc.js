@@ -643,7 +643,7 @@ function stuntJump(id, metres) {
       banner('pass', 'ALL STUNT JUMPS', ramps.length + ' of ' + ramps.length + '   +' + dollars(RAMP.all), 5);
       sfx.pass();
     } else {
-      hint('Stunt jump ' + save.jumps.length + ' of ' + ramps.length + '. M shows the whole map: the orange marks are the others.', 6);
+      hint('Stunt jump ' + save.jumps.length + ' of ' + ramps.length + '. M shows the whole map. The orange marks are the others.', 6);
     }
   }
   persist();
