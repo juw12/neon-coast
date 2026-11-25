@@ -709,3 +709,19 @@ more fun: that was Juwen's verdict on 1.8 and only his next ten minutes can chan
 - Left: R5-11, a real iPhone and Android phone (the slide on HAND BRAKE and the vibration ran in Chrome's
   phone emulation only).
 - Next command: `/hone neon-coast` (run 8 starts from what Juwen says about 1.9).
+
+## Sync (run 7, 2026-11-25)
+
+- GitHub repo: [PR 13](https://github.com/juw12/neon-coast/pull/13) squash-merged, main `ae2e3a1`; release
+  [v1.9.0](https://github.com/juw12/neon-coast/releases/tag/v1.9.0) with `NeonCoast.html` (905,021 bytes).
+  The repo has no CI; the suites above were run on the ASUS before the merge.
+- Live check: https://juw12.github.io/neon-coast/NeonCoast.html has the same bytes as the local build
+  (sha256 `e6fb8d09`) and `sw.js` names the cache `neon-coast-1.9.0` (read with `curl`). The live page was
+  not opened in a browser this run.
+- Profile README: unchanged.
+- Portfolio: catalog `juw12/projects` [PR 136](https://github.com/juw12/projects/pull/136), `67c0e61`: the
+  description names 1.9; the summary, the order and the card are unchanged. Card sync run 45564056969 passed.
+- Landing page: `juw12/juw12.github.io` [PR 4](https://github.com/juw12/juw12.github.io/pull/4), `3711b04`;
+  https://juw12.github.io/p/neon-coast/ shows SIDEWAYS / 01.9 and the six items of 1.9 above the 1.8 ones.
+- Obsidian: a line in `journal/2026-11-25.md`, saved through Cairn.
+- Not done: the four-versions gate (`platforms.py`), Featured (`featured.py`), a fact sheet, a council score.
