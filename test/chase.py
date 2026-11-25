@@ -61,13 +61,14 @@ CRASH_JS = """(setup) => new Promise(done => {
 # Police gunfire at the player's car. The car and one cruiser 20 m behind it are held in place on the street
 # while the car is given a speed (a treadmill), and every dice roll of the game is fixed to `roll`, so the
 # same shots are fired every time. At Normal an officer further than 15 m away hits on a roll under 0.28
-# when the car stands, and under 0.28 x 0.4 = 0.112 when it does 30 m/s or more.
+# when the car stands, and under 0.28 x 0.4 = 0.112 when it does 30 m/s or more. The moving car is shot at with
+# three stars on: since 1.9 a two-star pursuit holds its fire at a car on the move (test/thrill.py checks that).
 AIM_JS = """(setup) => new Promise(done => {
     const n = NEON, c = n.player.car;
     for (const v of n.vehicles.slice()) if (v !== c) n.removeVehicle(v);
     n.save.mission = Math.max(1, n.save.mission);
     n.save.difficulty = 1;
-    n.setWanted(0); n.wanted.pts = 0; n.setWanted(2);
+    n.setWanted(0); n.wanted.pts = 0; n.setWanted(setup.stars || 2);
     c.hp = c.t.hp; c.crashT = 0;
     const cop = n.addVehicle('police', -3.2, -62, 0, 'cop');
     cop.ai.fire = 0.2;
@@ -208,10 +209,10 @@ def run(target):
         standing = page.evaluate(AIM_JS, {"speed": 0, "roll": 0.2, "seconds": 4})
         check("with the dice fixed at 0.2, an officer 20 m away hits the standing car",
               standing["hits"] >= 3 and standing["other"] == 0, brief(standing))
-        fast = page.evaluate(AIM_JS, {"speed": 32, "roll": 0.2, "seconds": 4})
-        check("the same shots all miss the car when it does 32 m/s",
+        fast = page.evaluate(AIM_JS, {"speed": 32, "roll": 0.2, "seconds": 4, "stars": 3})
+        check("the same shots all miss the car when it does 32 m/s (three stars)",
               fast["hits"] == 0 and fast["other"] == 0 and not fast["dead"], brief(fast))
-        lucky = page.evaluate(AIM_JS, {"speed": 32, "roll": 0.1, "seconds": 4})
+        lucky = page.evaluate(AIM_JS, {"speed": 32, "roll": 0.1, "seconds": 4, "stars": 3})
         check("a fast car is harder to hit, not safe: a better roll (0.1) still hits it",
               lucky["hits"] >= 3, brief(lucky))
 

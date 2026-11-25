@@ -263,12 +263,24 @@ def run():
         check("buildings carry roof shapes and the quay is built",
               outlines["boxes"] > 300 and outlines["wedges"] > 20 and outlines["drums"] > 20, json.dumps(outlines))
 
-        # 12. J: during the story it only names the next job; after the story it deals a new kind each press
+        # 12. J. Before the first story job it only names that job. Since 1.9, once the first job is done, J goes
+        # from the story job to an odd job and back (before 1.9 it only named the next story job until the story
+        # was over). After the story it deals a new kind each press.
+        first = page.evaluate("""() => { const n = NEON; n.save.mission = 0; n.offerMission(); n.anotherJob();
+            const out = { hint: document.getElementById('hint').textContent, job: n.mission.offer.name };
+            n.save.mission = 1; n.offerMission(); return out; }""")
+        check("J before the first story job names that job and changes nothing",
+              first["job"] == "First Wheels" and "First Wheels" in first["hint"] and "Odd jobs open once it is done" in first["hint"],
+              json.dumps(first))
         page.keyboard.press("j")
         page.wait_for_timeout(250)
-        told = page.evaluate("() => ({ hint: document.getElementById('hint').textContent, job: NEON.mission.offer.name })")
-        check("J during the story names the next job and changes nothing",
-              told["job"] == "Hot Delivery" and "Hot Delivery" in told["hint"] and "after the story" in told["hint"], json.dumps(told))
+        told = page.evaluate("() => ({ hint: document.getElementById('hint').textContent, job: NEON.mission.offer.name, kind: NEON.mission.offer.kind || '' })")
+        page.keyboard.press("j")
+        page.wait_for_timeout(250)
+        back = page.evaluate("() => ({ hint: document.getElementById('hint').textContent, job: NEON.mission.offer.name })")
+        check("J during the story offers an odd job, and J again brings the story job back",
+              told["job"] != "Hot Delivery" and told["kind"] and told["job"] in told["hint"] and "back to the story job" in told["hint"]
+              and back["job"] == "Hot Delivery" and "Story job: Hot Delivery" in back["hint"], json.dumps([told, back]))
         page.evaluate("() => { NEON.save.mission = NEON.MISSIONS.length; NEON.offerMission(); }")
         kinds = [page.evaluate("() => NEON.mission.offer.kind")]
         for _ in range(5):

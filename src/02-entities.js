@@ -282,19 +282,22 @@ function buildCar(type, colorHex) {
   const t = VEHICLE_TYPES[type];
   const g = carGeos(type);
   const group = new T.Group();
+  const shell = new T.Group();      // everything above the wheels: it rolls in a turn and dips under the brakes
+  shell.rotation.order = 'YXZ';
+  group.add(shell);
   const paint = mat(colorHex);
   const add = (w, h, d, material, x, y, z) => {
     const mesh = new T.Mesh(boxGeo, material);
     mesh.scale.set(w, h, d);
     mesh.position.set(x, y, z);
     mesh.castShadow = true;
-    group.add(mesh);
+    shell.add(mesh);
     return mesh;
   };
   const body = new T.Mesh(g.body, paint);
   const cabin = new T.Mesh(g.cabin, glassMat);
   body.castShadow = cabin.castShadow = true;
-  group.add(body, cabin);
+  shell.add(body, cabin);
   const bodyY = g.y0 + g.bodyH / 2;
   const roofY = g.y1 + g.cabH;
   const roofZ = (g.topF + g.topR) / 2;
@@ -328,7 +331,7 @@ function buildCar(type, colorHex) {
   const beam = new T.Mesh(beamPoolGeo, lampGlowMat);     // pool of light on the road after dark
   beam.position.set(0, 0.07, t.len / 2 + 5.5);
   group.add(beam);
-  group.userData = { painted, wheels, bar: null };
+  group.userData = { painted, wheels, shell, bar: null };
   if (type === 'police') {
     add(t.wid + 0.03, g.bodyH * 0.55, t.len * 0.36, mat('#15171c'), 0, bodyY, -0.15);
     add(t.wid * 0.62, 0.1, 0.3, mat('#2a2d35'), 0, roofY + 0.1, roofZ);
@@ -346,6 +349,7 @@ function addVehicle(type, x, z, h, driver, colorHex) {
   const v = {
     type, t, x, z, h,
     vx: 0, vz: 0, vf: 0, slip: 0, steer: 0,
+    grip: t.grip, thr: 0, roll: 0, pitch: 0, sliding: false, call: 0,
     hp: t.hp, driver: driver || null,
     burn: 0, dead: false, deadT: 0, keep: false, siren: false, smokeT: 0,
     input: { thr: 0, st: 0 },
@@ -492,6 +496,24 @@ function blockedAhead(v, range) {
   return false;
 }
 
+const HONK_AFTER = 1.2;      // seconds a driver waits behind something before sounding the horn
+const HONK_REACH = 55;       // m: horns further away than this are not played
+const CALL_SPEED = 24;       // m/s of a patrol car on a call (traffic cruises at 10 to 15)
+let honkT = 0;               // game clock of the last horn, so a jam does not sound like one long chord
+function honk(v, force) {
+  const [px, pz] = focus();
+  const d = Math.hypot(v.x - px, v.z - pz);
+  if (d > HONK_REACH || state !== 'play' || (!force && gameClock - honkT < 0.5)) return false;
+  honkT = gameClock;
+  honkCount++;
+  // each kind of car has its own note; a horn across the junction is quieter than one on your bumper
+  sfx.hornAt(HORN_HZ[v.type] || 330, clamp(1 - d / HONK_REACH, 0.12, 1) * 0.16);
+  return true;
+}
+const HORN_HZ = { sedan: 370, taxi: 415, sports: 494, muscle: 311, pickup: 277, van: 247, police: 440 };
+let honkCount = 0;           // horns played so far (read by the checks)
+let gameClock = 0;           // seconds of play, advanced by the main loop
+
 const PURSUIT_CLOSE = 4;     // m/s: how much faster than the player's car a two-star cruiser arrives
 const PURSUIT_GAP = 8;       // m between car centres at which it has slowed to that (bumpers meet at about 5)
 const PURSUIT_BRAKE = 18;    // m/s2 of the 30 its brakes can do: it starts to slow down about 60 m out
@@ -540,12 +562,22 @@ function aiDrive(v, dt) {
     tx = a.cx;
     tz = a.cz;
     want = a.want;
+    if (v.call > 0) {
+      // a patrol car on a call: siren on, twice the traffic's speed, until the call runs out
+      v.call -= dt;
+      if (a.want === a.cruise) want = CALL_SPEED;
+    }
     if (blockedAhead(v, 6 + Math.abs(v.vf) * 0.8)) {
       a.block += dt;
       if (a.block < 7) want = 0;
       else if (a.block > 9.5) a.block = 0;      // crept through a jam, start waiting again
+      if (a.block > HONK_AFTER && !a.honked) {
+        a.honked = true;
+        honk(v);
+      }
     } else {
       a.block = Math.max(0, a.block - dt * 2);
+      if (a.block === 0) a.honked = false;
     }
   }
   const turn = wrapPi(Math.atan2(tx - v.x, tz - v.z) - v.h);
@@ -569,6 +601,12 @@ function aiDrive(v, dt) {
   v.input.thr = throttle;
   v.input.st = steer;
 }
+
+// The handbrake with the wheel turned, at speed, is a slide: the tail swings round faster than the car can
+// steer, the tyres hold a fraction of their grip, and most of the speed the slide scrubs off is carried on
+// in the new direction. Grip comes back over most of a second after the handbrake is let go.
+const DRIFT = { speed: 9, steer: 0.25, turn: 1.3, cut: 6, grip: 2.2, carry: 0.55, recover: 7 };
+const stickSteer = (x) => Math.sign(x) * Math.pow(Math.abs(x), 1.5);   // a thumb stick: finer near the middle
 
 const LEARNER_HP = 12;            // below 45 a car smokes, at 0 it burns
 function damageVehicle(v, amount) {
@@ -600,7 +638,11 @@ function impact(v, speed, police) {
   const [px, pz] = focus();
   const d = Math.hypot(v.x - px, v.z - pz);
   if (d < 60) sfx.crash(clamp((speed / 30) * (1 - d / 60), 0.03, 0.6));
-  if (v.driver === 'player') cam.shake = Math.min(0.6, speed / 40);
+  if (v.driver === 'player') {
+    cam.shake = Math.min(0.6, speed / 40);
+    styleCrash(speed);
+    if (touch.on && navigator.vibrate) navigator.vibrate(Math.round(clamp(speed * 5, 20, 140)));   // the crash in the hand (Android)
+  }
   for (let k = 0; k < 5; k++) puff(v.x, 0.7, v.z, rand(-4, 4), rand(1, 4), rand(-4, 4), 0.4, 1, 0.8, 0.4, 9);
 }
 
@@ -614,8 +656,10 @@ function updateVehicle(v, dt) {
   } else if (v.driver === 'player') {
     if (state === 'play') {
       throttle = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
-      steer = clamp((keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0) - touch.sx, -1, 1);
+      steer = clamp((keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0) - stickSteer(touch.sx), -1, 1);
       handbrake = !!keys.Space;
+      // one thumb cannot hold GAS and HAND BRAKE together: on a touch screen a slide keeps the power on by itself
+      if (touch.on && handbrake && throttle === 0 && Math.abs(v.steer) > DRIFT.steer && v.vf > DRIFT.speed) throttle = 1;
     }
   } else {
     aiDrive(v, dt);
@@ -626,10 +670,15 @@ function updateVehicle(v, dt) {
   if (v.crashT > 0) v.crashT -= dt;
 
   v.steer += clamp(steer - v.steer, -dt * 6, dt * 6);
+  v.thr = throttle;
   let fx = Math.sin(v.h);
   let fz = Math.cos(v.h);
   let vf = v.vx * fx + v.vz * fz;
-  v.h += ((v.steer * t.turn) / (1 + Math.abs(vf) / 40)) * clamp(vf / 6, -1, 1) * dt;
+  const sliding = handbrake && !v.dead && Math.abs(v.steer) > DRIFT.steer && vf > DRIFT.speed;
+  v.sliding = sliding;
+  const vfBefore = vf;
+  const yaw = ((v.steer * t.turn * (sliding ? DRIFT.turn : 1)) / (1 + Math.abs(vf) / 40)) * clamp(vf / 6, -1, 1);
+  v.h += yaw * dt;
   fx = Math.sin(v.h);
   fz = Math.cos(v.h);
   const rx = -fz;                 // right-hand side of the car
@@ -649,11 +698,19 @@ function updateVehicle(v, dt) {
     vf -= vf * 0.35 * dt;
   }
   if (handbrake) {
-    const cut = 16 * dt;
+    const cut = (sliding ? DRIFT.cut : 16) * dt;
     vf = Math.abs(vf) < cut ? 0 : vf - Math.sign(vf) * cut;
   }
   vf -= Math.sign(vf) * Math.min(Math.abs(vf), 0.6 * dt);
-  vl *= Math.exp(-(handbrake ? 1.5 : t.grip) * dt);
+  if (handbrake) v.grip = sliding ? DRIFT.grip : 1.5;
+  else v.grip = Math.min(t.grip, v.grip + DRIFT.recover * dt);
+  const vlBefore = vl;
+  vl *= Math.exp(-v.grip * dt);
+  if (v.driver && v.grip < t.grip && vf > 0) {
+    // a slide keeps its momentum: part of the speed the tyres scrub off sideways goes on forwards
+    const kept = Math.sqrt(Math.max(0, vf * vf + vlBefore * vlBefore - vl * vl));
+    vf += (kept - vf) * DRIFT.carry;
+  }
   v.slip = Math.abs(vl);
   v.vf = vf;
   v.vx = fx * vf + rx * vl;
@@ -714,6 +771,12 @@ function updateVehicle(v, dt) {
   v.mesh.position.set(v.x, 0, v.z);
   v.mesh.rotation.y = v.h;
   const u = v.mesh.userData;
+  // weight: the body leans out of a turn, squats under power and dips under the brakes
+  const ease = Math.min(1, dt * 7);
+  v.roll += (clamp(yaw * vfBefore * 0.0035, -0.09, 0.09) - v.roll) * ease;
+  v.pitch += ((v.dead || dt <= 0 ? 0 : clamp(((vfBefore - vf) / dt) * 0.0018, -0.035, 0.06)) - v.pitch) * ease;
+  u.shell.rotation.z = v.roll;
+  u.shell.rotation.x = v.pitch;
   u.wheels[0].rotation.y = u.wheels[1].rotation.y = v.steer * 0.45;
   if (u.bar) {
     const flash = v.siren && !v.dead ? Math.floor(performance.now() / 160) % 2 : -1;
@@ -771,6 +834,8 @@ function collideVehicles() {
           nx /= d;
           nz /= d;
           const pen = (reach - d) * 0.5;
+          if (A.driver === 'player') B.scraped = 1.5;       // touching a car is not a near miss
+          else if (B.driver === 'player') A.scraped = 1.5;
           A.x += nx * pen;
           A.z += nz * pen;
           B.x -= nx * pen;

@@ -21,22 +21,44 @@
 - On foot (walk, sprint, jump, punch, pistol) and seven vehicle types (Tidal, Vanta GT, Ravager, Brawler,
   Hauler, City Cab, Patrol Cruiser) with arcade handling, handbrake, damage and fire. Each type has its own
   body outline (raked windscreens, a pickup bed, a rear wing on the fast ones), hubcaps, mirrors and a grille;
-  at night every car throws a pool of light on the road.
-- Traffic that follows lanes, pedestrians that flee from shots, occupied cars can be taken.
+  at night every car throws a pool of light on the road. Since 1.9 the handbrake with the wheel turned
+  slides the car round a corner and keeps its speed (from 24 m/s, 0.9 s of handbrake at full lock turns
+  the car 84 to 91 degrees and leaves it at 22 m/s; 1.8 turned 68 degrees and left 14 m/s); with the wheel
+  straight it brakes as before. The body leans out of a turn, squats under power and dips under the brakes.
+- Style (release 1.9): a near miss (passing a moving car at over 14 m/s with less than 1.8 m between)
+  pays $25, or $50 past a police car; a slide pays $30 a second from 0.6 s on. Tricks go on a card under
+  the job line; another trick within 4 seconds adds half to the multiplier, up to four times. The sum is
+  paid when the bar on the card runs out, a crash loses it, and with wanted stars on every trick pays
+  double. The sums are first guesses, not tuned by play.
+- Speed heard and seen (release 1.9): the engine has five gears (the note climbs through each and drops
+  at the change; a low octave joins only when the engine works, so an idling car does not drown the
+  radio), tyres squeal in a slide, wind is heard from 50 km/h, the lens widens up to 20 degrees with
+  speed (before 14), the screen edges darken from 80 km/h and the car trembles near its top speed.
+- Traffic that follows lanes, pedestrians that flee from shots, occupied cars can be taken. Since 1.9:
+  20 cars driving and 11 parked around the player (before 15 and 9) and 34 people walking (before 26);
+  a driver kept waiting sounds the horn after 1.2 s, each kind of car with its own note, and so does a
+  driver passed too closely; with no stars on the player a patrol car now and then answers a call
+  somewhere in town (siren on, 24 m/s, not after the player).
 - Police: wanted level 1 to 5, officers shoot from 2 stars, an arrest when stopped beside a patrol car,
   escape by staying out of sight or paying for a respray. Since 1.8: at two stars patrol cars chase without
   ramming (a cruiser slows down as it reaches the player's car) and ram at top speed only from three stars;
   a crash with a patrol car adds wanted points only when the player drove into it; one crash with a patrol
   car takes at most 40% of the car's health on Normal; officers hit a moving car less often (40% as often
   from 30 m/s). Before 1.8 patrol cars rammed from two stars, every such crash added 1.3 wanted points and
-  one head-on ram took about three quarters of a car.
+  one head-on ram took about three quarters of a car. Since 1.9: at two stars officers shoot only at a
+  player on foot or in a car slower than 8 m/s (from three stars at a moving car as before); losing the
+  police pays by the most stars the chase reached ($150 at two, $400, $800, $1,400 at five; the full sum
+  needs 10 seconds in their sight, less time pays that share, one star pays nothing); a bar under the
+  stars (LOSING THEM) shows how close they are to giving up.
 - Six story jobs from three contacts (delivery against the clock, two checkpoint races, a car theft, a
-  getaway with 3 stars). Rewards from $250 to $3,500. After the story, odd jobs come in six kinds taken in
-  turn: Rush Order (timed delivery), Repo Run (take a marked car, bring it to the garage with one star on
+  getaway with 3 stars). Rewards from $250 to $3,500. Odd jobs (after the story; since 1.9 from the first story job on) come in six kinds
+  taken in turn: Rush Order (timed delivery), Repo Run (take a marked car, bring it to the garage with one star on
   you), Block Dash (a checkpoint lap round a few blocks), Hot Parcel (collect, then shake two stars),
   since 1.4 Paper Round (four envelopes round one block on foot against the clock, $550; it does not count
   from a driver's seat) and, since 1.7, Shadow Run. Since 1.4 the J key asks for another kind instead of
-  taking what comes.
+  taking what comes. Since 1.9, once the first story job is done, J goes from the story job to an odd job
+  and back, another kind each time round; before, J named the next story job and changed nothing until
+  all six were done. On a phone the pause screen has the button.
 - Shadow Run (release 1.7, $700 from Rico): the first job that is neither a clock nor a chase. A pink car
   pulls out and drives through the traffic; follow it for 40 seconds, 12 to 60 m behind. The top line
   shows the gap in metres, whether it is good, too close or too far, and the seconds left. Too close for
@@ -94,7 +116,7 @@
   pause screens. The pause screen is three buttons, settings and perks; the map legend moved onto the map
   itself (M). The title screen shows the keys you need first (Sprint among them since 1.4) and folds the rest away.
 - Every gain or loss of money shows as a green or red amount under the cash figure.
-- The title screen has a "what changed" line that opens the release history (1.0 to 1.7).
+- The title screen has a "what changed" line that opens the release history (1.0 to 1.9).
 - Harbor courier shift (release 1.1, from the title screen or G in free roam): three timed stops, $450 plus
   a time bonus, best time saved; checked by `test/harbor.py`.
 - Money sinks: property, respray and repair $150 ($75 with the perk), ammo $80, hospital and bail fees of 10% of cash, and the Tune-up
@@ -111,7 +133,7 @@
   list, pause with Resume / Restart / Main menu, progress saved in the browser. A new player who stands
   still for 3.5 seconds is shown the walking keys; one who sets off never sees them.
 - Tests in the repository: `test/gates.py` (10 gates), `test/harbor.py` (the courier shift), `test/city.py`
-  (54 checks: cab fares, property, perks, helicopter, route, map, old saves, for 1.3 the safehouse rule,
+  (55 checks since 1.9, where the J check became two for the new rule: cab fares, property, perks, helicopter, route, map, old saves, for 1.3 the safehouse rule,
   the wheel ride, the refusals while wanted and the perk card, for 1.4 the learner phase, the J key,
   the Paper Round and the building outlines, and for 1.7 the near first beam, the ON FOOT start rule,
   Shadow Run seen, lost and the slow start, the head start and the respray route), `test/radio.py` (new in 1.4: 14 checks that measure the
@@ -123,7 +145,11 @@
   (the three-star getaway) and Shadow Run. New in 1.8: `test/chase.py` (13 checks that set up crashes with
   a patrol car, police gunfire and a pursuit and let the game run them: who gets the wanted points, the 40%
   limit of one crash, hits on a standing and on a fast car, braking at two stars and ramming at three) and
-  `test/chase_bench.py` (not pass/fail: how long a car lasts with the police after it).
+  `test/chase_bench.py` (not pass/fail: how long a car lasts with the police after it). New in 1.9:
+  `test/thrill.py` (34 checks on the game's own clock: the slide, near misses and the chain, the two-star
+  hold-fire, getaway pay, the patrol call, horns, lens and edge darkening, the engine's gears, odd jobs
+  from job one, the crowd; the 1.8 build passes 11 of them). In `test/chase.py` the two checks of gunfire
+  at a moving car now run at three stars, because two stars no longer fires at one.
 - Phones and tablets (release 1.5): the page switches to touch by itself when a touch screen is the main
   pointer. A thumb stick appears under the left thumb (walk, steer, a full push sprints); buttons on the
   right press the same keys as the keyboard (GAS, BRAKE, HAND BRAKE, CAR / EXIT, FIRE / PUNCH, SWAP, JUMP,
@@ -132,8 +158,10 @@
   landscape and upright (upright widens the lens from 62 to up to 88 degrees). On a web address the game
   can be added to the home screen, where it opens full screen and plays offline after one visit. Hints name
   the buttons instead of keys. Since 1.7 the buttons are more see-through (fill 20% instead of 42%), so
-  the road shows through them. `test/touch.py` checks all of this on an emulated phone and on WebKit; no
-  real phone has run it yet.
+  the road shows through them. Since 1.9 HAND BRAKE with the stick pushed over slides the car and keeps
+  the power on (one thumb cannot hold GAS and HAND BRAKE together), the stick is finer near its middle
+  (half the stick is a third of the wheel) and on Android a crash is felt as a short vibration.
+  `test/touch.py` checks all of this on an emulated phone and on WebKit; no real phone has run it yet.
 - Graphics: Fast, Pretty or Auto (release 1.6). Auto is where a phone starts: 2 drawn pixels per point with
   the glow pass, shadows when the frame rate allows. It measures the frame rate in play and walks a ladder:
   shadows off first, then glow and half the crowd, drawn pixels last (never under 1.5 per point on a touch
