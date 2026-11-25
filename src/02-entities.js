@@ -492,6 +492,9 @@ function blockedAhead(v, range) {
   return false;
 }
 
+const PURSUIT_CLOSE = 4;     // m/s: how much faster than the player's car a two-star cruiser arrives
+const PURSUIT_GAP = 8;       // m between car centres at which it has slowed to that (bumpers meet at about 5)
+const PURSUIT_BRAKE = 18;    // m/s2 of the 30 its brakes can do: it starts to slow down about 60 m out
 function aiDrive(v, dt) {
   const a = v.ai;
   let tx;
@@ -519,6 +522,14 @@ function aiDrive(v, dt) {
       tx = a.cx;
       tz = a.cz;
       want = a.want;
+    }
+    if (wanted.stars === 2 && player.car) {
+      // two stars: pursue, do not ram. The cruiser brakes on its way in, seen or not, so that it reaches the
+      // player's car no more than PURSUIT_CLOSE m/s faster than the car drives away from it, and then holds
+      // that speed. From three stars it rams at full speed, as before.
+      const away = (player.car.vx * (px - v.x) + player.car.vz * (pz - v.z)) / (d || 1);
+      const room = Math.max(0, d - PURSUIT_GAP);
+      want = Math.min(want, Math.max(0, away + (room > 0 ? PURSUIT_CLOSE : 0) + Math.sqrt(2 * PURSUIT_BRAKE * room)));
     }
   } else {
     if (a.wasDirect) {
@@ -567,9 +578,25 @@ function damageVehicle(v, amount) {
   if (v.driver === 'player' && save.mission === 0 && v.hp < LEARNER_HP) v.hp = LEARNER_HP;
 }
 
-function impact(v, speed) {
+// One crash with a police car, however hard, costs the player's car at most CRASH_SHARE of its full health.
+// Every hit in the CRASH_WINDOW seconds after the first one is the same crash, also the wall the car is
+// shoved into. Crashes without a police car are not capped.
+const CRASH_SHARE = 0.4;
+const CRASH_WINDOW = 0.6;
+function impact(v, speed, police) {
   if (speed < 4) return;
-  damageVehicle(v, (speed - 4) * 1.7);
+  let amount = (speed - 4) * 1.7;
+  if (v.driver === 'player') {
+    if (police && !(v.crashT > 0)) {
+      v.crashT = CRASH_WINDOW;
+      v.crashSum = 0;
+    }
+    if (v.crashT > 0) {
+      amount = Math.min(amount, Math.max(0, v.t.hp * CRASH_SHARE - v.crashSum));
+      v.crashSum += amount;
+    }
+  }
+  damageVehicle(v, amount);
   const [px, pz] = focus();
   const d = Math.hypot(v.x - px, v.z - pz);
   if (d < 60) sfx.crash(clamp((speed / 30) * (1 - d / 60), 0.03, 0.6));
@@ -596,6 +623,7 @@ function updateVehicle(v, dt) {
     steer = v.input.st;
   }
   if (v.hp <= 0) throttle = 0;
+  if (v.crashT > 0) v.crashT -= dt;
 
   v.steer += clamp(steer - v.steer, -dt * 6, dt * 6);
   let fx = Math.sin(v.h);
@@ -751,15 +779,28 @@ function collideVehicles() {
           B.h += clamp((((nz * Math.sin(B.h) - nx * Math.cos(B.h)) * pen) / ob) * 0.5, -0.06, 0.06);
           const rel = (A.vx - B.vx) * nx + (A.vz - B.vz) * nz;
           if (rel >= 0) continue;
+          // how fast each car was driving at the other one (the two add up to -rel)
+          const closeA = -(A.vx * nx + A.vz * nz);
+          const closeB = B.vx * nx + B.vz * nz;
           const push = -rel * 0.6;
           A.vx += nx * push;
           A.vz += nz * push;
           B.vx -= nx * push;
           B.vz -= nz * push;
-          impact(A, -rel * 0.8);
-          impact(B, -rel * 0.8);
+          const police = A.type === 'police' || B.type === 'police';
+          impact(A, -rel * 0.8, police);
+          impact(B, -rel * 0.8, police);
           const mine = A.driver === 'player' ? B : B.driver === 'player' ? A : null;
-          if (mine && -rel > 5) crime(mine.type === 'police' ? 1.3 : mine.driver ? 0.3 : 0);
+          if (mine && -rel > 5) {
+            if (mine.type === 'police') {
+              // hitting a police car is a crime only when the player drove into it, not when it rammed the player
+              const own = mine === B ? closeA : closeB;
+              const theirs = mine === B ? closeB : closeA;
+              if (own > 5 && own >= theirs) crime(1.3);
+            } else {
+              crime(mine.driver ? 0.3 : 0);
+            }
+          }
         }
       }
     }

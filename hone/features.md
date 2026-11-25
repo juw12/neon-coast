@@ -23,8 +23,13 @@
   body outline (raked windscreens, a pickup bed, a rear wing on the fast ones), hubcaps, mirrors and a grille;
   at night every car throws a pool of light on the road.
 - Traffic that follows lanes, pedestrians that flee from shots, occupied cars can be taken.
-- Police: wanted level 1 to 5, patrol cars chase and ram, officers shoot from 2 stars, an arrest when stopped
-  beside a patrol car, escape by staying out of sight or paying for a respray.
+- Police: wanted level 1 to 5, officers shoot from 2 stars, an arrest when stopped beside a patrol car,
+  escape by staying out of sight or paying for a respray. Since 1.8: at two stars patrol cars chase without
+  ramming (a cruiser slows down as it reaches the player's car) and ram at top speed only from three stars;
+  a crash with a patrol car adds wanted points only when the player drove into it; one crash with a patrol
+  car takes at most 40% of the car's health on Normal; officers hit a moving car less often (40% as often
+  from 30 m/s). Before 1.8 patrol cars rammed from two stars, every such crash added 1.3 wanted points and
+  one head-on ram took about three quarters of a car.
 - Six story jobs from three contacts (delivery against the clock, two checkpoint races, a car theft, a
   getaway with 3 stars). Rewards from $250 to $3,500. After the story, odd jobs come in six kinds taken in
   turn: Rush Order (timed delivery), Repo Run (take a marked car, bring it to the garage with one star on
@@ -115,7 +120,10 @@
   nothing moved by script). Since 1.4 it plays three story jobs instead of one: job 1 First Wheels, job 2
   Hot Delivery (against the 80 s clock) and job 4 Borrowed Time (a car theft with the police after it).
   Since 1.7 it also plays job 3 Midnight Sprint and job 6 Coastline Run (the two races), job 5 Heat Wave
-  (the three-star getaway) and Shadow Run.
+  (the three-star getaway) and Shadow Run. New in 1.8: `test/chase.py` (13 checks that set up crashes with
+  a patrol car, police gunfire and a pursuit and let the game run them: who gets the wanted points, the 40%
+  limit of one crash, hits on a standing and on a fast car, braking at two stars and ramming at three) and
+  `test/chase_bench.py` (not pass/fail: how long a car lasts with the police after it).
 - Phones and tablets (release 1.5): the page switches to touch by itself when a touch screen is the main
   pointer. A thumb stick appears under the left thumb (walk, steer, a full push sprints); buttons on the
   right press the same keys as the keyboard (GAS, BRAKE, HAND BRAKE, CAR / EXIT, FIRE / PUNCH, SWAP, JUMP,

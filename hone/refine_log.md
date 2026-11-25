@@ -501,3 +501,102 @@ machine): worth a look together with R5-12.
 - Landing page: `juw12/juw12.github.io` `ca1f305`, https://juw12.github.io/p/neon-coast/ shows
   TAIL LIGHTS / 01.7 and the three new items above the 1.6 ones.
 - Obsidian: `GitHub/neon-coast.md` and `Update Log/2026-11-21 2135 neon-coast hone.md`.
+
+## Run 6 (2026-11-25, "neon coast continue hone", from the shipped 1.7 build)
+
+Ask: continue the hone. The first open item of run 5 was R5-12, police chase balance, so this run did that
+one item and nothing else. On the ASUS `build.py` gave the committed 1.7 bytes again (880,315) before any
+change.
+
+Goal beyond the goal, unchanged: a stranger opens one link, knows what to do within a minute and has
+something worth doing for ten. A chase that raises its own stars and wrecks the car in one hit ends the two
+police jobs before that.
+
+### Run queue (run 6)
+
+- [x] R6-0 Rebuild 1.7 on the ASUS, read the police code, write a test that shows the three rules of the
+      run-5 handoff on 1.7 (`test/chase.py`: 1.7 fails 4 of the first 8 checks)
+- [x] R6-1 A way to measure a chase that does not follow the frame rate: `test/chase_bench.py`, a car held
+      at a set speed for 30 s of game time
+- [x] R6-2 Rule 1: a crash with a police car is a crime only when the player drove into it
+- [x] R6-3 Rule 2: one crash with a police car takes at most 40% of the car
+- [x] R6-4 Rule 3: officers hit a moving car less often (not in the handoff; added because the bench showed
+      rules 1 and 2 alone left 2 of 7 three-star runs not wrecked, with gunfire doing the rest)
+- [x] R6-5 Rule 4: at two stars a cruiser slows down and stays behind the car; it rams from three stars
+- [x] R6-6 Bench and key-press runs of jobs 4 and 5, 1.7 against 1.8; all suites
+- [x] R5-12 Police chase balance: the four rules are in and measured. Whether the two police jobs can now
+      be finished by a person is not shown; see "What was measured" and the Handoff
+- [ ] R6-7 Council score and blind pair: not done this run. No new sheet, no judges
+- [ ] R5-11 A real person plays it, and a real iPhone and Android phone run it: needs Juwen
+
+### Assumptions (run 6)
+
+- Assumed: "continue hone" means run 6 in Loop mode on the game, starting from the shipped 1.7 build, first
+  item R5-12.
+- Assumed: the four rules are design changes. No existing check was changed; `test/chase.py` and
+  `test/chase_bench.py` are new files.
+- Assumed: the numbers are 40% of full health for one crash on Normal, 0.6 s for what counts as one crash,
+  60% fewer hits at 30 m/s, and for the two-star cruiser a 4 m/s closing speed, an 8 m gap and 18 m/s2 of
+  braking. They were set from the code and the bench rounds listed below, and not tuned further.
+- Assumed: the bench may remove the other traffic and hold the car's speed by script. It measures the police
+  rules, not the driving; the key-press script measures the whole job.
+- Assumed: a bench run the police never found is listed but not counted as survived.
+- Assumed: three-star bench runs made on the build without the two-star rule count for 1.8, because that
+  rule only acts at exactly two stars. The same for the job 5 key-press runs.
+- Assumed: 1.8 ships without a council score. Run 5 could not tell builds apart with the sheet (two readings
+  of one sheet differed by 0.5), and this run has a direct measurement instead: the rule test (4 of 8 on
+  1.7, 13 of 13 on 1.8) and the bench. The rubric score of 1.8 is unknown and nothing here claims one.
+- Assumed: release name 1.8 "Fair Cop".
+
+| round | change | gates | judge score | pairwise win | kept? | note |
+|---|---|---|---|---|---|---|
+| 10 (candidate A) | rules 1 and 2: blame and the crash cap | - | not judged | - | kept, not enough | bench at three stars: 2 of 7 not wrecked (1.7: 0 of 3); gunfire about 54 health in 30 s. Jobs by key press: job 4 2 of 3, job 5 0 of 2 |
+| 11 (candidate B) | A plus rule 3: gunfire against a moving car | - | not judged | - | kept, not enough | bench at three stars: 5 of 8 not wrecked, gunfire about 37; at two stars 3 of 8 wrecked, 1 never found. Jobs by key press: job 4 1 of 3, job 5 0 of 3 (most stars 3, 4, 3) |
+| 12 (release 1.8 Fair Cop) | B plus rule 4: the two-star pursuit | 10/10 | not judged | - | shipped | bench at two stars: 0 of 5 chased runs wrecked (1.7: 4 of 4), crash damage 0; at three stars 3 of 3 not wrecked (one with under 1% health left), gunfire about 51. `test/chase.py` 13/13. Job 4 by key press 2 of 3, stars stayed at two |
+
+What was measured, every run (`NeonCoast.html` 883,569 bytes, sha256 `b3d2cc17`). The PC was busy with other
+work the whole day; the bench and `test/chase.py` wait on the game's clock, the key-press runs do not.
+
+- `test/chase.py`: 1.7 4 of the first 8 checks; candidate A fails the gunfire check; candidate B 12 of 13
+  (fails the two-star pursuit check); 1.8 13 of 13.
+- `test/gates.py` 10/10, `test/city.py` 54/54, `test/harbor.py` pass, `test/radio.py` 14/14, in one chain on
+  the final build. `test/smoke.py` and `test/touch.py` were not run on 1.8 (the touch code did not change).
+- Bench, Vanta GT held at 21 m/s for 30 s, traffic removed. Two stars: 1.7, 7 runs, 3 never found, the 4
+  chased runs wrecked after 12.7, 15.5, 20.4 and 23 s, stars at three in 4 of 7. Candidate B, 8 runs, 3
+  wrecked (18, 21.9, 23.1 s), 1 never found. An earlier setting of the two-star rule, 8 runs, 3 never found, 0 of 5 chased runs wrecked, crash damage 0, 6,
+  0, 19, 0. 1.8, 6 runs, 1 never found, the 5 chased runs still driving with 47, 19, 7, 47 and 13% health,
+  crash damage 0, gunfire 48 to 84 of 90 health, stars at two. Three stars: 1.7, 3 runs, all wrecked (27.4,
+  20.7, 29.2 s), stars at four in all. Candidate A 2 of 7 not wrecked. Candidate B 5 of 8 and 1.8 3 of 3 not
+  wrecked (one of the three with under 1% health left), together 8 of 11, stars at three in all. Gunfire
+  at three stars: about 55 health on 1.7, 54 on A, 37 on B, 51 on 1.8 (three runs).
+- `test/drive.py`, two builds playing at the same time. Job 4: 1.7 2 of 3 (most stars 5, 2, 4), then 1 of 3
+  (4, 5, 3); candidate A 2 of 3; candidate B 1 of 3; 1.8 2 of 3 (stars stayed at two; the car was destroyed
+  4 times in the three runs). Job 5: 1.7 0 of 3 (five stars in all); candidate A 0 of 2; candidate B 0 of 3
+  (most stars 3, 4, 3); 1.8 itself was not run on job 5.
+- A result once showed the player's health at -899: that is the old rule that a car explosion hurts the
+  driver by 999, not a new fault.
+
+What this means. The three faults named in the run-5 handoff are gone and a test now holds them: a chase no
+longer raises its own stars, one crash no longer takes the car, and a two-star cruiser no longer rams. The
+bench shows the car lasting. The key-press script does not finish the two police jobs more often than
+before, with samples of three: job 4 3 of 6 against 2 of 3, job 5 0 of 3 against 0 of 3. So 1.8 is shipped
+as a rule fix that is measured, not as "the police jobs can now be finished".
+
+## Handoff (run 6)
+
+- Done: R6-0 to R6-6, R5-12. Release 1.8 "Fair Cop" (see Sync below).
+- In progress: nothing.
+- Left: gunfire against a car at two stars. With the ramming gone a cruiser now sits within 15 m behind the
+  car, where officers shoot with their close-range bonus, and in the bench that took 48 to 84 of 90 health
+  in 30 s. To try: no shooting at a moving car at two stars, or a longer gap. Measure with
+  `python test/chase_bench.py NeonCoast.html 2 21 6`.
+- Left: `test/drive.py` stops for traffic while it is chased and never tries to get out of the police's
+  sight. Until it does, its job 4 and job 5 numbers say more about the script than about the police.
+- Left: why the player is taken out on foot in Heat Wave (0 of 3 on both builds) was not looked into.
+- Left: R6-7, a new fact sheet with the bench table, a council score and a blind pair of 1.8 against 1.7.
+- Left: one clean run of `python test/touch.py` for 1.8 on a quiet PC or on the Mac; the fixed waits in
+  `test/city.py` (both from run 5, not touched).
+- Left: R5-11, a real person plays ten minutes, with one of the two police jobs in it, and a real iPhone and
+  Android phone open the link (needs Juwen). This is the only measurement that can say whether 1.8 is more
+  fun.
+- Next command: `/hone neon-coast` (run 7 starts from the 1.8 build; first item the two-star gunfire).
