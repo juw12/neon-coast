@@ -600,3 +600,19 @@ as a rule fix that is measured, not as "the police jobs can now be finished".
   Android phone open the link (needs Juwen). This is the only measurement that can say whether 1.8 is more
   fun.
 - Next command: `/hone neon-coast` (run 7 starts from the 1.8 build; first item the two-star gunfire).
+
+## Sync (run 6, 2026-11-25)
+
+- GitHub repo: [PR 11](https://github.com/juw12/neon-coast/pull/11) squash-merged, main `8942e82`; release
+  [v1.8.0](https://github.com/juw12/neon-coast/releases/tag/v1.8.0) with `NeonCoast.html` (883,569 bytes).
+  The repo has no CI; the suites above were run on the ASUS before the merge.
+- Live check: https://juw12.github.io/neon-coast/NeonCoast.html has the same bytes as the local build
+  (sha256 `b3d2cc17`) and `sw.js` names the cache `neon-coast-1.8.0` (read with `curl`). The live page was
+  not opened in a browser this run.
+- Profile README: unchanged. Its sentence about the game names nothing that 1.8 changed.
+- Portfolio: catalog `juw12/projects` [PR 135](https://github.com/juw12/projects/pull/135), `df223dc`: the
+  description names 1.8; the summary, the order and the card are unchanged. Card sync run 45551047421 started.
+- Landing page: `juw12/juw12.github.io` [PR 3](https://github.com/juw12/juw12.github.io/pull/3), `7d72ec9`;
+  https://juw12.github.io/p/neon-coast/ shows FAIR COP / 01.8 and the three police items above the 1.7 ones.
+- Obsidian: a line in `journal/2026-11-25.md`, saved through Cairn.
+- Not done: the four-versions gate (`platforms.py`), Featured (`featured.py`), a fact sheet, a council score.
