@@ -22,6 +22,58 @@ needed. Choose New Game or Continue. Walk up to a car and press F. Drive with WA
 Follow the arrows on the road to the yellow J marker for the first of six jobs. Press M for the whole map
 and P to pause. Progress is stored in your browser, so use the same browser and file location to resume.
 
+## Version 1.9 · Sideways
+
+The first person to play 1.8 said it was not fun enough. This release works on six things: the jobs, how
+the car drives, the police, the city, what there is to do between jobs, and the phone.
+
+- **Odd jobs open after the first story job.** Before, **J** offered an odd job only when all six story
+  jobs were done, so the story was the only thing to do for the first hour. Now **J** goes from the story
+  job to an odd job and back, and each time round the odd job is another kind. On a phone the pause screen
+  has the button for it.
+- **The handbrake slides the car.** Hold Space with the wheel turned and the car swings round the corner
+  and keeps its speed; let go and the tyres grip again within a second. With the wheel straight the
+  handbrake is the brake it was. From 24 m/s (87 km/h), 0.9 s of handbrake and full lock: 1.8 turned the
+  car 68 degrees and left it at 14 m/s, 1.9 turns it 84 to 91 degrees (three runs) and leaves it at 22 m/s.
+- **Near misses and slides pay.** Pass a moving car at over 14 m/s with less than 1.8 m between you and it
+  is a near miss: $25, or $50 past a police car. A slide pays $30 a second from 0.6 s on. Each trick goes on
+  a card under the job line; another trick within 4 seconds adds half to the multiplier, up to four times.
+  The sum is paid when the bar on the card runs out. A crash loses it. With wanted stars on, every trick
+  pays double.
+- **Losing the police pays.** Get out of their sight until they give up: $150 at two stars, $400 at three,
+  $800 at four, $1,400 at five, by the most stars the chase reached. The full sum needs the police to have
+  had you in sight for 10 seconds; less time pays that share. One star pays nothing. A bar under the stars
+  (LOSING THEM) shows how close they are to giving up; before, the only sign was the stars blinking.
+- **Two stars: no shooting at a moving car.** The open item of 1.8: with the ramming gone, gunfire was what
+  wore the car down in a two-star chase. Now officers at two stars shoot only at a player on foot or in a
+  car slower than 8 m/s (29 km/h). From three stars they shoot at a moving car as in 1.8.
+- **A busier city with a voice.** 20 cars driving and 11 parked around you (before 15 and 9), 34 people
+  walking (before 26). A driver who has to wait behind something sounds the horn after 1.2 s, each kind of
+  car with its own note; a driver you pass too closely does too. With no stars on you a patrol car now and
+  then answers a call somewhere: siren on, 24 m/s through the traffic, and not after you.
+- **Speed can be heard and seen.** The engine has five gears: the note climbs through each and drops at the
+  change; its low octave joins only when the engine works, so an idling car does not drown the radio. Tyres squeal in a slide, wind is heard from 50 km/h. The body leans out of a turn, squats under
+  power and dips under the brakes. The lens widens up to 20 degrees with speed (before 14) and the edges of
+  the screen darken from 80 km/h; near its top speed the car trembles.
+- **On a phone.** HAND BRAKE with the stick pushed over slides the car and keeps the power on, since one
+  thumb cannot hold GAS and HAND BRAKE together (the same 0.9 s slide leaves the car at 21 m/s; on 1.8 it
+  left it at 6). The stick is finer near its middle: half the stick is a third of the wheel. On Android a
+  crash is felt as a short vibration.
+- **A new test.** `test/thrill.py` holds every rule above, 34 checks on the game's own clock. The 1.8 build
+  passes 11 of them (the ones that say what must stay as it was).
+
+What this does not show:
+
+- **Whether it is more fun.** A script can check that a slide keeps its speed and that a near miss pays
+  $25. It cannot say whether that is fun. Nobody has played 1.9 yet.
+- **The sums are first guesses.** $25 for a near miss and $150 to $1,400 for a getaway stand next to story
+  jobs that pay $250 to $3,500. They were not tuned by play.
+- **No real phone.** The touch changes ran in Chrome's phone emulation only.
+- **The offline reload on the build PC.** `test/touch.py` passes 9 of 10 there: "installs and plays
+  offline" times out, for the 1.8 build in the same way (3 of 3 runs each). Why was not found.
+
+Saves from 1.8 carry over.
+
 ## Version 1.8 · Fair Cop
 
 The police chase is fairer. Nothing else changed.
@@ -224,19 +276,29 @@ Needs Python with Playwright and Chrome. Run from this folder after `python buil
 - `python test/gates.py` - ten pass/fail gates (offline single file, clean console, the core loop with 22
   checks, all six jobs pay, arrest, mouse look, frame rate, HUD overlap at three sizes, own names, clear first view).
 - `python test/harbor.py` - the harbor courier shift from start to payout, cancel and timeout.
-- `python test/city.py` - 54 checks on cab fares, property, perks, the helicopter, the route, the map,
+- `python test/city.py` - 55 checks (54 before 1.9: the one **J** check during the story became two, for the
+  new rule) on cab fares, property, perks, the helicopter, the route, the map,
   saves from older versions, the Sol Wheel ride, what the police stars switch off, the learner phase, the
   **J** key, the Paper Round and its ON FOOT start rule, the building outlines, the near first beam,
   Shadow Run (seen, lost, a slow start, passed), the head start and the respray route. The Shadow Run and
   head-start checks wait on the game's own clock. Other checks still wait a fixed time, so on a busy PC a
   timer check can fail: on 1.7 it read 52, 52 and 54 of 54 in three runs in a row (a cab fare paid late,
   the helicopter not yet gone), and before the two checks used the game clock 52, 51, 51 and 49.
-- `python test/chase.py` - 13 checks on the police chase rules of 1.8, all waiting on the game's own
+- `python test/chase.py` - 13 checks on the police chase rules of 1.8 (since 1.9 the two checks on shots at a
+  moving car run at three stars, because two stars no longer shoots at one), all waiting on the game's own
   clock: a cruiser ramming a standing car adds no wanted points, driving into a cruiser still does, one
   crash with a cruiser takes at most 40% of the car (also when it shoves the car into a wall), a crash with
   no police car is as before, officers hit a standing car as often as before and a fast one less, at two
   stars a cruiser with a clear road slows down and stays behind the car, at three stars it rams. The 1.7
   build fails 4 of the first 8 checks.
+- `python test/thrill.py` - 34 checks on what 1.9 added, all waiting on the game's own clock: the handbrake
+  is a brake with the wheel straight and a slide with it turned (speed kept, degrees turned, grip back
+  within a second, body lean, tyre noise), a near miss pays and a wide or slow pass does not, three in a
+  row pay double, a crash loses the chain, stars double a trick, no shot at a moving car at two stars and
+  shots again at three, what a getaway pays by stars and by seconds in sight, the LOSING THEM bar, a horn
+  from a driver who has to wait, a patrol car on a call, five gears, wind, the wider lens, **J** before and
+  after the first story job, the number of cars and people, and the phone controls for the slide. Give it
+  another build to see which rules are new: `python test/thrill.py old.html` reads 11 of 34 on 1.8.
 - `python test/chase_bench.py NeonCoast.html 2 21` - how long a car lasts in a chase. It holds a Vanta GT
   at a set speed (here 21 m/s) at a set number of stars (here two) for 30 s of game time, with the other
   traffic removed, and reports whether the car was wrecked, the stars at the end and the damage from

@@ -51,6 +51,26 @@ SOFTWARE.
   #stars i { font-style: normal; color: rgba(255,255,255,.16); }
   #stars i.on { color: var(--gold); text-shadow: 0 0 12px rgba(255,225,79,.8); }
   #stars i.on.dim { color: rgba(255,225,79,.35); text-shadow: none; }
+  #evade { display: none; align-items: center; justify-content: flex-end; gap: 7px; margin-top: 3px; }
+  #evade.show { display: flex; }
+  #evade small { font-size: 10.5px; font-weight: 700; letter-spacing: 1.6px; color: var(--gold); }
+  #evade .bar { width: 96px; height: 6px; margin: 0; }
+  #evade .bar i { background: linear-gradient(90deg, var(--gold), #7dffa5); }
+  #rush { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .25s;
+    background: radial-gradient(ellipse at 50% 56%, rgba(8,10,24,0) 46%, rgba(8,10,24,.34) 78%, rgba(8,10,24,.72) 100%); }
+  #style { position: absolute; top: 150px; left: 50%; transform: translateX(-50%); min-width: 190px; padding: 7px 16px 9px;
+    border-radius: 12px; background: rgba(8,10,24,.74); border: 1px solid rgba(63,224,255,.55); text-align: center;
+    text-shadow: none; opacity: 0; transition: opacity .35s; white-space: nowrap; }
+  #style.show { opacity: 1; transition: none; }
+  #style b { display: block; font-size: 17px; font-style: italic; letter-spacing: 1.2px; color: var(--cyan); }
+  #style span { display: block; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 1px; }
+  #style .bar { width: 100%; height: 5px; margin: 6px 0 0; }
+  #style .bar i { background: linear-gradient(90deg, var(--cyan), #7dffa5); }
+  #style.paid { border-color: rgba(125,255,165,.8); }
+  #style.paid b, #style.paid span { color: #7dffa5; }
+  #style.lost { border-color: rgba(255,122,133,.8); }
+  #style.lost b, #style.lost span { color: #ff7a85; }
+  #style.paid .bar, #style.lost .bar { visibility: hidden; }
   #money { font-size: 34px; font-weight: 800; color: #7dffa5; margin-top: 4px; font-variant-numeric: tabular-nums; }
   .lab small { font-size: 10.5px; font-weight: 700; letter-spacing: 1.6px; opacity: .7; margin-right: 6px; }
   .hpline { display: flex; align-items: center; justify-content: flex-end; margin-top: 8px; }
@@ -234,6 +254,11 @@ SOFTWARE.
   body.touch #objective { font-size: 13px; padding: 6px 14px; border-radius: 16px; }
   body.touch #way { font-size: 12.5px; }
   body.touch #timer { font-size: 26px; line-height: 1; }
+  body.touch #style { min-width: 150px; padding: 5px 12px 7px; }
+  body.touch #style b { font-size: 13.5px; }
+  body.touch #style span { font-size: 12.5px; }
+  body.touch #evade small { font-size: 9px; }
+  body.touch #evade .bar { width: 70px; height: 5px; }
   body.touch #hint { left: calc(38 * var(--u) + var(--sl)); right: calc(52 * var(--u) + var(--sr)); bottom: calc(8px + var(--sb));
     transform: none; max-width: none; margin: 0 auto; width: -webkit-fit-content; width: fit-content; font-size: 13px;
     padding: 7px 12px; }
@@ -336,9 +361,11 @@ SOFTWARE.
   <div class="tb act on-ride" data-tap="KeyF" style="--s:20;--r:6;--b:8">GET<br>OFF</div>
 </div>
 
+<div id="rush"></div>
 <div id="hud" class="hidden">
   <div id="tr">
     <div id="stars"><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i></div>
+    <div id="evade"><small>LOSING THEM</small><div class="bar"><i id="evade-bar"></i></div></div>
     <div id="money">$0</div>
     <div class="lab hpline"><small>HEALTH</small><div class="bar"><i id="hp"></i></div></div>
     <div id="weapon">Pistol</div>
@@ -357,6 +384,7 @@ SOFTWARE.
     <div id="objective"></div>
     <div id="way"><i id="way-arrow"></i><span id="way-dist"></span></div>
     <div id="timer"></div>
+    <div id="style"><b></b><span></span><div class="bar"><i id="style-bar"></i></div></div>
   </div>
   <div id="hint" class="toast"></div>
   <div id="br">
@@ -418,7 +446,7 @@ SOFTWARE.
           <kbd>W A S D</kbd><span>Walk / drive</span>
           <kbd>Mouse</kbd><span>Look and aim</span>
           <kbd>F</kbd><span>In or out of any car</span>
-          <kbd>Space</kbd><span>Jump / handbrake</span>
+          <kbd>Space</kbd><span>Jump / handbrake: a slide with the wheel turned</span>
           <kbd>Shift</kbd><span>Sprint</span>
           <kbd>M</kbd><span>The whole map</span>
           <kbd>P</kbd><span>Pause (or Esc)</span>
@@ -433,14 +461,15 @@ SOFTWARE.
             <kbd>E</kbd><span>Buy or use, on foot</span>
             <kbd>T</kbd><span>Cab fares, in a City Cab</span>
             <kbd>G</kbd><span>Harbor courier shift</span>
-            <kbd>J</kbd><span>Another kind of odd job</span>
+            <kbd>J</kbd><span>Odd job, or back to the story job</span>
           </div>
         </details>
       </div>
     </div>
     <details class="news">
-      <summary><strong>Version 1.8 · Fair Cop</strong> — at two stars the police chase you but no longer ram, a cruiser that does ram you adds nothing to your stars, and officers shoot worse at a moving car. What changed, release by release</summary>
+      <summary><strong>Version 1.9 · Sideways</strong> — the handbrake slides the car round a corner, near misses and slides pay cash, losing the police pays, a two-star pursuit does not shoot at a moving car, and odd jobs open after your first job. What changed, release by release</summary>
       <ul>
+        <li><strong>1.9 · Sideways</strong> — Hold the handbrake with the wheel turned and the car slides round the corner and keeps most of its speed; with the wheel straight it is the brake it was. Passing another car closely at speed is a near miss worth $25 ($50 past a police car), and a slide pays $30 a second. Tricks in a row multiply, up to four times; the sum is paid when the bar on the card runs out, and a crash loses it. With wanted stars on, every trick pays double. Losing the police on the road pays $150 at two stars, $400, $800 and $1,400 above, in full when they had you in sight for ten seconds; a bar under the stars shows how close you are to losing them. At two stars officers no longer shoot at a moving car. Odd jobs open after the first story job: J goes from the story job to an odd job and back. More cars and people on the streets, drivers sound their horns, and now and then a patrol car runs past on a call. The engine has gears, tyres squeal, wind is heard at speed, the car body leans, and the view widens and darkens at the edges when you drive fast. On a phone a slide keeps the power on by itself and the stick is finer near its middle.</li>
         <li><strong>1.8 · Fair Cop</strong> — At two stars the police chase you without ramming: a cruiser slows down as it reaches your car and stays on your bumper. From three stars they ram, as before. A crash with a police car adds to your stars only when you drove into it: when the cruiser rams you, it does not. One crash with a cruiser, however hard, takes at most 40% of your car's health on Normal, also when it shoves you into a wall. Officers hit a moving car less often: the faster you drive, the worse they shoot, and from 30 m/s (108 km/h) they hit less than half as often as they hit a standing car. Driving into the police yourself counts as before, and so does every other crash.</li>
         <li><strong>1.7 · Tail Lights</strong> — Shadow Run, a sixth odd job with no clock and no marker: stay 12 to 60 m behind a pink car for 40 seconds. The first job beam stands in the red car's own lane, 40 m ahead. Paper Round says ON FOOT on its beam and waits until you leave the car. Ten seconds of head start when you take the marked car in Borrowed Time. While you lose the police in a job, the road arrows lead to Mo's Respray. The shore in front of the Rustport quay is a dock apron with a lane, a crane rail and bollards. On a phone the buttons are more see-through, so the road shows behind them.</li>
         <li><strong>1.6 · Sharp</strong> — Graphics has a third choice, Auto, and a phone starts on it: twice the drawn pixels of 1.5, the neon glow, and shadows when the frame rate allows. It measures as you play, gives up shadows first and sharpness last, and takes back what it gave up when the phone is smooth again. On a touch screen each shot turns onto a target near the crosshair, the CAR button lights up when a car is in reach, and Settings can swap the steering stick for two arrows.</li>

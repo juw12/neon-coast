@@ -51,6 +51,26 @@ SOFTWARE.
   #stars i { font-style: normal; color: rgba(255,255,255,.16); }
   #stars i.on { color: var(--gold); text-shadow: 0 0 12px rgba(255,225,79,.8); }
   #stars i.on.dim { color: rgba(255,225,79,.35); text-shadow: none; }
+  #evade { display: none; align-items: center; justify-content: flex-end; gap: 7px; margin-top: 3px; }
+  #evade.show { display: flex; }
+  #evade small { font-size: 10.5px; font-weight: 700; letter-spacing: 1.6px; color: var(--gold); }
+  #evade .bar { width: 96px; height: 6px; margin: 0; }
+  #evade .bar i { background: linear-gradient(90deg, var(--gold), #7dffa5); }
+  #rush { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .25s;
+    background: radial-gradient(ellipse at 50% 56%, rgba(8,10,24,0) 46%, rgba(8,10,24,.34) 78%, rgba(8,10,24,.72) 100%); }
+  #style { position: absolute; top: 150px; left: 50%; transform: translateX(-50%); min-width: 190px; padding: 7px 16px 9px;
+    border-radius: 12px; background: rgba(8,10,24,.74); border: 1px solid rgba(63,224,255,.55); text-align: center;
+    text-shadow: none; opacity: 0; transition: opacity .35s; white-space: nowrap; }
+  #style.show { opacity: 1; transition: none; }
+  #style b { display: block; font-size: 17px; font-style: italic; letter-spacing: 1.2px; color: var(--cyan); }
+  #style span { display: block; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 1px; }
+  #style .bar { width: 100%; height: 5px; margin: 6px 0 0; }
+  #style .bar i { background: linear-gradient(90deg, var(--cyan), #7dffa5); }
+  #style.paid { border-color: rgba(125,255,165,.8); }
+  #style.paid b, #style.paid span { color: #7dffa5; }
+  #style.lost { border-color: rgba(255,122,133,.8); }
+  #style.lost b, #style.lost span { color: #ff7a85; }
+  #style.paid .bar, #style.lost .bar { visibility: hidden; }
   #money { font-size: 34px; font-weight: 800; color: #7dffa5; margin-top: 4px; font-variant-numeric: tabular-nums; }
   .lab small { font-size: 10.5px; font-weight: 700; letter-spacing: 1.6px; opacity: .7; margin-right: 6px; }
   .hpline { display: flex; align-items: center; justify-content: flex-end; margin-top: 8px; }
@@ -234,6 +254,11 @@ SOFTWARE.
   body.touch #objective { font-size: 13px; padding: 6px 14px; border-radius: 16px; }
   body.touch #way { font-size: 12.5px; }
   body.touch #timer { font-size: 26px; line-height: 1; }
+  body.touch #style { min-width: 150px; padding: 5px 12px 7px; }
+  body.touch #style b { font-size: 13.5px; }
+  body.touch #style span { font-size: 12.5px; }
+  body.touch #evade small { font-size: 9px; }
+  body.touch #evade .bar { width: 70px; height: 5px; }
   body.touch #hint { left: calc(38 * var(--u) + var(--sl)); right: calc(52 * var(--u) + var(--sr)); bottom: calc(8px + var(--sb));
     transform: none; max-width: none; margin: 0 auto; width: -webkit-fit-content; width: fit-content; font-size: 13px;
     padding: 7px 12px; }
@@ -336,9 +361,11 @@ SOFTWARE.
   <div class="tb act on-ride" data-tap="KeyF" style="--s:20;--r:6;--b:8">GET<br>OFF</div>
 </div>
 
+<div id="rush"></div>
 <div id="hud" class="hidden">
   <div id="tr">
     <div id="stars"><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i><i>&#9733;</i></div>
+    <div id="evade"><small>LOSING THEM</small><div class="bar"><i id="evade-bar"></i></div></div>
     <div id="money">$0</div>
     <div class="lab hpline"><small>HEALTH</small><div class="bar"><i id="hp"></i></div></div>
     <div id="weapon">Pistol</div>
@@ -357,6 +384,7 @@ SOFTWARE.
     <div id="objective"></div>
     <div id="way"><i id="way-arrow"></i><span id="way-dist"></span></div>
     <div id="timer"></div>
+    <div id="style"><b></b><span></span><div class="bar"><i id="style-bar"></i></div></div>
   </div>
   <div id="hint" class="toast"></div>
   <div id="br">
@@ -418,7 +446,7 @@ SOFTWARE.
           <kbd>W A S D</kbd><span>Walk / drive</span>
           <kbd>Mouse</kbd><span>Look and aim</span>
           <kbd>F</kbd><span>In or out of any car</span>
-          <kbd>Space</kbd><span>Jump / handbrake</span>
+          <kbd>Space</kbd><span>Jump / handbrake: a slide with the wheel turned</span>
           <kbd>Shift</kbd><span>Sprint</span>
           <kbd>M</kbd><span>The whole map</span>
           <kbd>P</kbd><span>Pause (or Esc)</span>
@@ -433,14 +461,15 @@ SOFTWARE.
             <kbd>E</kbd><span>Buy or use, on foot</span>
             <kbd>T</kbd><span>Cab fares, in a City Cab</span>
             <kbd>G</kbd><span>Harbor courier shift</span>
-            <kbd>J</kbd><span>Another kind of odd job</span>
+            <kbd>J</kbd><span>Odd job, or back to the story job</span>
           </div>
         </details>
       </div>
     </div>
     <details class="news">
-      <summary><strong>Version 1.8 · Fair Cop</strong> — at two stars the police chase you but no longer ram, a cruiser that does ram you adds nothing to your stars, and officers shoot worse at a moving car. What changed, release by release</summary>
+      <summary><strong>Version 1.9 · Sideways</strong> — the handbrake slides the car round a corner, near misses and slides pay cash, losing the police pays, a two-star pursuit does not shoot at a moving car, and odd jobs open after your first job. What changed, release by release</summary>
       <ul>
+        <li><strong>1.9 · Sideways</strong> — Hold the handbrake with the wheel turned and the car slides round the corner and keeps most of its speed; with the wheel straight it is the brake it was. Passing another car closely at speed is a near miss worth $25 ($50 past a police car), and a slide pays $30 a second. Tricks in a row multiply, up to four times; the sum is paid when the bar on the card runs out, and a crash loses it. With wanted stars on, every trick pays double. Losing the police on the road pays $150 at two stars, $400, $800 and $1,400 above, in full when they had you in sight for ten seconds; a bar under the stars shows how close you are to losing them. At two stars officers no longer shoot at a moving car. Odd jobs open after the first story job: J goes from the story job to an odd job and back. More cars and people on the streets, drivers sound their horns, and now and then a patrol car runs past on a call. The engine has gears, tyres squeal, wind is heard at speed, the car body leans, and the view widens and darkens at the edges when you drive fast. On a phone a slide keeps the power on by itself and the stick is finer near its middle.</li>
         <li><strong>1.8 · Fair Cop</strong> — At two stars the police chase you without ramming: a cruiser slows down as it reaches your car and stays on your bumper. From three stars they ram, as before. A crash with a police car adds to your stars only when you drove into it: when the cruiser rams you, it does not. One crash with a cruiser, however hard, takes at most 40% of your car's health on Normal, also when it shoves you into a wall. Officers hit a moving car less often: the faster you drive, the worse they shoot, and from 30 m/s (108 km/h) they hit less than half as often as they hit a standing car. Driving into the police yourself counts as before, and so does every other crash.</li>
         <li><strong>1.7 · Tail Lights</strong> — Shadow Run, a sixth odd job with no clock and no marker: stay 12 to 60 m behind a pink car for 40 seconds. The first job beam stands in the red car's own lane, 40 m ahead. Paper Round says ON FOOT on its beam and waits until you leave the car. Ten seconds of head start when you take the marked car in Borrowed Time. While you lose the police in a job, the road arrows lead to Mo's Respray. The shore in front of the Rustport quay is a dock apron with a lane, a crane rail and bollards. On a phone the buttons are more see-through, so the road shows behind them.</li>
         <li><strong>1.6 · Sharp</strong> — Graphics has a third choice, Auto, and a phone starts on it: twice the drawn pixels of 1.5, the neon glow, and shadows when the frame rate allows. It measures as you play, gives up shadows first and sharpness last, and takes back what it gave up when the phone is smooth again. On a touch screen each shot turns onto a target near the crosshair, the CAR button lights up when a car is in reach, and Settings can swap the steering stick for two arrows.</li>
@@ -549,7 +578,7 @@ const headingOf = (d) => Math.atan2(DX[d], DZ[d]);
 
 // ---------- save data ----------
 const SAVE_KEY = 'neon-coast-save-v1';
-const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], difficulty: 1, quality: 1, sound: 1, steer: 0 };
+const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], difficulty: 1, quality: 1, sound: 1, steer: 0, tricks: 0, styleBest: 0, driftBest: 0, getaways: 0, styleTold: 0 };
 const save = Object.assign({}, SAVE_DEFAULTS);
 try {
   Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'));
@@ -2786,19 +2815,22 @@ function buildCar(type, colorHex) {
   const t = VEHICLE_TYPES[type];
   const g = carGeos(type);
   const group = new T.Group();
+  const shell = new T.Group();      // everything above the wheels: it rolls in a turn and dips under the brakes
+  shell.rotation.order = 'YXZ';
+  group.add(shell);
   const paint = mat(colorHex);
   const add = (w, h, d, material, x, y, z) => {
     const mesh = new T.Mesh(boxGeo, material);
     mesh.scale.set(w, h, d);
     mesh.position.set(x, y, z);
     mesh.castShadow = true;
-    group.add(mesh);
+    shell.add(mesh);
     return mesh;
   };
   const body = new T.Mesh(g.body, paint);
   const cabin = new T.Mesh(g.cabin, glassMat);
   body.castShadow = cabin.castShadow = true;
-  group.add(body, cabin);
+  shell.add(body, cabin);
   const bodyY = g.y0 + g.bodyH / 2;
   const roofY = g.y1 + g.cabH;
   const roofZ = (g.topF + g.topR) / 2;
@@ -2832,7 +2864,7 @@ function buildCar(type, colorHex) {
   const beam = new T.Mesh(beamPoolGeo, lampGlowMat);     // pool of light on the road after dark
   beam.position.set(0, 0.07, t.len / 2 + 5.5);
   group.add(beam);
-  group.userData = { painted, wheels, bar: null };
+  group.userData = { painted, wheels, shell, bar: null };
   if (type === 'police') {
     add(t.wid + 0.03, g.bodyH * 0.55, t.len * 0.36, mat('#15171c'), 0, bodyY, -0.15);
     add(t.wid * 0.62, 0.1, 0.3, mat('#2a2d35'), 0, roofY + 0.1, roofZ);
@@ -2850,6 +2882,7 @@ function addVehicle(type, x, z, h, driver, colorHex) {
   const v = {
     type, t, x, z, h,
     vx: 0, vz: 0, vf: 0, slip: 0, steer: 0,
+    grip: t.grip, thr: 0, roll: 0, pitch: 0, sliding: false, call: 0,
     hp: t.hp, driver: driver || null,
     burn: 0, dead: false, deadT: 0, keep: false, siren: false, smokeT: 0,
     input: { thr: 0, st: 0 },
@@ -2996,6 +3029,24 @@ function blockedAhead(v, range) {
   return false;
 }
 
+const HONK_AFTER = 1.2;      // seconds a driver waits behind something before sounding the horn
+const HONK_REACH = 55;       // m: horns further away than this are not played
+const CALL_SPEED = 24;       // m/s of a patrol car on a call (traffic cruises at 10 to 15)
+let honkT = 0;               // game clock of the last horn, so a jam does not sound like one long chord
+function honk(v, force) {
+  const [px, pz] = focus();
+  const d = Math.hypot(v.x - px, v.z - pz);
+  if (d > HONK_REACH || state !== 'play' || (!force && gameClock - honkT < 0.5)) return false;
+  honkT = gameClock;
+  honkCount++;
+  // each kind of car has its own note; a horn across the junction is quieter than one on your bumper
+  sfx.hornAt(HORN_HZ[v.type] || 330, clamp(1 - d / HONK_REACH, 0.12, 1) * 0.16);
+  return true;
+}
+const HORN_HZ = { sedan: 370, taxi: 415, sports: 494, muscle: 311, pickup: 277, van: 247, police: 440 };
+let honkCount = 0;           // horns played so far (read by the checks)
+let gameClock = 0;           // seconds of play, advanced by the main loop
+
 const PURSUIT_CLOSE = 4;     // m/s: how much faster than the player's car a two-star cruiser arrives
 const PURSUIT_GAP = 8;       // m between car centres at which it has slowed to that (bumpers meet at about 5)
 const PURSUIT_BRAKE = 18;    // m/s2 of the 30 its brakes can do: it starts to slow down about 60 m out
@@ -3044,12 +3095,22 @@ function aiDrive(v, dt) {
     tx = a.cx;
     tz = a.cz;
     want = a.want;
+    if (v.call > 0) {
+      // a patrol car on a call: siren on, twice the traffic's speed, until the call runs out
+      v.call -= dt;
+      if (a.want === a.cruise) want = CALL_SPEED;
+    }
     if (blockedAhead(v, 6 + Math.abs(v.vf) * 0.8)) {
       a.block += dt;
       if (a.block < 7) want = 0;
       else if (a.block > 9.5) a.block = 0;      // crept through a jam, start waiting again
+      if (a.block > HONK_AFTER && !a.honked) {
+        a.honked = true;
+        honk(v);
+      }
     } else {
       a.block = Math.max(0, a.block - dt * 2);
+      if (a.block === 0) a.honked = false;
     }
   }
   const turn = wrapPi(Math.atan2(tx - v.x, tz - v.z) - v.h);
@@ -3073,6 +3134,12 @@ function aiDrive(v, dt) {
   v.input.thr = throttle;
   v.input.st = steer;
 }
+
+// The handbrake with the wheel turned, at speed, is a slide: the tail swings round faster than the car can
+// steer, the tyres hold a fraction of their grip, and most of the speed the slide scrubs off is carried on
+// in the new direction. Grip comes back over most of a second after the handbrake is let go.
+const DRIFT = { speed: 9, steer: 0.25, turn: 1.3, cut: 6, grip: 2.2, carry: 0.55, recover: 7 };
+const stickSteer = (x) => Math.sign(x) * Math.pow(Math.abs(x), 1.5);   // a thumb stick: finer near the middle
 
 const LEARNER_HP = 12;            // below 45 a car smokes, at 0 it burns
 function damageVehicle(v, amount) {
@@ -3104,7 +3171,11 @@ function impact(v, speed, police) {
   const [px, pz] = focus();
   const d = Math.hypot(v.x - px, v.z - pz);
   if (d < 60) sfx.crash(clamp((speed / 30) * (1 - d / 60), 0.03, 0.6));
-  if (v.driver === 'player') cam.shake = Math.min(0.6, speed / 40);
+  if (v.driver === 'player') {
+    cam.shake = Math.min(0.6, speed / 40);
+    styleCrash(speed);
+    if (touch.on && navigator.vibrate) navigator.vibrate(Math.round(clamp(speed * 5, 20, 140)));   // the crash in the hand (Android)
+  }
   for (let k = 0; k < 5; k++) puff(v.x, 0.7, v.z, rand(-4, 4), rand(1, 4), rand(-4, 4), 0.4, 1, 0.8, 0.4, 9);
 }
 
@@ -3118,8 +3189,10 @@ function updateVehicle(v, dt) {
   } else if (v.driver === 'player') {
     if (state === 'play') {
       throttle = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
-      steer = clamp((keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0) - touch.sx, -1, 1);
+      steer = clamp((keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0) - stickSteer(touch.sx), -1, 1);
       handbrake = !!keys.Space;
+      // one thumb cannot hold GAS and HAND BRAKE together: on a touch screen a slide keeps the power on by itself
+      if (touch.on && handbrake && throttle === 0 && Math.abs(v.steer) > DRIFT.steer && v.vf > DRIFT.speed) throttle = 1;
     }
   } else {
     aiDrive(v, dt);
@@ -3130,10 +3203,15 @@ function updateVehicle(v, dt) {
   if (v.crashT > 0) v.crashT -= dt;
 
   v.steer += clamp(steer - v.steer, -dt * 6, dt * 6);
+  v.thr = throttle;
   let fx = Math.sin(v.h);
   let fz = Math.cos(v.h);
   let vf = v.vx * fx + v.vz * fz;
-  v.h += ((v.steer * t.turn) / (1 + Math.abs(vf) / 40)) * clamp(vf / 6, -1, 1) * dt;
+  const sliding = handbrake && !v.dead && Math.abs(v.steer) > DRIFT.steer && vf > DRIFT.speed;
+  v.sliding = sliding;
+  const vfBefore = vf;
+  const yaw = ((v.steer * t.turn * (sliding ? DRIFT.turn : 1)) / (1 + Math.abs(vf) / 40)) * clamp(vf / 6, -1, 1);
+  v.h += yaw * dt;
   fx = Math.sin(v.h);
   fz = Math.cos(v.h);
   const rx = -fz;                 // right-hand side of the car
@@ -3153,11 +3231,19 @@ function updateVehicle(v, dt) {
     vf -= vf * 0.35 * dt;
   }
   if (handbrake) {
-    const cut = 16 * dt;
+    const cut = (sliding ? DRIFT.cut : 16) * dt;
     vf = Math.abs(vf) < cut ? 0 : vf - Math.sign(vf) * cut;
   }
   vf -= Math.sign(vf) * Math.min(Math.abs(vf), 0.6 * dt);
-  vl *= Math.exp(-(handbrake ? 1.5 : t.grip) * dt);
+  if (handbrake) v.grip = sliding ? DRIFT.grip : 1.5;
+  else v.grip = Math.min(t.grip, v.grip + DRIFT.recover * dt);
+  const vlBefore = vl;
+  vl *= Math.exp(-v.grip * dt);
+  if (v.driver && v.grip < t.grip && vf > 0) {
+    // a slide keeps its momentum: part of the speed the tyres scrub off sideways goes on forwards
+    const kept = Math.sqrt(Math.max(0, vf * vf + vlBefore * vlBefore - vl * vl));
+    vf += (kept - vf) * DRIFT.carry;
+  }
   v.slip = Math.abs(vl);
   v.vf = vf;
   v.vx = fx * vf + rx * vl;
@@ -3218,6 +3304,12 @@ function updateVehicle(v, dt) {
   v.mesh.position.set(v.x, 0, v.z);
   v.mesh.rotation.y = v.h;
   const u = v.mesh.userData;
+  // weight: the body leans out of a turn, squats under power and dips under the brakes
+  const ease = Math.min(1, dt * 7);
+  v.roll += (clamp(yaw * vfBefore * 0.0035, -0.09, 0.09) - v.roll) * ease;
+  v.pitch += ((v.dead || dt <= 0 ? 0 : clamp(((vfBefore - vf) / dt) * 0.0018, -0.035, 0.06)) - v.pitch) * ease;
+  u.shell.rotation.z = v.roll;
+  u.shell.rotation.x = v.pitch;
   u.wheels[0].rotation.y = u.wheels[1].rotation.y = v.steer * 0.45;
   if (u.bar) {
     const flash = v.siren && !v.dead ? Math.floor(performance.now() / 160) % 2 : -1;
@@ -3275,6 +3367,8 @@ function collideVehicles() {
           nx /= d;
           nz /= d;
           const pen = (reach - d) * 0.5;
+          if (A.driver === 'player') B.scraped = 1.5;       // touching a car is not a near miss
+          else if (B.driver === 'player') A.scraped = 1.5;
           A.x += nx * pen;
           A.z += nz * pen;
           B.x -= nx * pen;
@@ -3601,7 +3695,25 @@ function initAudio() {
     return { osc, gain };
   };
   audio.engine = loop('sawtooth', 420);
+  audio.engine2 = loop('square', 240);         // the same note an octave down: the engine's weight
   audio.siren = loop('square', 1500);
+  // two beds of noise that are always running and are turned up when needed: tyres, and the wind at speed
+  const hiss = (type, cutoff, q) => {
+    const src = ctx.createBufferSource();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+    src.buffer = audio.noise;
+    src.loop = true;
+    filter.type = type;
+    filter.frequency.value = cutoff;
+    filter.Q.value = q;
+    gain.gain.value = 0;
+    src.connect(filter).connect(gain).connect(audio.fx);
+    src.start();
+    return { filter, gain };
+  };
+  audio.squeal = hiss('bandpass', 1700, 5);
+  audio.wind = hiss('lowpass', 520, 0.7);
   applySound();
 }
 
@@ -3659,6 +3771,11 @@ const sfx = {
   star: () => tone(620, 0.3, 0.16, 'sawtooth', 980),
   door: () => noiseBurst(0.09, 0.35, 320),
   horn: () => tone(330, 0.45, 0.2, 'square'),
+  hornAt: (hz, vol) => {                       // another driver's horn: two notes, as loud as it is near
+    tone(hz, 0.34, vol, 'square');
+    tone(hz * 1.26, 0.34, vol * 0.7, 'square');
+  },
+  trick: (n) => tone(520 * Math.pow(1.122, Math.min(n, 9)), 0.09, 0.13, 'triangle'),   // each trick in a chain a tone higher
   hurt: () => tone(160, 0.2, 0.3, 'sawtooth', 80),
   click: () => tone(1200, 0.03, 0.1, 'square'),
   pass: () => [523, 659, 784, 1047].forEach((f, k) => setTimeout(() => tone(f, 0.25, 0.2, 'triangle'), k * 130)),
@@ -3705,19 +3822,53 @@ function setStation(k) {
   noiseBurst(0.09, 0.05, 2600, 0, audio.fx, 'bandpass');     // the dial crackles between stations
 }
 
+// The engine has five gears: its note climbs through each one and drops at the change, so speed can be heard.
+const GEAR_ENDS = [0, 0.14, 0.3, 0.5, 0.72, 1.2];      // share of the car's top speed at which each gear runs out
+function engineNote(car) {
+  const share = Math.abs(car.vf) / car.t.max;
+  let gear = 1;
+  while (gear < GEAR_ENDS.length - 1 && share > GEAR_ENDS[gear]) gear++;
+  const rev = clamp((share - GEAR_ENDS[gear - 1]) / (GEAR_ENDS[gear] - GEAR_ENDS[gear - 1]), 0, 1);
+  return { gear, rev, hz: 52 + rev * 78 + gear * 6 };
+}
+// what the car sounds like this frame (also read by the checks): engine note, tyres, wind
+function carSound(car) {
+  if (!car) return { gear: 0, hz: 48, engine: 0, weight: 0, squeal: 0, wind: 0 };
+  const speed = Math.hypot(car.vx, car.vz);
+  const note = engineNote(car);
+  // the part of the engine that comes from revs and throttle: none of it at idle
+  const work = note.rev * 0.04 + (car.thr > 0 ? 0.03 : 0);
+  return {
+    gear: note.gear,
+    hz: note.hz,
+    engine: 0.045 + work,
+    // the low octave only joins when the engine works, so an idling car does not drown the radio
+    weight: work * 0.55,
+    squeal: speed > 6 ? clamp((car.slip - 3) / 9, 0, 1) * 0.11 : 0,
+    wind: clamp((speed - 14) / 34, 0, 1) * 0.1,
+  };
+}
+
 function updateAudio() {
   const ctx = audio.ctx;
   if (!ctx) return;
   const now = ctx.currentTime;
   const car = state === 'play' ? player.car : null;
-  audio.engine.osc.frequency.setTargetAtTime(car ? 48 + Math.abs(car.vf) * 3.4 : 48, now, 0.08);
-  audio.engine.gain.gain.setTargetAtTime(car ? 0.05 + Math.min(0.06, Math.abs(car.vf) * 0.002) : 0, now, 0.1);
+  const mix = (audio.mix = carSound(car));
+  audio.engine.osc.frequency.setTargetAtTime(mix.hz, now, 0.05);
+  audio.engine.gain.gain.setTargetAtTime(mix.engine, now, 0.08);
+  audio.engine2.osc.frequency.setTargetAtTime(mix.hz / 2, now, 0.05);
+  audio.engine2.gain.gain.setTargetAtTime(mix.weight, now, 0.08);
+  audio.squeal.gain.gain.setTargetAtTime(mix.squeal, now, 0.06);
+  audio.squeal.filter.frequency.setTargetAtTime(1500 + (car ? car.slip * 45 : 0), now, 0.1);
+  audio.wind.gain.gain.setTargetAtTime(mix.wind, now, 0.25);
 
+  // sirens: the ones chasing you at full volume, a patrol car on a call somewhere in town more quietly
   let sirenVol = 0;
-  if (wanted.stars > 0 && state === 'play') {
+  if (state === 'play') {
     const [px, pz] = focus();
     for (const v of vehicles) {
-      if (v.siren) sirenVol = Math.max(sirenVol, clamp(1 - Math.hypot(v.x - px, v.z - pz) / 170, 0, 1));
+      if (v.siren) sirenVol = Math.max(sirenVol, clamp(1 - Math.hypot(v.x - px, v.z - pz) / 170, 0, 1) * (wanted.stars > 0 ? 1 : 0.5));
     }
   }
   audio.siren.osc.frequency.value = 700 + 260 * Math.sin(now * 5.5);
@@ -3811,6 +3962,157 @@ function addMoney(amount) {
   toastTimers.delta = setTimeout(() => (el.className = ''), 2400);
 }
 
+// ---------- style: near misses and slides pay cash, and more of it in a row ----------
+// A near miss is another driver's car passing the player's car, front to back, with a small gap and no touch.
+// A slide is the car travelling well sideways (more than steering alone gives) for a moment. Each trick adds
+// its cash to a chain; the chain is paid, times its multiplier, when no further trick follows in time, and is
+// lost in a crash. With the police behind you every trick is worth double.
+const STYLE = {
+  nearSpeed: 14,       // m/s the player's car must be doing
+  nearClosing: 8,      // m/s between the two cars: creeping past a queue is not a near miss
+  nearGap: 1.8,        // m of daylight between the two cars at most
+  nearPay: 25,
+  copPay: 50,          // a near miss with a police car
+  driftAngle: 0.36,    // sideways share of the car's speed (21 degrees)
+  driftSpeed: 10,
+  driftMin: 0.6,       // seconds before a slide counts
+  driftPay: 30,        // $ a second
+  driftCap: 6,
+  hold: 4,             // seconds a chain stays open after its last trick
+  step: 0.5,           // each further trick adds this to the multiplier
+  maxMult: 4,
+  heat: 2,             // with wanted stars on
+  crash: 6,            // m/s: a crash at least this hard loses the chain
+};
+const style = { bank: 0, count: 0, t: 0, drift: 0, crashT: 0, noteT: 0, shown: false };
+const styleMult = () => Math.min(STYLE.maxMult, 1 + STYLE.step * Math.max(0, style.count - 1));
+const styleValue = () => Math.round(style.bank * styleMult());
+
+// the card under the clock: what the last trick was, what the chain is worth, how long it stays open
+function styleNote(title, detail, kind, secs) {
+  const el = $('style');
+  el.querySelector('b').textContent = title;
+  el.querySelector('span').textContent = detail;
+  el.className = 'show ' + (kind || '');
+  style.shown = true;
+  style.noteT = secs || 0;        // 0: stays while the chain is open
+}
+function styleTrick(title, cash) {
+  style.count++;
+  style.bank += cash * (wanted.stars > 0 ? STYLE.heat : 1);
+  style.t = STYLE.hold;
+  save.tricks = (save.tricks || 0) + 1;
+  const mult = styleMult();
+  styleNote(title, '$' + styleValue() + (mult > 1 ? '  \u00b7  x' + mult : '') + (wanted.stars > 0 ? '  \u00b7  HEAT' : ''), 'open');
+  sfx.trick(style.count);
+}
+function styleClear() {
+  style.bank = 0;
+  style.count = 0;
+  style.t = 0;
+  style.drift = 0;
+}
+function styleBank() {
+  if (!style.count) return 0;
+  const pay = styleValue();
+  const chain = style.count;
+  styleClear();
+  save.styleBest = Math.max(save.styleBest || 0, pay);
+  addMoney(pay);
+  sfx.cash();
+  styleNote('BANKED', '+$' + pay + (chain > 1 ? '  \u00b7  ' + chain + ' in a row' : ''), 'paid', 2.2);
+  return pay;
+}
+// called for every crash of the player's car (part 2)
+function styleCrash(speed) {
+  if (speed < STYLE.crash) return;
+  style.crashT = 1;               // a spin after a crash is not a slide
+  const lost = styleValue();
+  const open = style.count > 0;
+  styleClear();
+  if (open) styleNote('CRASHED', 'lost $' + lost, 'lost', 2.2);
+  else if (style.shown && !style.noteT) styleReset();      // a slide that was still being counted
+}
+function styleReset() {
+  styleClear();
+  style.crashT = 0;
+  style.noteT = 0;
+  style.shown = false;
+  $('style').className = '';
+}
+
+function updateStyle(dt) {
+  if (style.shown && style.noteT > 0 && (style.noteT -= dt) <= 0) {
+    style.shown = false;
+    $('style').className = '';
+  }
+  const car = player.car;
+  if (!car || car.dead) {
+    styleBank();                  // stepping out takes the money with you
+    style.drift = 0;
+    return;
+  }
+  style.crashT = Math.max(0, style.crashT - dt);
+  const speed = Math.hypot(car.vx, car.vz);
+  const fx = Math.sin(car.h);
+  const fz = Math.cos(car.h);
+
+  for (const o of vehicles) {
+    if (o === car) continue;
+    if (o.scraped > 0) o.scraped -= dt;
+    const dx = o.x - car.x;
+    const dz = o.z - car.z;
+    if (Math.abs(dx) > 14 || Math.abs(dz) > 14) {
+      o.passAhead = undefined;
+      continue;
+    }
+    const ahead = dx * fx + dz * fz;
+    const was = o.passAhead;
+    o.passAhead = ahead;
+    if (!(was > 0 && ahead <= 0)) continue;              // it has just gone from in front of the bonnet to behind it
+    if (speed < STYLE.nearSpeed || o.dead || !o.driver || o.scraped > 0 || o.nearT > gameClock || style.crashT > 0) continue;
+    if (Math.hypot(car.vx - o.vx, car.vz - o.vz) < STYLE.nearClosing) continue;
+    const turn = o.h - car.h;
+    const reach = car.t.wid / 2 + (Math.abs(Math.cos(turn)) * o.t.wid + Math.abs(Math.sin(turn)) * o.t.len) / 2;
+    if (Math.abs(dx * fz - dz * fx) - reach > STYLE.nearGap) continue;
+    o.nearT = gameClock + 3;
+    const police = o.type === 'police';
+    styleTrick(police ? 'CLOSE CALL' : 'NEAR MISS', police ? STYLE.copPay : STYLE.nearPay);
+    if (!police) honk(o, true);                          // the other driver leans on the horn
+  }
+
+  const sideways = speed > 1 ? car.slip / speed : 0;
+  if (sideways > STYLE.driftAngle && speed > STYLE.driftSpeed && style.crashT <= 0) {
+    style.drift += dt;
+    if (style.drift >= STYLE.driftMin) {
+      // the slide is live: the card counts it, and an open chain waits for it to end
+      const cash = Math.round(STYLE.driftPay * Math.min(STYLE.driftCap, style.drift));
+      styleNote('SLIDE  ' + style.drift.toFixed(1) + 's', '+$' + cash * (wanted.stars > 0 ? STYLE.heat : 1), 'open');
+      if (style.count) style.t = Math.max(style.t, 0.5);
+    }
+  } else if (style.drift > 0) {
+    const secs = Math.min(STYLE.driftCap, style.drift);
+    style.drift = 0;
+    if (secs >= STYLE.driftMin) {
+      save.driftBest = Math.max(save.driftBest || 0, Math.round(secs * 10) / 10);
+      styleTrick('SLIDE  ' + secs.toFixed(1) + 's', Math.round(STYLE.driftPay * secs));
+    }
+  }
+
+  if (style.count) {
+    style.t -= dt;
+    $('style-bar').style.width = Math.round(clamp(style.t / STYLE.hold, 0, 1) * 100) + '%';
+    if (style.t <= 0) styleBank();
+  }
+
+  // said once, the first time the car is really moving
+  if (!save.styleTold && speed > 17 && state === 'play') {
+    save.styleTold = 1;
+    persist();
+    hint('Near misses pay cash, and so does a slide: [Space] with the wheel turned. Chain them before the bar runs out.', 7);
+  }
+}
+
 // ---------- perks: what you do in one part of the city pays off in another ----------
 const PERKS = [
   { id: 'armour', name: 'Body armour', how: 'Find 5 hidden packages', what: 'You take 25% less damage', count: () => [save.packages.length, 5] },
@@ -3856,9 +4158,13 @@ function checkPerks(quiet) {
 }
 
 // ---------- wanted level ----------
-const wanted = { pts: 0, stars: 0, evade: 0, bust: 0, spawnT: 0 };
+const wanted = { pts: 0, stars: 0, evade: 0, bust: 0, spawnT: 0, peak: 0, seenT: 0, callT: 20 };
 const STAR_PTS = [0, 1, 3, 6, 10, 15];
 const COPS_PER_STAR = [0, 1, 2, 3, 4, 6];
+const HOLD_FIRE_SPEED = 8;                       // m/s: at two stars officers do not shoot at a car faster than this
+const GETAWAY_PAY = [0, 0, 150, 400, 800, 1400]; // cash for losing the police on the road, by the most stars the chase reached
+const GETAWAY_SEEN = 10;                         // seconds the police must have had you in sight for the full sum
+const evadeNeed = () => (7 + wanted.stars * 3) * diff().evade;      // seconds out of sight that lose them
 
 function refreshStars() {
   let s = 0;
@@ -3886,6 +4192,10 @@ function setWanted(n) {
   wanted.pts = STAR_PTS[n];
   wanted.evade = 0;
   wanted.bust = 0;
+  if (n === 0) {
+    wanted.peak = 0;              // the next chase starts its own count
+    wanted.seenT = 0;
+  }
   refreshStars();
 }
 
@@ -4032,22 +4342,36 @@ function updateWanted(dt) {
   if (wanted.stars === 0) {
     wanted.pts = Math.max(0, wanted.pts - dt * 0.03);
     wanted.bust = 0;
-    for (const v of vehicles) v.siren = false;
+    wanted.peak = 0;
+    wanted.seenT = 0;
+    // a quiet city still has police at work: now and then a patrol car answers a call with its siren on
+    wanted.callT -= dt;
+    if (wanted.callT <= 0) {
+      wanted.callT = rand(35, 70);
+      const patrol = vehicles.find((v) => v.driver === 'cop' && !v.dead && Math.hypot(v.x - px, v.z - pz) < 220) || spawnCop();
+      if (patrol) patrol.call = rand(14, 22);
+    }
+    for (const v of vehicles) v.siren = v.call > 0 && v.driver === 'cop' && !v.dead;
     return;
   }
+  wanted.peak = Math.max(wanted.peak, wanted.stars);
   let active = 0;
   let seen = fromAbove;
   let arresting = false;
+  const carSpeed = player.car ? Math.hypot(player.car.vx, player.car.vz) : 0;
+  // two stars is a pursuit: officers shoot at you on foot or in a car that has all but stopped, not at a car on the move
+  const holdFire = wanted.stars === 2 && carSpeed > HOLD_FIRE_SPEED;
   for (const v of vehicles) {
     if (v.driver !== 'cop' || v.dead) continue;
     v.siren = true;
+    v.call = 0;
     const d = Math.hypot(v.x - px, v.z - pz);
     if (d < 230) active++;
     if (d < 60 && (d < 22 || v.ai.direct)) seen = true;
     if (d < 7.5 && Math.abs(v.vf) < 6) arresting = true;
 
     // two stars and up: officers open fire
-    if (wanted.stars >= 2 && d < 36 && v.ai.direct) {
+    if (wanted.stars >= 2 && d < 36 && v.ai.direct && !holdFire) {
       v.ai.fire -= dt;
       if (v.ai.fire <= 0) {
         v.ai.fire = rand(0.5, 1.1);
@@ -4071,9 +4395,20 @@ function updateWanted(dt) {
   }
 
   wanted.evade = seen ? 0 : wanted.evade + dt;
-  if (wanted.evade > (7 + wanted.stars * 3) * diff().evade) {
+  if (seen) wanted.seenT += dt;
+  if (wanted.evade > evadeNeed()) {
+    // a getaway pays: more for more stars, and in full only when the police really were on you
+    const peak = wanted.peak;
+    const pay = Math.round((GETAWAY_PAY[peak] * Math.min(1, wanted.seenT / GETAWAY_SEEN)) / 10) * 10;
     setWanted(0);
-    hint('You lost them.');
+    if (pay > 0) {
+      save.getaways = (save.getaways || 0) + 1;
+      addMoney(pay);
+      sfx.cash();
+      hint(`You lost them.  +$${pay} for a ${peak}-star getaway.`, 5);
+    } else {
+      hint('You lost them.');
+    }
     return;
   }
 
@@ -4755,26 +5090,30 @@ function cabDuty() {
   startMission();
 }
 
-// J: after the story, ask the contacts for another kind of odd job
+// J: ask the contacts for an odd job. They open once the first story job is done; while story jobs are left,
+// J goes from the story job to an odd job and back, and each time round it is another kind of odd job.
 function anotherJob() {
   if (mission.active) {
     hint('Finish your current job first.');
     return;
   }
-  const job = mission.offer;
-  if (save.mission < MISSIONS.length) {
-    hint(`Next job: ${job.name} from ${job.by}, $${job.reward}. Odd jobs open after the story.`, 4.5);
+  if (save.mission === 0) {
+    const first = mission.offer;
+    hint(`First job: ${first.name} from ${first.by}, $${first.reward}. Odd jobs open once it is done.`, 4.5);
     return;
   }
-  offerMission();
+  const story = MISSIONS[save.mission];
+  const toStory = story && mission.offer !== story;
+  offerMission(toStory ? story : oddJob());
   const next = mission.offer;
-  hint(`${next.name} from ${next.by}, $${next.reward}${next.kind === 'foot' ? ', ON FOOT' : next.kind === 'tail' ? ', follow a car unseen' : ''}.  [J] another kind`, 5);
+  if (toStory) hint(`Story job: ${next.name} from ${next.by}, $${next.reward}.  [J] an odd job instead`, 5);
+  else hint(`${next.name} from ${next.by}, $${next.reward}${next.kind === 'foot' ? ', ON FOOT' : next.kind === 'tail' ? ', follow a car unseen' : ''}.  ${story ? '[J] back to the story job' : '[J] another kind'}`, 5);
   sfx.cash();
 }
 
-function offerMission() {
+function offerMission(job) {
   removeMarker(mission.startMarker);
-  mission.def = mission.offer = MISSIONS[save.mission] || oddJob();
+  mission.def = mission.offer = job || MISSIONS[save.mission] || oddJob();
   const [x, z] = mission.def.at;
   mission.startMarker = addMarker('mission', x, z, 2.2, '#ffe14f', 'JOB: ' + mission.def.by.toUpperCase() + (mission.def.kind === 'foot' ? ' · ON FOOT' : ''));
   mission.blip = [x, z];
@@ -4895,7 +5234,7 @@ function endMission(passed, reason) {
     } else {
       if (save.mission < MISSIONS.length) {
         save.mission++;
-        if (save.mission === 1) hint('From now on the police are watching you.', 5);
+        if (save.mission === 1) hint('From now on the police are watching you.  Odd jobs are open: [J].', 6);
         if (save.mission === MISSIONS.length) hint('Story finished. Odd jobs from here: [J] picks the kind.', 7);
       }
       banner('pass', 'MISSION PASSED', '+$' + pay, 4.5);
@@ -5432,7 +5771,18 @@ function updateHud() {
     for (let k = 0; k < 5; k++) els[k].className = k < wanted.stars ? (flashing ? 'on dim' : 'on') : '';
   }
 
+  // out of their sight: a bar under the stars fills up, and when it is full they are lost
+  const hiding = wanted.stars > 0 && wanted.evade > 0.4;
+  $('evade').classList.toggle('show', hiding);
+  if (hiding) $('evade-bar').style.width = Math.round(clamp(wanted.evade / evadeNeed(), 0, 1) * 100) + '%';
+
   const car = player.car;
+  const rush = car ? clamp((Math.hypot(car.vx, car.vz) - SPEED_FEEL.rushFrom) / (SPEED_FEEL.rushFull - SPEED_FEEL.rushFrom), 0, 1) : 0;
+  const rushShown = Math.round(rush * 20) / 20;
+  if (hudCache.rush !== rushShown) {
+    hudCache.rush = rushShown;
+    $('rush').style.opacity = rushShown;
+  }
   if (car) {
     const kmh = Math.round(Math.hypot(car.vx, car.vz) * 3.6);
     setText('speed', kmh + ' km/h');
@@ -5488,6 +5838,9 @@ const TOUCH_WORDS = [
   [/\[Shift\] sprints/g, 'full stick sprints'],
   [/\[Space\]/g, '[HAND BRAKE]'],
   [/\[J\] another kind/g, 'the pause menu has other kinds'],
+  [/\[J\] an odd job instead/g, 'the pause menu has odd jobs'],
+  [/\[J\] back to the story job/g, 'the pause menu goes back to the story job'],
+  [/Odd jobs are open: \[J\]\./g, 'Odd jobs are open: see the pause menu.'],
   [/\[J\] picks the kind/g, 'the pause menu picks the kind'],
   [/Press E\b/g, 'Tap USE'],
   [/Press T\b/g, 'Tap CAB'],
@@ -5814,6 +6167,8 @@ let titleAngle = 0.6;
 const view = { fov: 62 };        // the lens at rest; resize() widens it on an upright screen
 
 // ---------- keeping the streets busy around the player ----------
+// how many are kept within reach of the player: [with the full crowd, on the lightest graphics]
+const CROWD = { traffic: [20, 11], parked: [11, 7], walkers: [34, 18] };
 function updatePopulation(dt) {
   popT -= dt;
   if (popT > 0) return;
@@ -5831,14 +6186,14 @@ function updatePopulation(dt) {
     if (v.driver === 'ai' || v.driver === 'cop') traffic++;
     else if (!v.driver && !v.dead) parked++;
   }
-  if (traffic < (gfx.crowd ? 15 : 9)) spawnTraffic(95, 250, false);
-  if (parked < (gfx.crowd ? 9 : 6)) spawnTraffic(95, 250, true);
+  if (traffic < (gfx.crowd ? CROWD.traffic[0] : CROWD.traffic[1])) spawnTraffic(95, 250, false);
+  if (parked < (gfx.crowd ? CROWD.parked[0] : CROWD.parked[1])) spawnTraffic(95, 250, true);
   for (let k = peds.length - 1; k >= 0; k--) {
     if (dist2(peds[k].x, peds[k].z, px, pz) < 190 * 190) continue;
     scene.remove(peds[k].mesh);
     peds.splice(k, 1);
   }
-  if (peds.length < (gfx.crowd ? 26 : 14)) spawnWalker(45, 150);
+  if (peds.length < (gfx.crowd ? CROWD.walkers[0] : CROWD.walkers[1])) spawnWalker(45, 150);
 }
 
 // ---------- session control ----------
@@ -5858,6 +6213,7 @@ function resetSession() {
   $('objective').classList.remove('show');
   setWanted(0);
   wanted.pts = 0;
+  styleReset();
   hideHeli();
   cab.on = false;
   ride.t = 0;
@@ -5894,6 +6250,7 @@ function die(kind) {
   if (mission.active) endMission(false, kind === 'busted' ? 'You were arrested.' : 'You were taken out.');
   state = 'dead';
   deadKind = kind;
+  styleReset();
   deadT = 3.4;
   firing = false;
   if (player.car) exitCar();
@@ -5921,6 +6278,9 @@ function respawn() {
 }
 
 // ---------- camera ----------
+// how speed shows: the lens widens by `lens` degrees for each m/s up to `lensMax` (1.8: 0.3 and 14), the car
+// trembles above `rumbleFrom` of its top speed, and the edges of the screen darken from `rushFrom` m/s
+const SPEED_FEEL = { lens: 0.42, lensMax: 20, rumbleFrom: 0.72, rumble: 0.22, rushFrom: 22, rushFull: 46 };
 function updateCamera(dt) {
   if (state === 'title') {
     titleAngle += dt * 0.07;
@@ -5947,7 +6307,11 @@ function updateCamera(dt) {
   const ty = car ? 1.6 : 1.55 + player.y;
   const speed = car ? Math.hypot(car.vx, car.vz) : 0;
   if (car && performance.now() - cam.lastMouse > 1400 && car.vf > 2.5) {
-    cam.yaw += wrapPi(car.h - cam.yaw) * Math.min(1, dt * 2.8);
+    // in a slide the camera stays nearer the way the car is travelling than the way it points,
+    // so the car is seen at an angle and the road ahead stays in view
+    const sideways = speed > 6 ? car.slip / speed : 0;
+    const travel = wrapPi(Math.atan2(car.vx, car.vz) - car.h) * clamp((sideways - 0.15) * 1.6, 0, 0.6);
+    cam.yaw += wrapPi(car.h + travel - cam.yaw) * Math.min(1, dt * 2.8);
     cam.pitch += (-0.2 - cam.pitch) * Math.min(1, dt * 1.5);
   }
   if (!car && touch.on && player.speed > 0 && performance.now() - cam.lastMouse > 1200) {
@@ -5977,11 +6341,13 @@ function updateCamera(dt) {
   }
   cam.dist = open < cam.dist ? open : lerp(cam.dist, open, Math.min(1, dt * 4));
   cam.shake = Math.max(0, cam.shake - dt * 1.6);
+  // near its top speed the car trembles
+  if (car && state === 'play') cam.shake = Math.max(cam.shake, (speed / car.t.max - SPEED_FEEL.rumbleFrom) * SPEED_FEEL.rumble);
   const jx = (Math.random() - 0.5) * cam.shake;
   const jy = (Math.random() - 0.5) * cam.shake;
   camera.position.set(ox - dx * cam.dist + jx, Math.max(0.5, ty - dy * cam.dist + jy), oz - dz * cam.dist);
   camera.lookAt(ox + dx * 10, ty + dy * 10, oz + dz * 10);
-  const fov = view.fov + Math.min(14, speed * 0.3);
+  const fov = view.fov + Math.min(SPEED_FEEL.lensMax, speed * SPEED_FEEL.lens);
   if (Math.abs(fov - camera.fov) > 0.05) {
     camera.fov = lerp(camera.fov, fov, Math.min(1, dt * 3));
     camera.updateProjectionMatrix();
@@ -6006,8 +6372,10 @@ function update(dt, realDt) {
       if (firing) playerAttack();
     }
   }
+  if (state === 'play') gameClock += dt;
   for (let k = 0; k < vehicles.length; k++) updateVehicle(vehicles[k], dt);
   collideVehicles();
+  if (state === 'play') updateStyle(dt);
   vehiclesVsPeople(dt);
   for (let k = peds.length - 1; k >= 0; k--) {
     if (updatePed(peds[k], dt)) continue;
@@ -6293,11 +6661,14 @@ function renderSettings() {
   }
   $('btn-end-shift').hidden = !(mission.active && mission.def === FERRY);
   $('btn-shift').hidden = mission.active;
-  $('btn-oddjob').hidden = mission.active || save.mission < MISSIONS.length;
+  $('btn-oddjob').hidden = mission.active || save.mission < 1;
+  $('btn-oddjob').textContent = !MISSIONS[save.mission] ? 'Another odd job' : mission.offer === MISSIONS[save.mission] ? 'An odd job instead' : 'Back to the story job';
   const jobs = Math.min(save.mission, MISSIONS.length) + ' / ' + MISSIONS.length;
   const have = PROPERTIES.filter(owned).length;
   $('progress').textContent = 'Time ' + clockText() + '     Jobs ' + jobs + '     Packages ' + save.packages.length + ' / ' + packageSpots.length + '     Cash $' + save.money + (save.ferryRuns ? `     Ferry shifts ${save.ferryRuns} · best ${save.ferryBest}s` : '')
-    + (save.fares ? `     Cab fares ${save.fares} · best run ${save.fareBest}` : '') + (have ? `     Property ${have} / ${PROPERTIES.length}` : '');
+    + (save.fares ? `     Cab fares ${save.fares} · best run ${save.fareBest}` : '') + (have ? `     Property ${have} / ${PROPERTIES.length}` : '')
+    + (save.tricks ? `     Tricks ${save.tricks} · best chain $${save.styleBest}` + (save.driftBest ? ` · longest slide ${save.driftBest}s` : '') : '')
+    + (save.getaways ? `     Getaways ${save.getaways}` : '');
   const perkBox = $('perks');
   perkBox.innerHTML = '';
   for (const p of PERKS) {
@@ -6532,6 +6903,13 @@ window.NEON = {
   ride, checkPerks, packageSpots, damageVehicle, audio, radio, STATIONS, setStation, anotherJob, offerMission, blocks, TAIL,
   touch, say, keyAction, setTouchMode, view, gfx, auto, governor, LADDER, applySettings, renderSettings, aimAssist,
   addVehicle, removeVehicle,
+  style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, carSound, updateStyle, honk,
+  get honks() {
+    return honkCount;
+  },
+  get clock() {
+    return gameClock;
+  },
   setTime(hours) {
     tod = hours;
   },

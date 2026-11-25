@@ -54,7 +54,7 @@ const headingOf = (d) => Math.atan2(DX[d], DZ[d]);
 
 // ---------- save data ----------
 const SAVE_KEY = 'neon-coast-save-v1';
-const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], difficulty: 1, quality: 1, sound: 1, steer: 0 };
+const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], difficulty: 1, quality: 1, sound: 1, steer: 0, tricks: 0, styleBest: 0, driftBest: 0, getaways: 0, styleTold: 0 };
 const save = Object.assign({}, SAVE_DEFAULTS);
 try {
   Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'));

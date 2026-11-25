@@ -617,3 +617,95 @@ as a rule fix that is measured, not as "the police jobs can now be finished".
   https://juw12.github.io/p/neon-coast/ shows FAIR COP / 01.8 and the three police items above the 1.7 ones.
 - Obsidian: a line in `journal/2026-11-25.md`, saved through Cairn.
 - Not done: the four-versions gate (`platforms.py`), Featured (`featured.py`), a fact sheet, a council score.
+
+## Run 7 (2026-11-25, "neon coast i played not fun enough ... all 1 till 6 improve", from the shipped 1.8 build)
+
+Ask: Juwen played 1.8 and said it was not fun enough. He was shown six things that could be why (the jobs,
+how the car drives, the police, the city, what there is to do between jobs, the phone) and answered "all 1
+till 6 improve". This is the first run that starts from a person's verdict (R5-11) and not from a score.
+
+Goal beyond the goal, unchanged: a stranger opens one link, knows what to do within a minute and has
+something worth doing for ten. 1.8 had the first minute; the ten were jobs or nothing, and driving between
+them paid nothing and felt like nothing.
+
+### Run queue (run 7)
+
+- [x] R7-0 Rebuild 1.8, read the driving, police, crowd and sound code, write `test/thrill.py` first (the
+      1.8 build passes 11 of its 34 checks: the ones that say what must stay as it was)
+- [x] R7-1 Driving: the handbrake with the wheel turned is a slide that keeps the speed; body roll and pitch
+- [x] R7-2 Something to do between jobs: near misses and slides pay, with a chain and a card
+- [x] R7-3 Police: no gunfire at a moving car at two stars (the first open item of run 6), getaway pay, the
+      LOSING THEM bar
+- [x] R7-4 Jobs: odd jobs from the first story job on, J goes there and back
+- [x] R7-5 City: more traffic and people, horns, a patrol car on a call
+- [x] R7-6 Speed: five gears, tyre squeal, wind, a wider lens, dark edges
+- [x] R7-7 Phone: the slide keeps the power on, a finer stick, a crash vibration
+- [x] R7-8 All suites on the final build, 1.8 against 1.9 where a number can be compared
+- [ ] R7-9 Juwen plays 1.9 and says whether it is fun now: the only measurement that counts for this run
+- [ ] R6-7 Council score and blind pair: not done this run either. No new sheet, no judges
+- [ ] R5-11 A real iPhone and Android phone run it: needs Juwen
+
+### Assumptions (run 7)
+
+- Assumed: "all 1 till 6" means one release with all six, not six releases.
+- Assumed: release name 1.9 "Sideways".
+- Assumed: the sums. $25 for a near miss ($50 past a police car), $30 a second of slide, a chain of up to
+  four times, $150 / $400 / $800 / $1,400 for a getaway at two to five stars. They are first guesses next to
+  story jobs of $250 to $3,500 and were not tuned by play.
+- Assumed: the other numbers. A near miss is under 1.8 m at over 14 m/s; a slide counts from 0.6 s; the
+  chain holds 4 s; the two-star hold-fire starts at 8 m/s; a getaway pays in full after 10 s in sight; the
+  crowd is 20 driving, 11 parked, 34 walking; a horn after 1.2 s; a patrol call at 24 m/s.
+- Assumed: three checks may change because the rule they hold changed, and one because it was wrong.
+  `test/city.py`: the check "J during the story names the next job and changes nothing" held the old rule;
+  it is now two checks for the new one (55 checks). `test/chase.py`: the two checks of gunfire at a moving
+  car run at three stars with the same thresholds, because two stars no longer fires at one.
+  `test/touch.py`: the aim-assist check compared two angles as numbers and failed whenever the camera's
+  heading was past half a turn (it did on one of four screens this run; the same on the 1.8 build, where the
+  camera ended within 0.031 rad of the walker and the check read 6.253). It now compares directions; the
+  0.05 rad limit is unchanged.
+- Assumed: 1.9 ships without a council score, as 1.8 did.
+
+| round | change | gates | judge score | pairwise win | kept? | note |
+|---|---|---|---|---|---|---|
+| 13 (release 1.9 Sideways) | the six points above | 10/10 | not judged | - | shipped | `test/thrill.py` 34/34 (1.8: 11/34). One fault found by a suite on the way: an idling engine drowned the radio (`test/radio.py` 8/14); the engine's new low octave now joins only under revs or throttle (14/14) |
+
+What was measured (`NeonCoast.html` 905,021 bytes, sha256 `e6fb8d09`). The PC was busy with other
+work; `test/thrill.py` and `test/chase.py` wait on the game's clock.
+
+- `test/thrill.py` 34/34 on 1.9, 11/34 on 1.8. Handbrake at full lock from 24 m/s for 0.9 s: 1.8 turns the
+  car 68 degrees and leaves 14.3 m/s; 1.9 turns it 84, 84 and 91 degrees in three runs and leaves 21.6 to 21.9 m/s. With no thumb on GAS
+  (touch): 1.8 leaves 5.6 m/s, 1.9 21.3 to 21.5. Handbrake with the wheel straight: 24 to about 5 m/s on both.
+  Lens at 46 m/s: 19 degrees wider (1.8: 13.7). Crowd around the player: 20 driving, 11 or 12 parked (1.8:
+  15 and 9). A driver stopped behind the player's car sounds the horn after 3 s. A patrol car on a call
+  reaches 24 m/s with nobody wanted.
+- On the final build, in one chain: `test/gates.py` 10/10 (frame rate gate 144 fps at 1280x720, Pretty),
+  `test/chase.py` 13/13, `test/city.py` 55/55, `test/harbor.py` pass, `test/smoke.py` 22/22,
+  `test/radio.py` 14/14 (Radio Off with the engine idling 0.017; 1.8: 0.019; the first 1.9 build: 0.024).
+- `test/touch.py` 9/10. The check that fails is "installs and plays offline" (the reload with the network
+  off times out after 30 s). It fails the same way on the 1.8 build on this PC, 3 of 3 runs for each build,
+  so it is not from 1.9; why it fails here was not found. It passed on the MacBook in earlier runs. The other nine,
+  with the four phone sizes (nothing overlaps with the new style card and bar) and WebKit as an iPhone 13,
+  pass.
+- Not run: `test/drive.py` (key presses; it does not use the handbrake), `test/chase_bench.py`,
+  `test/fps_ab.py` (the crowd is a third larger; only the frame rate gate above speaks for it).
+
+What this means. Every rule of 1.9 is in a test and the old suites still pass. None of that says the game is
+more fun: that was Juwen's verdict on 1.8 and only his next ten minutes can change it.
+
+## Handoff (run 7)
+
+- Done: R7-0 to R7-8. Release 1.9 "Sideways" (see Sync below).
+- In progress: nothing.
+- Left: R7-9, Juwen plays 1.9. Ask what he did in the first ten minutes and where he stopped, not for a
+  score.
+- Left: the sums of the style card and the getaway were not tuned. Watch whether sliding on an empty road
+  out-earns the jobs.
+- Left: "installs and plays offline" times out on the ASUS for 1.8 and 1.9 alike. `sw.js` asks the network
+  first with no time limit; to try: give that request a few seconds, then use the stored copy.
+- Left: `test/fps_ab.py NeonCoast.html <1.8 build>` on a quiet PC, for the larger crowd on a phone-class
+  frame budget.
+- Left from run 6: `test/drive.py` never tries to get out of the police's sight; why the player is taken
+  out on foot in Heat Wave; R6-7 council score and blind pair.
+- Left: R5-11, a real iPhone and Android phone (the slide on HAND BRAKE and the vibration ran in Chrome's
+  phone emulation only).
+- Next command: `/hone neon-coast` (run 8 starts from what Juwen says about 1.9).

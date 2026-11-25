@@ -335,7 +335,9 @@ def play_on_phone(browser, name, width, height):
         ped.x = p.x + Math.sin(yaw) * 18; ped.z = p.z + Math.cos(yaw) * 18; ped.state = 'walk'; ped.hp = 100;
         const before = n.cam.yaw;
         const found = n.aimAssist();
-        return [found, Math.abs(n.cam.yaw - yaw) < 0.05, before !== n.cam.yaw];
+        // the camera's heading is not kept inside one turn, so compare the two directions, not the two numbers
+        const apart = Math.abs(Math.atan2(Math.sin(n.cam.yaw - yaw), Math.cos(n.cam.yaw - yaw)));
+        return [found, apart < 0.05, before !== n.cam.yaw];
     }""")
     want(all(aimed), f"aim assist did not turn onto a walker 0.25 rad off the crosshair: {aimed}")
     ammo = page.evaluate("NEON.player.ammo")

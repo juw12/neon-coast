@@ -10,6 +10,8 @@ let titleAngle = 0.6;
 const view = { fov: 62 };        // the lens at rest; resize() widens it on an upright screen
 
 // ---------- keeping the streets busy around the player ----------
+// how many are kept within reach of the player: [with the full crowd, on the lightest graphics]
+const CROWD = { traffic: [20, 11], parked: [11, 7], walkers: [34, 18] };
 function updatePopulation(dt) {
   popT -= dt;
   if (popT > 0) return;
@@ -27,14 +29,14 @@ function updatePopulation(dt) {
     if (v.driver === 'ai' || v.driver === 'cop') traffic++;
     else if (!v.driver && !v.dead) parked++;
   }
-  if (traffic < (gfx.crowd ? 15 : 9)) spawnTraffic(95, 250, false);
-  if (parked < (gfx.crowd ? 9 : 6)) spawnTraffic(95, 250, true);
+  if (traffic < (gfx.crowd ? CROWD.traffic[0] : CROWD.traffic[1])) spawnTraffic(95, 250, false);
+  if (parked < (gfx.crowd ? CROWD.parked[0] : CROWD.parked[1])) spawnTraffic(95, 250, true);
   for (let k = peds.length - 1; k >= 0; k--) {
     if (dist2(peds[k].x, peds[k].z, px, pz) < 190 * 190) continue;
     scene.remove(peds[k].mesh);
     peds.splice(k, 1);
   }
-  if (peds.length < (gfx.crowd ? 26 : 14)) spawnWalker(45, 150);
+  if (peds.length < (gfx.crowd ? CROWD.walkers[0] : CROWD.walkers[1])) spawnWalker(45, 150);
 }
 
 // ---------- session control ----------
@@ -54,6 +56,7 @@ function resetSession() {
   $('objective').classList.remove('show');
   setWanted(0);
   wanted.pts = 0;
+  styleReset();
   hideHeli();
   cab.on = false;
   ride.t = 0;
@@ -90,6 +93,7 @@ function die(kind) {
   if (mission.active) endMission(false, kind === 'busted' ? 'You were arrested.' : 'You were taken out.');
   state = 'dead';
   deadKind = kind;
+  styleReset();
   deadT = 3.4;
   firing = false;
   if (player.car) exitCar();
@@ -117,6 +121,9 @@ function respawn() {
 }
 
 // ---------- camera ----------
+// how speed shows: the lens widens by `lens` degrees for each m/s up to `lensMax` (1.8: 0.3 and 14), the car
+// trembles above `rumbleFrom` of its top speed, and the edges of the screen darken from `rushFrom` m/s
+const SPEED_FEEL = { lens: 0.42, lensMax: 20, rumbleFrom: 0.72, rumble: 0.22, rushFrom: 22, rushFull: 46 };
 function updateCamera(dt) {
   if (state === 'title') {
     titleAngle += dt * 0.07;
@@ -143,7 +150,11 @@ function updateCamera(dt) {
   const ty = car ? 1.6 : 1.55 + player.y;
   const speed = car ? Math.hypot(car.vx, car.vz) : 0;
   if (car && performance.now() - cam.lastMouse > 1400 && car.vf > 2.5) {
-    cam.yaw += wrapPi(car.h - cam.yaw) * Math.min(1, dt * 2.8);
+    // in a slide the camera stays nearer the way the car is travelling than the way it points,
+    // so the car is seen at an angle and the road ahead stays in view
+    const sideways = speed > 6 ? car.slip / speed : 0;
+    const travel = wrapPi(Math.atan2(car.vx, car.vz) - car.h) * clamp((sideways - 0.15) * 1.6, 0, 0.6);
+    cam.yaw += wrapPi(car.h + travel - cam.yaw) * Math.min(1, dt * 2.8);
     cam.pitch += (-0.2 - cam.pitch) * Math.min(1, dt * 1.5);
   }
   if (!car && touch.on && player.speed > 0 && performance.now() - cam.lastMouse > 1200) {
@@ -173,11 +184,13 @@ function updateCamera(dt) {
   }
   cam.dist = open < cam.dist ? open : lerp(cam.dist, open, Math.min(1, dt * 4));
   cam.shake = Math.max(0, cam.shake - dt * 1.6);
+  // near its top speed the car trembles
+  if (car && state === 'play') cam.shake = Math.max(cam.shake, (speed / car.t.max - SPEED_FEEL.rumbleFrom) * SPEED_FEEL.rumble);
   const jx = (Math.random() - 0.5) * cam.shake;
   const jy = (Math.random() - 0.5) * cam.shake;
   camera.position.set(ox - dx * cam.dist + jx, Math.max(0.5, ty - dy * cam.dist + jy), oz - dz * cam.dist);
   camera.lookAt(ox + dx * 10, ty + dy * 10, oz + dz * 10);
-  const fov = view.fov + Math.min(14, speed * 0.3);
+  const fov = view.fov + Math.min(SPEED_FEEL.lensMax, speed * SPEED_FEEL.lens);
   if (Math.abs(fov - camera.fov) > 0.05) {
     camera.fov = lerp(camera.fov, fov, Math.min(1, dt * 3));
     camera.updateProjectionMatrix();
@@ -202,8 +215,10 @@ function update(dt, realDt) {
       if (firing) playerAttack();
     }
   }
+  if (state === 'play') gameClock += dt;
   for (let k = 0; k < vehicles.length; k++) updateVehicle(vehicles[k], dt);
   collideVehicles();
+  if (state === 'play') updateStyle(dt);
   vehiclesVsPeople(dt);
   for (let k = peds.length - 1; k >= 0; k--) {
     if (updatePed(peds[k], dt)) continue;
@@ -489,11 +504,14 @@ function renderSettings() {
   }
   $('btn-end-shift').hidden = !(mission.active && mission.def === FERRY);
   $('btn-shift').hidden = mission.active;
-  $('btn-oddjob').hidden = mission.active || save.mission < MISSIONS.length;
+  $('btn-oddjob').hidden = mission.active || save.mission < 1;
+  $('btn-oddjob').textContent = !MISSIONS[save.mission] ? 'Another odd job' : mission.offer === MISSIONS[save.mission] ? 'An odd job instead' : 'Back to the story job';
   const jobs = Math.min(save.mission, MISSIONS.length) + ' / ' + MISSIONS.length;
   const have = PROPERTIES.filter(owned).length;
   $('progress').textContent = 'Time ' + clockText() + '     Jobs ' + jobs + '     Packages ' + save.packages.length + ' / ' + packageSpots.length + '     Cash $' + save.money + (save.ferryRuns ? `     Ferry shifts ${save.ferryRuns} · best ${save.ferryBest}s` : '')
-    + (save.fares ? `     Cab fares ${save.fares} · best run ${save.fareBest}` : '') + (have ? `     Property ${have} / ${PROPERTIES.length}` : '');
+    + (save.fares ? `     Cab fares ${save.fares} · best run ${save.fareBest}` : '') + (have ? `     Property ${have} / ${PROPERTIES.length}` : '')
+    + (save.tricks ? `     Tricks ${save.tricks} · best chain $${save.styleBest}` + (save.driftBest ? ` · longest slide ${save.driftBest}s` : '') : '')
+    + (save.getaways ? `     Getaways ${save.getaways}` : '');
   const perkBox = $('perks');
   perkBox.innerHTML = '';
   for (const p of PERKS) {
@@ -728,6 +746,13 @@ window.NEON = {
   ride, checkPerks, packageSpots, damageVehicle, audio, radio, STATIONS, setStation, anotherJob, offerMission, blocks, TAIL,
   touch, say, keyAction, setTouchMode, view, gfx, auto, governor, LADDER, applySettings, renderSettings, aimAssist,
   addVehicle, removeVehicle,
+  style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, carSound, updateStyle, honk,
+  get honks() {
+    return honkCount;
+  },
+  get clock() {
+    return gameClock;
+  },
   setTime(hours) {
     tod = hours;
   },
