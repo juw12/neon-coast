@@ -611,7 +611,8 @@ as a rule fix that is measured, not as "the police jobs can now be finished".
   not opened in a browser this run.
 - Profile README: unchanged. Its sentence about the game names nothing that 1.8 changed.
 - Portfolio: catalog `juw12/projects` [PR 135](https://github.com/juw12/projects/pull/135), `df223dc`: the
-  description names 1.8; the summary, the order and the card are unchanged. Card sync run 45551047421 started.
+  description names 1.8; the summary, the order and the card are unchanged. Card sync run 45551047421 failed on its
+  push (another push to `juw12/portfolio` came in between); run 45551143685 passed.
 - Landing page: `juw12/juw12.github.io` [PR 3](https://github.com/juw12/juw12.github.io/pull/3), `7d72ec9`;
   https://juw12.github.io/p/neon-coast/ shows FAIR COP / 01.8 and the three police items above the 1.7 ones.
 - Obsidian: a line in `journal/2026-11-25.md`, saved through Cairn.
