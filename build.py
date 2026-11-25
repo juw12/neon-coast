@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 THREE_URL = "https://unpkg.com/three@0.149.0/build/three.min.js"
 THREE_FILE = ROOT / "vendor" / "three.min.js"
-PARTS = ["01-world.js", "02-entities.js", "03-systems.js", "03b-touch.js", "04-main.js"]
+PARTS = ["01-world.js", "02-entities.js", "03-systems.js", "03b-touch.js", "03c-havoc.js", "04-main.js"]
 
 
 def main():

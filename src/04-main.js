@@ -29,7 +29,12 @@ function updatePopulation(dt) {
     if (v.driver === 'ai' || v.driver === 'cop') traffic++;
     else if (!v.driver && !v.dead) parked++;
   }
-  if (traffic < (gfx.crowd ? CROWD.traffic[0] : CROWD.traffic[1])) spawnTraffic(95, 250, false);
+  // at speed the player outruns one try every fifth of a second: up to three, so the road ahead is not empty
+  const car = player.car;
+  const tries = car && Math.hypot(car.vx, car.vz) > AHEAD.speed ? 3 : 1;
+  for (let k = 0; k < tries && traffic < (gfx.crowd ? CROWD.traffic[0] : CROWD.traffic[1]); k++) {
+    if (spawnTraffic(95, 250, false)) traffic++;
+  }
   if (parked < (gfx.crowd ? CROWD.parked[0] : CROWD.parked[1])) spawnTraffic(95, 250, true);
   for (let k = peds.length - 1; k >= 0; k--) {
     if (dist2(peds[k].x, peds[k].z, px, pz) < 190 * 190) continue;
@@ -57,6 +62,7 @@ function resetSession() {
   setWanted(0);
   wanted.pts = 0;
   styleReset();
+  resetHavoc();                   // part 3c: everything stands again, the nitro tank is back at its start
   hideHeli();
   cab.on = false;
   ride.t = 0;
@@ -147,7 +153,7 @@ function updateCamera(dt) {
   const car = player.car;
   const tx = car ? car.x : player.x;
   const tz = car ? car.z : player.z;
-  const ty = car ? 1.6 : 1.55 + player.y;
+  const ty = car ? 1.6 + car.y * 0.8 : 1.55 + player.y;      // up a ramp and through the air with the car
   const speed = car ? Math.hypot(car.vx, car.vz) : 0;
   if (car && performance.now() - cam.lastMouse > 1400 && car.vf > 2.5) {
     // in a slide the camera stays nearer the way the car is travelling than the way it points,
@@ -190,7 +196,7 @@ function updateCamera(dt) {
   const jy = (Math.random() - 0.5) * cam.shake;
   camera.position.set(ox - dx * cam.dist + jx, Math.max(0.5, ty - dy * cam.dist + jy), oz - dz * cam.dist);
   camera.lookAt(ox + dx * 10, ty + dy * 10, oz + dz * 10);
-  const fov = view.fov + Math.min(SPEED_FEEL.lensMax, speed * SPEED_FEEL.lens);
+  const fov = view.fov + Math.min(SPEED_FEEL.lensMax, speed * SPEED_FEEL.lens) + (nitro.on ? NITRO.lens : 0);
   if (Math.abs(fov - camera.fov) > 0.05) {
     camera.fov = lerp(camera.fov, fov, Math.min(1, dt * 3));
     camera.updateProjectionMatrix();
@@ -218,6 +224,7 @@ function update(dt, realDt) {
   if (state === 'play') gameClock += dt;
   for (let k = 0; k < vehicles.length; k++) updateVehicle(vehicles[k], dt);
   collideVehicles();
+  vehiclesVsProps();              // part 3c: what stands on the street is knocked over
   if (state === 'play') updateStyle(dt);
   vehiclesVsPeople(dt);
   for (let k = peds.length - 1; k >= 0; k--) {
@@ -226,6 +233,8 @@ function update(dt, realDt) {
     peds.splice(k, 1);
   }
   updatePopulation(dt);
+  updateProps(dt);
+  updateHavoc(dt, realDt);
   if (state === 'play') {
     updateWanted(dt);
     updateMarkers(dt);
@@ -511,7 +520,8 @@ function renderSettings() {
   $('progress').textContent = 'Time ' + clockText() + '     Jobs ' + jobs + '     Packages ' + save.packages.length + ' / ' + packageSpots.length + '     Cash $' + save.money + (save.ferryRuns ? `     Ferry shifts ${save.ferryRuns} · best ${save.ferryBest}s` : '')
     + (save.fares ? `     Cab fares ${save.fares} · best run ${save.fareBest}` : '') + (have ? `     Property ${have} / ${PROPERTIES.length}` : '')
     + (save.tricks ? `     Tricks ${save.tricks} · best chain $${save.styleBest}` + (save.driftBest ? ` · longest slide ${save.driftBest}s` : '') : '')
-    + (save.getaways ? `     Getaways ${save.getaways}` : '');
+    + (save.getaways ? `     Getaways ${save.getaways}` : '')
+    + (save.smashed || save.jumps.length ? `     Smashed ${save.smashed || 0} · stunt jumps ${save.jumps.length} / ${ramps.length}` + (save.jumpBest ? ` · longest ${save.jumpBest} m` : '') : '');
   const perkBox = $('perks');
   perkBox.innerHTML = '';
   for (const p of PERKS) {
@@ -569,7 +579,7 @@ function updateIntro(dt) {
 
 function startGame(fresh) {
   if (fresh) {
-    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [] });
+    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], jumps: [], jumpBest: 0, smashed: 0, havocTold: 0 });
     persist();
   }
   initAudio();
@@ -730,7 +740,8 @@ function frame(now) {
   frameNo++;
   if ((frameNo & 15) === 0) refreshLockHint();
   refreshPad();
-  if (state !== 'paused') update(state === 'dead' ? realDt * 0.4 : realDt, realDt);
+  // timeScale (part 3c): a ramp take-off and a blast run slower for a moment
+  if (state !== 'paused') update(state === 'dead' ? realDt * 0.4 : realDt * timeScale(realDt), realDt);
   renderFrame();
 }
 requestAnimationFrame(frame);
@@ -746,6 +757,9 @@ window.NEON = {
   ride, checkPerks, packageSpots, damageVehicle, audio, radio, STATIONS, setStation, anotherJob, offerMission, blocks, TAIL,
   touch, say, keyAction, setTouchMode, view, gfx, auto, governor, LADDER, applySettings, renderSettings, aimAssist,
   addVehicle, removeVehicle,
+  props, ramps, fallen, jets, PROP_KINDS, PROP_HIT, PROP_BACK, BLAST, SPIN, RAMP, NITRO, AHEAD, LOOSE_MASS, nitro, warp, kerbTaken, worksAt,
+  knockProp, blast, shootProps, rampAt, rampHeight, kerbBusy, nearPlace, stuntJump, resetHavoc, spawnTraffic, roadStop, downPed,
+  addPed, insideBox, lampMesh, lamps, FERRY, START, styleSmash,
   style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, carSound, updateStyle, honk,
   get honks() {
     return honkCount;

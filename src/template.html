@@ -113,6 +113,10 @@ SOFTWARE.
   #drive .bar { margin: 4px 0 0 0; width: 168px; height: 12px; }
   #drive .bar i { background: linear-gradient(90deg, var(--cyan), #a6f3ff); }
   #drive small { display: block; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; opacity: .7; margin-top: 6px; }
+  #drive .bar.nitro { height: 8px; margin-top: 9px; transition: box-shadow .15s; }
+  #drive .bar.nitro i { width: 50%; background: linear-gradient(90deg, #ff8a1f, #ffe14f); transition: width .12s linear; }
+  #drive.boost .bar.nitro { box-shadow: 0 0 14px 2px rgba(255,176,63,.9); }
+  #drive.boost #speed { color: #ffe14f; }
 
   #objective { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); max-width: 60vw;
     padding: 9px 20px; border-radius: 999px; background: rgba(8,10,24,.72); border: 1px solid rgba(255,63,164,.6);
@@ -159,6 +163,8 @@ SOFTWARE.
   #flash { position: absolute; inset: 0; opacity: 0; transition: opacity .15s;
     background: radial-gradient(ellipse at center, rgba(255,0,40,0) 45%, rgba(255,0,40,.55) 100%); }
   #flash.show { opacity: 1; }
+  #boom { position: absolute; inset: 0; opacity: 0; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(255,214,150,.22) 0%, rgba(255,150,50,.6) 100%); }
   #lockhint { position: absolute; left: 50%; top: 58%; transform: translateX(-50%); padding: 8px 16px; border-radius: 8px;
     background: rgba(8,10,24,.8); font-size: 15px; opacity: 0; text-shadow: none; }
   #lockhint.show { opacity: 1; }
@@ -231,6 +237,9 @@ SOFTWARE.
   body.touch #speed { font-size: 17px; }
   body.touch #drive .bar { width: 96px; height: 6px; margin-top: 2px; }
   body.touch #drive small { font-size: 9px; margin-top: 3px; letter-spacing: 1px; }
+  body.touch #drive .bar.nitro { height: 5px; margin-top: 4px; }
+  body.touch #drive small.nitro { display: none; }
+  body.touch #drive .key { display: none; }
   body.touch #tr { top: calc(8px + var(--st)); right: calc(60px + var(--sr)); }
   body.touch #stars { font-size: 19px; letter-spacing: 2px; }
   body.touch #money { font-size: 22px; margin-top: 2px; }
@@ -350,7 +359,8 @@ SOFTWARE.
   <div class="tb in-car" data-hold="Space" style="--s:15;--r:27;--b:25">HAND<br>BRAKE</div>
   <div class="tb act in-car" data-tap="KeyF" style="--s:13;--r:5;--b:31">EXIT</div>
   <div class="tb in-car" data-tap="KeyH" style="--s:11;--r:5;--b:47">HORN</div>
-  <div class="tb in-car" data-tap="KeyR" style="--s:11;--r:45;--b:25">RADIO</div>
+  <div class="tb go in-car near" id="tb-nitro" data-hold="ShiftLeft" style="--s:12;--r:44;--b:25">NITRO</div>
+  <div class="tb in-car" data-tap="KeyR" style="--s:11;--r:53;--b:43">RADIO</div>
   <div class="tb stop in-car ctx" id="tb-carfire" data-fire style="--s:13;--r:21;--b:43">FIRE</div>
   <div class="tb act in-car ctx" id="tb-cab" data-tap="KeyT" style="--s:13;--r:37;--b:43">CAB</div>
   <div class="tb stop on-foot" id="tb-fire" data-fire style="--s:22;--r:4;--b:6">FIRE</div>
@@ -378,6 +388,8 @@ SOFTWARE.
       <div id="speed">0 km/h</div>
       <div class="bar"><i id="carhp"></i></div>
       <small>CAR CONDITION</small>
+      <div class="bar nitro"><i id="nitro"></i></div>
+      <small class="nitro">NITRO<span class="key"> · SHIFT</span></small>
     </div>
   </div>
   <div id="topc">
@@ -406,12 +418,14 @@ SOFTWARE.
         <kbd class="blip" style="--c:#d6dbe6">$</kbd><span>Property: E buys, rent and a place to lie low</span>
         <kbd class="blip" style="--c:#ff8fd0">W</kbd><span>Sol Wheel: a ride spots hidden packages</span>
         <kbd class="blip" style="--c:#c58bff">?</kbd><span>A package spotted from the wheel</span>
+        <kbd class="blip" style="--c:#ff8a1f">^</kbd><span>Stunt ramp: the further the jump, the more it pays</span>
       </div>
     </div>
     <p id="bigmap-note"></p>
   </div>
   <div id="banner"><b></b><span></span></div>
   <div id="flash"></div>
+  <div id="boom"></div>
   <div id="lockhint">Click the game to capture the mouse</div>
 </div>
 
@@ -436,7 +450,7 @@ SOFTWARE.
           <kbd>Left thumb</kbd><span>Walk, or steer the car. Push it right out to sprint. Settings can give the car two arrows instead</span>
           <kbd>Drag the view</kbd><span>Look and aim</span>
           <kbd>CAR / EXIT</kbd><span>In or out of any car</span>
-          <kbd>GAS · BRAKE</kbd><span>Drive. BRAKE at a standstill reverses</span>
+          <kbd>GAS · BRAKE</kbd><span>Drive. BRAKE at a standstill reverses. NITRO is the gas and the nitro in one</span>
           <kbd>FIRE</kbd><span>Shoot or punch. Shots find a target near the crosshair; slide the thumb on FIRE to aim yourself. SWAP changes pistol and fists</span>
           <kbd>Round map</kbd><span>Tap it for the whole island</span>
           <kbd>II</kbd><span>Pause: settings, courier shift, odd jobs</span>
@@ -447,7 +461,7 @@ SOFTWARE.
           <kbd>Mouse</kbd><span>Look and aim</span>
           <kbd>F</kbd><span>In or out of any car</span>
           <kbd>Space</kbd><span>Jump / handbrake: a slide with the wheel turned</span>
-          <kbd>Shift</kbd><span>Sprint</span>
+          <kbd>Shift</kbd><span>Sprint / nitro, in a car</span>
           <kbd>M</kbd><span>The whole map</span>
           <kbd>P</kbd><span>Pause (or Esc)</span>
         </div>
@@ -467,8 +481,9 @@ SOFTWARE.
       </div>
     </div>
     <details class="news">
-      <summary><strong>Version 1.9 · Sideways</strong> — the handbrake slides the car round a corner, near misses and slides pay cash, losing the police pays, a two-star pursuit does not shoot at a moving car, and odd jobs open after your first job. What changed, release by release</summary>
+      <summary><strong>Version 2.0 · Havoc</strong> — the street breaks: cones, bins, hydrants, barrels and lamp posts fly and pay, twelve stunt ramps, a nitro tank that tricks fill, and a hard hit spins a car round. What changed, release by release</summary>
       <ul>
+        <li><strong>2.0 · Havoc</strong> — The street breaks. Cones, bins, news boxes, crates, hydrants, barrels and lamp posts no longer stand like walls or like air: a car knocks them flying. What your car knocks over pays into the chain ($5 to $25), a hydrant throws water, a lamp post comes down and its light goes out, and a red barrel goes up, throws the cars round it and sets off the barrels next to it; a shot sets one off too. Twelve stunt ramps stand on the parking strips and on the Rustport dock: the further the jump, the more it pays, the big map marks them, and all twelve pay $2,500. Tricks, smashes and jumps fill a nitro tank: Shift, or the NITRO button, burns it for a harder pull and a higher top speed. A hard hit off the middle turns a car round and its driver loses it for a moment, so a cruiser can be spun out; a parked car is shoved down the street. Somebody hit at speed is thrown into the air. At speed most new traffic appears on the road ahead, and nothing parks on a ramp.</li>
         <li><strong>1.9 · Sideways</strong> — Hold the handbrake with the wheel turned and the car slides round the corner and keeps most of its speed; with the wheel straight it is the brake it was. Passing another car closely at speed is a near miss worth $25 ($50 past a police car), and a slide pays $30 a second. Tricks in a row multiply, up to four times; the sum is paid when the bar on the card runs out, and a crash loses it. With wanted stars on, every trick pays double. Losing the police on the road pays $150 at two stars, $400, $800 and $1,400 above, in full when they had you in sight for ten seconds; a bar under the stars shows how close you are to losing them. At two stars officers no longer shoot at a moving car. Odd jobs open after the first story job: J goes from the story job to an odd job and back. More cars and people on the streets, drivers sound their horns, and now and then a patrol car runs past on a call. The engine has gears, tyres squeal, wind is heard at speed, the car body leans, and the view widens and darkens at the edges when you drive fast. On a phone a slide keeps the power on by itself and the stick is finer near its middle.</li>
         <li><strong>1.8 · Fair Cop</strong> — At two stars the police chase you without ramming: a cruiser slows down as it reaches your car and stays on your bumper. From three stars they ram, as before. A crash with a police car adds to your stars only when you drove into it: when the cruiser rams you, it does not. One crash with a cruiser, however hard, takes at most 40% of your car's health on Normal, also when it shoves you into a wall. Officers hit a moving car less often: the faster you drive, the worse they shoot, and from 30 m/s (108 km/h) they hit less than half as often as they hit a standing car. Driving into the police yourself counts as before, and so does every other crash.</li>
         <li><strong>1.7 · Tail Lights</strong> — Shadow Run, a sixth odd job with no clock and no marker: stay 12 to 60 m behind a pink car for 40 seconds. The first job beam stands in the red car's own lane, 40 m ahead. Paper Round says ON FOOT on its beam and waits until you leave the car. Ten seconds of head start when you take the marked car in Borrowed Time. While you lose the police in a job, the road arrows lead to Mo's Respray. The shore in front of the Rustport quay is a dock apron with a lane, a crane rail and bollards. On a phone the buttons are more see-through, so the road shows behind them.</li>
