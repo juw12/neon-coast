@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 10.0,
+        "C2": 9.0,
+        "C3": 10.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "In-game prompts like 'Get into the red car ahead [F]' and 'Follow the beach road' guide the player seamlessly from title to job completion without ambiguity.",
+        "C2": "Distinct districts (Sol Beach, Rustport) and day/night cycles create mood, though the low-poly asset style is consistent rather than uniquely recognizable.",
+        "C3": "Systems feed each other: 'cab passenger will not get in while you are wanted' and 'Tune-up shop pulls its shutters down' create interlocking consequences.",
+        "C4": "Gate G8 passed for overlaps, but the mobile HUD (Screenshot 12) is dense with buttons that may obstruct the view during high-speed driving.",
+        "C5": "Fact sheet explicitly states 'No one else has played any version' and details untested areas like 'How the driving feels to a person', demonstrating extreme honesty."
+      },
+      "fixes": [
+        "Conduct external playtesting: The fact sheet admits 'No one else has played any version' and the owner previously found it 'not fun enough', which is a critical risk to C3 (fun/variety) and C1 (stranger experience).",
+        "Simplify Mobile HUD: Screenshot 12 shows over 10 touch buttons overlaying the gameplay area, potentially obstructing vision and violating the 'reads at a glance' anchor for C4.",
+        "Reduce Title Screen Density: Screenshot 1 displays a dense 'How to play' list; simplifying this ensures the 'first screen' part of C1 is as accessible as the in-game prompts."
+      ],
+      "total": 9.6,
+      "seconds": 28.6
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen lists keys needed first; first view shows red car and 'Get into the red car ahead [F]' with JOB 40 m beam visible; learner phase prevents early arrest; first job is short and ends at the Sol Wheel landmark.",
+        "C2": "Four districts with distinct palettes (aqua/coral Meridian, pastel Sol Beach, rust/ochre Rustport), neon trim, lit windows at night, Sol Wheel with lights, Coastliner airship, sunset skies; day and night clearly differ.",
+        "C3": "Six story jobs, six odd job types (Rush Order, Repo Run, Block Dash, Hot Parcel, Paper Round, Shadow Run), cab fares, property, 1-5 star police, 15 hidden packages, 12 stunt ramps, nitro, barrels, Tune-up shop, Sol Wheel ride, harbor courier - all feeding through perks.",
+        "C4": "HUD reduced to cash and health; stars only when wanted; weapon line only 5s; clock moved to map/pause; pause screen is three buttons plus settings/perks; G8 passes at three resolutions; phone HUD adapts to top edge.",
+        "C5": "Own names throughout; title screen states 'An original game with its own city, names and art, not affiliated with Rockstar, Grand Theft Auto or GTA V'; sheet plainly states driving feel unmeasured, radio unlistened to, no real phone tested, only one person has played it."
+      },
+      "fixes": [
+        "Get more than one human to playtest the game - the sheet admits 'One person has played it: the owner' and 'No one else has played any version', which leaves difficulty, fun, and pacing untested.",
+        "Have a human actually listen to the three radio stations - the sheet notes 'nobody has listened to it: whether the music is pleasant is not known' despite 13/14 automated checks passing.",
+        "Test touch controls on a real phone or tablet - the sheet states 'No real phone or tablet has run the game yet, so thumb reach, heat and frame rate on a phone are not known'."
+      ],
+      "total": 8.6,
+      "seconds": 19.1
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "First view shows 'Get into the red car ahead [F]' with 'JOB 40 m' and the car in view; 'the first job is shorter and ends at a landmark'; learner phase means 'crimes bring no stars' and the car 'cannot be wrecked'; job 1 done by keys 'in 27.7 to 29.2 s'. Only flaw: 'Harbor courier shift ↵' sits beside New Game, so a stray Enter starts a timed shift before any onboarding.",
+        "C2": "'Day and night cycle with lit windows and shop fronts... neon trim', '86 painted walls', the Sol Wheel dusk shot is distinctive. But screenshot 5 shows plain grey facades and flat road at dusk — the district palettes ('aqua, coral, cream and lilac') do not read in every view, so 'recognisable from one screenshot' is not met everywhere.",
+        "C3": "'Six story jobs', odd jobs 'in six kinds taken in turn', cab fares, property, 15 packages, ramps, barrels, nitro; 'Perks (release 1.2) tie the side activities together' and 'Police heat now reaches the other systems'. Held off 10 by the sheet's own words: 'The sums are first guesses, not tuned by play', and no human has judged 2.0+ (owner's last verdicts: 'not fun enough', 'not good enough').",
+        "C4": "'the HUD is cash and health; the stars appear only when you are wanted', G8 'no overlaps at 3 sizes', pause is 'three buttons, settings and perks'. Nitpick: a wordy tutorial paragraph ('Near misses pay cash, and so does a slide. [Space] with the handbrake...') sits on screen while driving at 122 km/h, and job line + trick card + hint can stack at once.",
+        "C5": "'Own city, names and art' with the one allowed 'not affiliated' line (G9 pass). Limits stated plainly and unfavourably: 'No real phone or tablet has run the game yet', 'One person has played it: the owner... not fun enough', and the gate flake 'Once nine of ten passed: G3 failed... It was not seen again.' Nothing meaningful left to improve."
+      },
+      "fixes": [
+        "Get a real person to play 2.1 and tune the numbers by play: the sheet admits 'The sums are first guesses, not tuned by play', the owner's last verdicts on 1.8/1.9 were negative, and every lost Heat Wave try still ends with the player 'shot dead on foot within seconds'.",
+        "Gate the title-screen 'Harbor courier shift ↵' behind the first job (or remove the Enter shortcut) so a stranger pressing Enter cannot start a timed three-stop shift before any onboarding.",
+        "Lift the weakest views to the standard of the Sol Wheel dusk shot: screenshot 5's plain grey facades show the painted-wall and district-palette work does not read everywhere, which is what keeps C2 from the one-screenshot anchor."
+      ],
+      "total": 8.85,
+      "seconds": 43.9
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.85,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 9.0,
+    "C5": 10.0
+  },
+  "criterion_spread": {
+    "C1": 1.0,
+    "C2": 1.0,
+    "C3": 1.0,
+    "C4": 1.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.6,
+    9.6
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Conduct external playtesting: The fact sheet admits 'No one else has played any version' and the owner previously found it 'not fun enough', which is a critical risk to C3 (fun/variety) and C1 (stranger experience)."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Simplify Mobile HUD: Screenshot 12 shows over 10 touch buttons overlaying the gameplay area, potentially obstructing vision and violating the 'reads at a glance' anchor for C4."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Reduce Title Screen Density: Screenshot 1 displays a dense 'How to play' list; simplifying this ensures the 'first screen' part of C1 is as accessible as the in-game prompts."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Get more than one human to playtest the game - the sheet admits 'One person has played it: the owner' and 'No one else has played any version', which leaves difficulty, fun, and pacing untested."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Have a human actually listen to the three radio stations - the sheet notes 'nobody has listened to it: whether the music is pleasant is not known' despite 13/14 automated checks passing."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Test touch controls on a real phone or tablet - the sheet states 'No real phone or tablet has run the game yet, so thumb reach, heat and frame rate on a phone are not known'."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Get a real person to play 2.1 and tune the numbers by play: the sheet admits 'The sums are first guesses, not tuned by play', the owner's last verdicts on 1.8/1.9 were negative, and every lost Heat Wave try still ends with the player 'shot dead on foot within seconds'."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Gate the title-screen 'Harbor courier shift ↵' behind the first job (or remove the Enter shortcut) so a stranger pressing Enter cannot start a timed three-stop shift before any onboarding."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Lift the weakest views to the standard of the Sol Wheel dusk shot: screenshot 5's plain grey facades show the painted-wall and district-palette work does not read everywhere, which is what keeps C2 from the one-screenshot anchor."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

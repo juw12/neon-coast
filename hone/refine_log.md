@@ -1070,9 +1070,11 @@ Goal beyond the goal, unchanged: a stranger opens one link, knows what to do, an
 
 - [x] R10-0 Baseline v12 = 2.0.1 under rubric v1. The judge kit on the measuring branch (GitHub Macs):
       screenshots, gates, radio, touch, and every job played by key presses. Scored twice, mean taken
-- [ ] R10-1 Round 16: the maker's change from the judges' fixes, built, suites, kit, sheet v13, scored
+- [x] R10-1 Round 16: the maker's change from the judges' fixes, built, suites, kit, sheet v13, scored
       twice, blind pair against the best
-- [ ] R10-2 Further rounds while a round gains 0.3 and wins its pair (at most 5)
+- [x] R10-2 Further rounds while a round gains 0.3 and wins its pair (at most 5)
+      stop: session limit, after one round. Round 16 gained 0.15, so by the rule no further round
+      was owed on gain either
 - [ ] R10-3 Sync: PR, release if the game changed, live check, landing page, log, memory
 
 ### Assumptions (run 10)
@@ -1110,3 +1112,65 @@ other than the owner to play it, which this loop cannot do.
 | round | change | gates | judge score | pairwise win | kept? | note |
 |---|---|---|---|---|---|---|
 | 0 (v12, release 2.0.1) | none: the shipped build, scored twice as the baseline on GitHub Macs | 10/10 | 8.45 and 8.70, mean 8.58 | - | baseline | Heat Wave 2 of 12 by key presses; first judged pass of 2.0 Havoc |
+| 16 (v13, release 2.1 Way Out) | one star brakes, police rams one at a time (rest 10 / 7 / 4 s), a crash takes at most 25% up to three stars, an officer in a moving cruiser shoots half as often, a burning car says so and can be left at any speed; on a phone one name at a time under the map | 10/10 twice, 9/10 once (G3 steering check, not seen again) | 8.60 and 8.85, mean 8.73 | yes, 3 of 3 judges, all six picks | no by the loop rule (+0.15, under 0.3); shipped as 2.1 on the measured fault | Heat Wave 9 of 9 by key presses, 2.0.1 with the same script 8 of 27 |
+
+### Round 16 (run 10): v13 = release 2.1 "Way Out"
+
+The change, from the one fault all three judges named first (Heat Wave cannot be finished, a dying car
+gives no warning) and the one two of three named (the phone's upright HUD):
+
+- `src/02-entities.js`: a cruiser brakes behind the car at one star as at two; `RAM_REST = [0,0,0,10,7,4]`
+  seconds in which the other police cars hold off after one has hit; `CRASH_SHARE_LOW = 0.25` up to three
+  stars; a car at zero health shows "Your car is on fire! Get out: [F]", burns 5.5 s with the driver in
+  it (3.6 before), and can be left at any speed (up to 30 health for the jump, then at least 2.6 s to run).
+- `src/03-systems.js`: an officer in a cruiser moving faster than 6 m/s fires half as often and gets no
+  bonus for being close.
+- `src/template.html`: on a phone the corner under the map shows one name at a time (district, then car,
+  then radio) and stands clear of the nitro bar.
+- `test/chase.py`: 22 checks (13 before). `test/drive.py`: writes down what ended a try, presses F on the
+  fire line, waits up to 6 s for a car.
+
+Measured on GitHub Macs. Heat Wave by key presses: **9 of 9** on the release build (measuring run
+45794408686; 5 at the first try, 4 at the second or third; 116 to 441 s) and 9 of 9 on the build one
+commit earlier (run 45786730213). With the ram rules but without the gunfire rule: 5 of 9 (run
+45782717153). The script changed in this round, so 2.0.1 was played again with the new script: **8 of 27**
+(2, 3 and 3 of 9), 62 of its 64 lost tries the car wrecked with the player in it. Job 1 three of three
+(27.7 to 29.2 s), jobs 2, 3, 4 and 6 two of two, Shadow Run three of three, touch 10/10, radio 13/14 (the
+same check as the baseline). Suites on the pull request head `a9b53d5` (run 45793636283): green, gates
+10/10 and `chase.py` 22/22 on a Mac and on the slow computer at the first attempt. Sheet:
+`hone/judge/v13.md`. Notes on the played runs: `hone/drive-notes-v13.md`.
+
+Council, twice, same 16 pictures as the baseline: 8.60 (V 9.6, T 8.6, G 8.1) and 8.85 (V 9.6, T 8.6,
+G 8.85), **mean 8.73**. Criterion medians C1 9 / 9, C2 8 / 8, C3 9 / 9, C4 8 / 9, C5 9 / 10. Blind pair
+against v12, each judge asked twice with the order swapped: **3 of 3 for v13**, all six picks.
+
+Read plainly:
+
+- The gain is 0.15. The loop asks for 0.3, and two scores of one sheet differ by 0.25 here (0.6 at
+  worst in earlier runs). So by the score alone v13 is not shown to be better, and it is **not a new best
+  by the loop rule**. What does show a difference: the pair (six of six) and the played job (9 of 9
+  against 8 of 27 with one script).
+- Two of the judges' reasons in the pair do not hold and should not be leaned on. They compare "2 of 12"
+  with "9 of 9": the 2 of 12 is the old script; like with like it is 8 of 27. And they count 123 frames a
+  second against 91 as a gain: those are two GitHub computers on two days, not two builds on one. No
+  speed change was made or measured.
+- One judge read "5 of 9 runs ended shot on foot". The sheet says five lost tries inside nine runs that
+  all finished. The sheet's wording was left as it is (the pair was already judged on it).
+- The ten gates ran three times on the release build: 10/10 in the suites and in the judge kit's rerun
+  (run 45803113639), 9/10 once in the kit of run 45794408686 (G3, "A steers left: heading change
+  0.04 rad"). Not explained, not seen again. The sheet says so.
+- A fault of this round, caught by `test/touch.py` before release: the first build (`c48ac03`, suites run
+  45786688000) cleared the start hint in the car in a way that left "W A S D to walk" for a phone. Fixed
+  in `a9b53d5`. In that same red run the FIRE check of `chase.py` failed in 3 of 6 runs of one
+  orientation; it did not come back on `a9b53d5` and was not explained.
+- What the judges ask for now: people other than the owner to play (all three, both passes); a way to
+  live through leaving a burning car (two of three: every lost try ends shot on foot within seconds);
+  fewer touch buttons at once on a phone (one judge, both passes); the title's Enter shortcut to the
+  courier shift before any first job (one judge).
+
+- Assumed: 2.1 ships although it is not a new best by the rule. The rule decides which sheet the next
+  round is compared with; it does not forbid shipping a fix for a measured fault that every judge named
+  and that the pair and the played job both support. The best sheet for the next round's pair is v13
+  (the shipped build), and its score to beat by 0.3 is 8.73.
+- Assumed: one round only. The session that ran it is at its limit; further rounds start from the
+  handoff below.

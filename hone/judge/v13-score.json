@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 10.0,
+        "C2": 9.0,
+        "C3": 10.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "'Get into the red car ahead [F]' and 'learner phase' prevents early arrest, guiding stranger to finish job without rereading.",
+        "C2": "Distinct districts (Sol Beach pastel hotels vs Rustport industry) with day/night lighting, though low-poly style is common.",
+        "C3": "6 story jobs, 6 odd jobs, cab fares, property, perks, and police system all interact to vary ten minutes of play.",
+        "C4": "Desktop HUD is 'cash and health' only, but mobile view (Screenshot 12) overlays 9 action buttons which may obscure road.",
+        "C5": "Fact sheet states 'One person has played it: the owner' and 'No real phone... has run the game yet' plainly."
+      },
+      "fixes": [
+        "Bailing a burning car during a chase leads to immediate death in script tests ('shot dead on foot within seconds'); add a police grace period to make the mechanic viable.",
+        "Mobile HUD (Screenshot 12) displays 9 action buttons simultaneously; hide context-irrelevant buttons (e.g. 'Cab', 'Nitro') to clear the view.",
+        "Job 1 is a safe drive, but Job 5 is a 3-star shootout; introduce police evasion mechanics (respray/hiding) in an earlier odd job to smooth difficulty curve."
+      ],
+      "total": 9.6,
+      "seconds": 27.8
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen lists controls (WASD, Walk/drive, Mouse, Sprint, F, M); first view shows 'Get into the red car ahead' with job beam 40m ahead in the car's own lane; learner phase prevents stars/arrest until first job done; first job ends at landmark (Sol Wheel pier) and car cannot be wrecked.",
+        "C2": "Four districts with distinct palettes (Meridian aqua/coral/cream/lilac, Rustport rust/ochre/sea-green, Sol Beach pastel), 86 painted walls, neon trim, day/night cycle with lit windows, Sol Wheel and Coastliner airship as landmarks; screenshots show recognizable mood but buildings remain somewhat boxy/simple.",
+        "C3": "Six story jobs ($250-$3,500), six odd job kinds (Rush Order, Repo Run, Block Dash, Hot Parcel, Paper Round, Shadow Run), cab fares, four properties, 5-star police with helicopter at 4, 12 stunt jumps, 15 hidden packages, barrels with chain reactions, nitro, perks tying activities together, Tune-up shop in three stages.",
+        "C4": "G8 passed (no overlaps at 3 sizes); HUD reduced to cash and health with stars/weapon line appearing only when relevant; clock moved to map/pause; perk card under cash shows progress; pause screen is three buttons plus settings and perks; map legend on map itself.",
+        "C5": "G9 passed (own names only); title screen has 'not affiliated' line; fact sheet plainly states 'One person has played it: the owner', 'No real phone or tablet has run the game yet', 'The scores are from AI judges reading this sheet and the screenshots'; limits of script-based testing acknowledged."
+      },
+      "fixes": [
+        "Get human playtesters beyond the owner — the fact sheet explicitly states only one person has played any version, and the AI-judge scores are unvalidated by player feedback.",
+        "Rebalance Heat Wave (job 5) — 5 of 9 scripted runs still ended in arrest or being shot on foot after exiting the burning car; the chase difficulty needs tuning so a competent player can finish on the first try.",
+        "Validate driving feel with humans — 'How the driving feels to a person' is listed as not covered; the handbrake slide, near-miss chain, and engine gear audio are all untested by actual players despite being central to the game's identity."
+      ],
+      "total": 8.6,
+      "seconds": 15.4
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 8.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Strong engineered chain: 'since 1.7 it stands 40 m ahead in the car's own lane, in the first view', prompt 'Get into the red car ahead [F]' in screenshot 2, idle 3.5 s shows walking keys, learner phase blocks wreck/arrest, script finishes job 1 in '27.7 to 29.2 s'. Not higher: 'A script is not a person... it cannot say whether a job is fun' and 'No one else has played any version', so the 10-anchor ('lead a stranger... without reading anything twice') is unverified with humans.",
+        "C2": "Consistent style with real mood: dusk Sol Wheel shot (pink sky, lit wheel, beach), 'Meridian towers are aqua, coral, cream and lilac instead of grey', 'Pretty graphics adds a glow pass', night shots show lit windows and neon. Not higher: screenshot 5 is a large plain beige wall with flat dark windows and some night views read as murky boxes; only some single screenshots are instantly recognisable as this place.",
+        "C3": "Breadth and interlock are far past the 7-anchor: 'Perks (release 1.2) tie the side activities together', heat closes 'the Tune-up shop... the Sol Wheel will not sell a ticket', smashes fill nitro ('3% a smash, 20% a trick, 35% a stunt jump'). Not higher: 'The sums are first guesses, not tuned by play', odd jobs/cab/courier 'passed by script only, so their difficulty and their time limits are not measured', and Heat Wave lost '5 of 9' tries all ending the same way.",
+        "C4": "'the HUD is cash and health; the stars appear only when you are wanted', G8 'no overlaps at 3 sizes', driving shots read at a glance (speed, condition, nitro, minimap, job line). Not higher: the map screen is dense with a 10-item legend, the phone layout carries nine buttons, and 2.1 had to fix that 'the radio line used to sit on the nitro bar'.",
+        "C5": "'Own city, names and art' plus 'An original game and is not affiliated with the publisher or the series it is often compared to'; limits stated plainly: 'Once nine of ten passed: G3 failed', 'No real phone or tablet has run the game yet', 'He played 1.8 and said not fun enough... No one else has played any version.' Not 10: the coy unnamed 'series it is often compared to' and genre-convention echo (stars, respray, BUSTED) leave a hair of leaning."
+      },
+      "fixes": [
+        "Put the build in front of 3-5 strangers and watch their first ten minutes unaided: the sheet admits 'No one else has played any version' and the only human feedback is the owner's vague 'not fun enough'/'not good enough' - this is the biggest unvalidated risk behind C1 and C3.",
+        "Make escaping a burning car a real option: all 5 lost Heat Wave tries ended with the player out of the car and 'shot dead on foot within seconds, with three police cars inside 10 m' - add cover or a reachable second car, or further dampen three-star close-range gunfire, so exiting can save a run.",
+        "Play-tune the admitted guesswork: 'The sums are first guesses, not tuned by play' for style payouts, and the odd jobs, cab fares and courier shift are 'passed by script only, so their difficulty and their time limits are not measured' - measure them with human runs and adjust."
+      ],
+      "total": 8.1,
+      "seconds": 44.9
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.6,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 8.0,
+    "C5": 9.0
+  },
+  "criterion_spread": {
+    "C1": 2.0,
+    "C2": 1.0,
+    "C3": 2.0,
+    "C4": 1.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.1,
+    9.6
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Bailing a burning car during a chase leads to immediate death in script tests ('shot dead on foot within seconds'); add a police grace period to make the mechanic viable."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Mobile HUD (Screenshot 12) displays 9 action buttons simultaneously; hide context-irrelevant buttons (e.g. 'Cab', 'Nitro') to clear the view."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Job 1 is a safe drive, but Job 5 is a 3-star shootout; introduce police evasion mechanics (respray/hiding) in an earlier odd job to smooth difficulty curve."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Get human playtesters beyond the owner — the fact sheet explicitly states only one person has played any version, and the AI-judge scores are unvalidated by player feedback."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Rebalance Heat Wave (job 5) — 5 of 9 scripted runs still ended in arrest or being shot on foot after exiting the burning car; the chase difficulty needs tuning so a competent player can finish on the first try."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Validate driving feel with humans — 'How the driving feels to a person' is listed as not covered; the handbrake slide, near-miss chain, and engine gear audio are all untested by actual players despite being central to the game's identity."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Put the build in front of 3-5 strangers and watch their first ten minutes unaided: the sheet admits 'No one else has played any version' and the only human feedback is the owner's vague 'not fun enough'/'not good enough' - this is the biggest unvalidated risk behind C1 and C3."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Make escaping a burning car a real option: all 5 lost Heat Wave tries ended with the player out of the car and 'shot dead on foot within seconds, with three police cars inside 10 m' - add cover or a reachable second car, or further dampen three-star close-range gunfire, so exiting can save a run."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Play-tune the admitted guesswork: 'The sums are first guesses, not tuned by play' for style payouts, and the odd jobs, cab fares and courier shift are 'passed by script only, so their difficulty and their time limits are not measured' - measure them with human runs and adjust."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

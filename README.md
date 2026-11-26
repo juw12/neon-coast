@@ -23,6 +23,53 @@ and Shift the nitro.
 Follow the arrows on the road to the yellow J marker for the first of six jobs. Press M for the whole map
 and P to pause. Progress is stored in your browser, so use the same browser and file location to resume.
 
+## Version 2.1 · Way Out
+
+A chase you can read. A script that plays the fifth job, Heat Wave (the three-star getaway), with key
+presses finished it 2 of 12 times on 2.0.1. Every one of its 23 logged tries that was lost ended the same
+way: the car wrecked with the player in it. Never an arrest. Three council judges who scored 2.0.1 from
+its fact sheet all named this first. What changed:
+
+- **One star does not ram.** A cruiser now slows down behind you at one star as it does at two. It used
+  to arrive at full speed.
+- **One ram at a time.** From three stars the police still ram. After a police car has hit you, the
+  others hold off: 10 s at three stars, 7 s at four, 4 s at five. Up to three stars one such crash takes
+  at most 25% of the car on Normal (40% from four stars, as before).
+- **An officer in a moving cruiser shoots half as often**, and gets nothing for being close. One who
+  has stopped shoots as before. The first two rules alone finished 5 of 9: the cruisers then sat on the
+  car's bumper and took two to three times as much from it by gunfire as by ramming.
+- **A dying car says so.** At zero health the hint line reads "Your car is on fire! Get out: [F]". With
+  you in it the fuse is 5.5 s, not 3.6. You can leave a burning car at any speed: a jump from a fast one
+  costs up to 30 health, and the car then gives you at least 2.6 s to run.
+- **On a phone** the corner under the map shows one name at a time: the district, then the car, then
+  the radio station. The radio line used to sit on the nitro bar.
+
+What was measured, all on GitHub's Macs:
+
+- Heat Wave by key presses: **9 of 9** for 2.1 (5 at the first try, the other 4 at the second or third),
+  and 9 of 9 again for the build one commit earlier. The script changed with this release (it presses F
+  when the fire line comes up and waits up to 6 s for a car), so 2.0.1 was played again with the same
+  script: **8 of 27**.
+- `test/chase.py` has 22 checks (13 before): the nine new ones cover each rule above. 22 of 22 on a Mac
+  and on the slow Windows computer; 2.0.1 fails the new ones, as it should.
+- The other jobs by key presses: job 1 three of three in 27.7 to 29.2 s, jobs 2, 3, 4 and 6 two of two,
+  Shadow Run three of three.
+
+What this does not show:
+
+- **Whether it is fun.** Nobody has played 2.0, 2.0.1 or 2.1. A script that finishes a job says the job
+  can be finished, not that it is good.
+- **Getting out of a burning car has not yet saved a try.** In all five lost tries of the nine runs the
+  script got out and was shot on foot within seconds, three police cars inside 10 m. It neither runs
+  nor takes another car under fire; a person might.
+- Four and five stars were not played by the script. The shorter pauses there are first guesses.
+- One fault of my own was caught by `test/touch.py` on the way: the first build left a key name in a
+  hint on a phone and could show the wrong hint in the car. Fixed before release.
+- No check covers the one-name-at-a-time rule on a phone; it is seen in the screenshots only.
+- The ten gates were run three times on the release build: all ten passed twice, nine once (G3, "A
+  steers left: heading change 0.04 rad"). It did not come back in the other two runs and was not
+  explained.
+
 ## Version 2.0.1
 
 2.0 was released with a list of things it had not shown. 2.0.1 goes through that list. Three things in the
