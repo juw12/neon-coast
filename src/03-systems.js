@@ -340,7 +340,13 @@ function updateAudio() {
   audio.music.gain.setTargetAtTime(playing ? 0.5 : 0, now, 0.2);
   if (!playing) return;
   const stepDur = 60 / station.bpm / 4;
-  if (radio.next < now) radio.next = now + 0.05;
+  // A new station, or back after a long sleep: start again. Late by less (a slow frame): the steps that
+  // were missed are left out and the beat stays where it was, so the tempo holds on a slow computer.
+  if (radio.next < now - 1) radio.next = now + 0.05;
+  while (radio.next < now) {
+    radio.next += stepDur;
+    radio.step++;
+  }
   while (radio.next < now + 0.2) {
     const step = radio.step++;
     const beat = step & 15;

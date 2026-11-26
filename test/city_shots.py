@@ -7,10 +7,16 @@ airship is on its lap); the pictures are the real game.
 
     python test/city_shots.py       # writes test/shots/11-cab-fare.png ... 27-shadow-run.png
 """
+import os
 import math
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+
+# NEON_WINDOW=1 opens a real window instead of a headless browser (a GitHub Mac uses its graphics card in both).
+# NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
+WINDOW = os.environ.get("NEON_WINDOW") == "1"
+EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "test" / "shots"
@@ -19,8 +25,8 @@ OUT = ROOT / "test" / "shots"
 def run():
     OUT.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(channel="chrome", headless=True, args=[
-            "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"])
+        browser = pw.chromium.launch(channel="chrome", headless=not WINDOW, args=[
+            "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] + EXTRA_ARGS)
         page = browser.new_page(viewport={"width": 1280, "height": 720})
         page.goto((ROOT / "NeonCoast.html").as_uri())
         page.wait_for_timeout(1200)

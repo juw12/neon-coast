@@ -4,7 +4,7 @@ barrels that go up, stunt ramps, a nitro tank that tricks fill, parked cars that
 hard hits that turn a car round, people thrown by a fast car, and traffic put on the road ahead at speed.
 
 The player's car is placed through the game's test handle (window.NEON) and the game is left to run each case
-itself. Time is counted on the game's own clock (the game never steps more than 0.05 s a frame), so a slow PC
+itself. Time is counted on the game's own clock (the game never moves on more than 0.1 s a frame, 0.05 s before 2.0.1), so a slow PC
 cannot fail it. Run it against an older build to see which rules are new: there they fail.
 
 It proves the rules hold. It does not prove that the game is more fun: only playing it can.
@@ -12,11 +12,17 @@ It proves the rules hold. It does not prove that the game is more fun: only play
     python test/havoc.py                 # NeonCoast.html; one line per check, exit code 0 when all pass
     python test/havoc.py other.html      # another build
 """
+import os
 import json
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+
+# NEON_WINDOW=1 opens a real window instead of a headless browser (a GitHub Mac uses its graphics card in both).
+# NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
+WINDOW = os.environ.get("NEON_WINDOW") == "1"
+EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
 
 ROOT = Path(__file__).resolve().parent.parent
 results = []
@@ -25,7 +31,7 @@ results = []
 TOOLS = """
     const n = NEON, c = n.player.car;
     let last = performance.now(), clock = 0;
-    const step = () => { const now = performance.now(); const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt; return dt; };
+    const step = () => { const now = performance.now(); const dt = Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now; clock += dt; return dt; };
     const empty = (keep) => {
         for (const v of n.vehicles.slice()) if (v !== c && !keep.includes(v)) n.removeVehicle(v);
     };
@@ -355,6 +361,11 @@ CHAIN_JS = """() => new Promise(done => {""" + TOOLS + """
             out.blasts = (n.save.smashed || 0) - smashed0;
             out.card = card();
             out.lost = c.t.hp - c.hp;
+            // the blast brought a star. The suite rests 5 s after this with the car standing, and nothing takes police
+            // cars off the road in that time: one that stops beside the car makes an arrest in 2.4 s, the game takes
+            // the player out of the car, and every case after this one needs the car. So the star goes here.
+            out.stars = n.wanted.stars;
+            n.setWanted(0); n.wanted.pts = 0;
             return done(out);
         }
         requestAnimationFrame(tick);
@@ -397,6 +408,45 @@ RESTORE_JS = """() => new Promise(done => {""" + TOOLS + """
     requestAnimationFrame(tick);
 })"""
 
+# Since 2.0.1 a barrel that went up does not stand again at 150 m like the rest: it stays gone for BARREL_BACK seconds
+# of play. The row on the Rustport dock is shot, the player is put 400 m away, and then the barrels' clock is wound on.
+BARREL_JS = """() => new Promise(done => {""" + TOOLS + """
+    fresh();
+    empty([]); noPeople([]);
+    const row = n.props.filter((p) => p.kind === 'barrel' && Math.abs(p.hx + 287) < 0.01);
+    if (row.length !== 4) return done({ error: 'no row of four barrels', row: row.length });
+    put(c, -327, 455, Math.PI / 2, 0);
+    const out = { wait: n.BARREL_BACK, lit: n.shootProps(-287, 0.5, 440, 0, 0, 1, 60) };
+    let stage = 0, mark = 0;
+    const tick = () => {
+        step();
+        empty([]); noPeople([]);
+        c.vx = c.vz = 0;
+        if (stage === 0 && clock > 2.5) {
+            out.gone = row.filter((p) => p.st === 3).length;
+            put(c, -3.2, 150, 0, 0);
+            stage = 1; mark = clock;
+        } else if (stage === 1 && clock - mark > 0.6) {
+            out.far = Math.min(...row.map((p) => Math.hypot(p.hx - c.x, p.hz - c.z)));
+            out.goneFar = row.filter((p) => p.st === 3).length;
+            out.listedFar = row.filter((p) => n.fallen.includes(p)).length;
+            for (const p of row) p.upAt = n.clock - (n.BARREL_BACK - 1);      // all but one second of the wait is over
+            stage = 2; mark = clock;
+        } else if (stage === 2 && clock - mark > 0.2 && out.goneEarly === undefined) {
+            out.goneEarly = row.filter((p) => p.st === 3).length;
+        } else if (stage === 2 && clock - mark > 1.6) {
+            out.standing = row.filter((p) => p.st === 0).length;
+            out.listedLate = row.filter((p) => n.fallen.includes(p)).length;
+            out.home = Math.max(...row.map((p) => Math.hypot(p.x - p.hx, p.z - p.hz)));
+            put(c, -3.2, -42, 0, 0);
+            n.setWanted(0); n.wanted.pts = 0;
+            return done(out);
+        }
+        requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+})"""
+
 # A stunt ramp. The player's car is put `back` metres before the middle of ramp `ramp`, pointing up it, at `speed`
 # (throttle held when `gas` is set). With `reverse` it is put beyond the tall end instead, pointing back at it.
 RAMP_JS = """(setup) => new Promise(done => {""" + TOOLS + """
@@ -408,10 +458,12 @@ RAMP_JS = """(setup) => new Promise(done => {""" + TOOLS + """
     const way = setup.reverse ? -1 : 1;
     put(c, r.x - r.fx * setup.back * way, r.z - r.fz * setup.back * way, r.h + (setup.reverse ? Math.PI : 0), setup.speed);
     const hp0 = c.hp, tank0 = n.nitro.tank, clock0 = n.clock;
-    const out = { ramp: r.id, at: [r.x, r.z], flew: false, high: 0, far: 0, minU: 99, card: '', bank: 0, count: 0, slowed: false, nose: 0, burned: false };
+    const out = { ramp: r.id, at: [r.x, r.z], flew: false, high: 0, far: 0, minU: 99, card: '', bank: 0, count: 0, slowed: false, nose: 0, burned: false, frame: 0 };
     let from = null, landed = 0, airFrom = 0;
     const tick = () => {
-        step();
+        const dt = step();
+        // the longest frame up to the landing: this script sees the take-off and the landing one frame late at most
+        if (!landed) out.frame = Math.max(out.frame, dt);
         empty([]); noPeople([]);
         out.high = Math.max(out.high, c.y);
         out.minU = Math.min(out.minU, (c.x - r.x) * r.fx + (c.z - r.z) * r.fz);
@@ -676,7 +728,7 @@ FOOT_JS = """(setup) => new Promise(done => {
     const out = { high: 0, minU: 99, maxU: -99 };
     let last = performance.now(), clock = 0;
     const tick = () => {
-        const now = performance.now(); clock += Math.min(0.05, (now - last) / 1000); last = now;
+        const now = performance.now(); clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now;
         for (const key of ['KeyW', 'KeyS', 'KeyA', 'KeyD', 'Space', 'ShiftLeft']) n.keys[key] = key === 'KeyW';
         n.cam.yaw = r.h + (setup.reverse ? Math.PI : 0);
         const u = (p.x - r.x) * r.fx + (p.z - r.z) * r.fz;
@@ -697,7 +749,7 @@ REST_JS = """(seconds) => new Promise(done => {
     let last = performance.now(), clock = 0;
     const tick = () => {
         const now = performance.now();
-        clock += Math.min(0.05, (now - last) / 1000); last = now;
+        clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now;
         if (NEON.player.car) NEON.player.car.vx = NEON.player.car.vz = 0;
         clock >= seconds ? done(clock) : requestAnimationFrame(tick);
     };
@@ -745,8 +797,8 @@ def brief(value):
 def run(target):
     problems = []
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(channel="chrome", headless=True, args=[
-            "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"])
+        browser = pw.chromium.launch(channel="chrome", headless=not WINDOW, args=[
+            "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] + EXTRA_ARGS)
         page = browser.new_context(viewport={"width": 1280, "height": 720}).new_page()
         page.on("pageerror", lambda e: problems.append(f"pageerror: {e}"))
         page.on("console", lambda m: problems.append(f"{m.type}: {m.text}") if m.type == "error" else None)
@@ -846,15 +898,27 @@ def run(target):
               lambda: back["stNear"] == 2 and back["listedNear"] and back["shift"] > 0.5 and back["stFar"] == 0 and not back["listedFar"]
               and back["home"] == 0 and back["far"] > 150 and back["paid"] == 0, brief(back))
 
+        # 5b. a barrel that went up stays gone (2.0.1)
+        gone = ask(page, BARREL_JS)
+        check("a barrel that went up is still gone with the player 150 m away, and stands again after ten minutes of play (2.0.1)",
+              lambda: gone["wait"] == 600 and gone["lit"] and gone["gone"] == 4 and gone["far"] > 150 and gone["goneFar"] == 4
+              and gone["listedFar"] == 4 and gone["goneEarly"] == 4 and gone["standing"] == 4 and gone["listedLate"] == 0
+              and gone["home"] == 0, brief(gone))
+        page.evaluate(REST_JS, 3.0)
+
         # 6. stunt ramps
         jump = ask(page, RAMP_JS, {"ramp": 2, "speed": 30, "back": 35, "gas": True})
         pay = 40 + round(jump["far"] * 4 / 5) * 5
+        # The game measures a jump on its own steps of 1/60 s (since 2.0.1), this script once a frame: its metres can be
+        # off by what the car covers in one frame (0.6 m at 60 frames a second, more on a slow computer).
+        slack = jump["landSpeed"] * jump["frame"]
         check("a ramp at 30 m/s: the car leaves the ground, flies more than 20 m and lands with no health lost",
               lambda: jump["flew"] and jump["high"] > 2 and jump["far"] > 20 and jump["secs"] > 0.6 and jump["lost"] == 0 and jump["nose"] > 0.1, brief(jump))
         check("it is a trick: STUNT JUMP with the metres on the card, $40 + $5 for every 1.25 m, 35% nitro, a moment of slow motion",
-              lambda: "STUNT JUMP" in jump["card"] and f"{round(jump['far'])} m" in jump["card"] and jump["count"] == 1
-              and abs(jump["bank"] - pay) <= 5 and abs(jump["gain"] - 0.35) < 0.005 and jump["slowed"], brief(dict(jump, expected=pay)))
-        check("the ramp is ticked off and the longest jump kept", lambda: jump["jumps"] == [2] and abs(jump["best"] - jump["far"]) <= 0.5, brief(jump))
+              lambda: "STUNT JUMP" in jump["card"] and f"  {int(jump['best'])} m" in jump["card"] and jump["count"] == 1
+              and abs(jump["bank"] - pay) <= 5 + 4 * slack and abs(jump["gain"] - 0.35) < 0.005 and jump["slowed"], brief(dict(jump, expected=pay)))
+        check("the ramp is ticked off and the longest jump kept",
+              lambda: jump["jumps"] == [2] and abs(jump["best"] - jump["far"]) <= 0.5 + slack, brief(dict(jump, slack=round(slack, 2))))
         page.evaluate(REST_JS, 5.0)
         hop = ask(page, RAMP_JS, {"ramp": 2, "speed": 10, "back": 10, "gas": False})
         check("rolled over at 10 m/s the same ramp is a hop of under 8 m: no trick, nothing ticked off",

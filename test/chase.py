@@ -3,18 +3,24 @@ how well officers shoot at a moving car, and that the police ram only from three
 
 A cruiser is put next to the player's car on a straight street (through the game's test handle,
 window.NEON), both cars are given a speed, and the game is left to run the crash itself. Time is counted
-on the game's own clock (the game never steps more than 0.05 s a frame), so a slow PC cannot fail it.
+on the game's own clock (the game never moves on more than 0.1 s a frame, 0.05 s before 2.0.1), so a slow PC cannot fail it.
 
 It proves the four rules hold. It does not prove that the chase is fun; test/drive.py plays the jobs.
 
     python test/chase.py                  # NeonCoast.html; one line per check, exit code 0 when all pass
     python test/chase.py other.html       # another build that has NEON.addVehicle and NEON.removeVehicle
 """
+import os
 import json
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+
+# NEON_WINDOW=1 opens a real window instead of a headless browser (a GitHub Mac uses its graphics card in both).
+# NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
+WINDOW = os.environ.get("NEON_WINDOW") == "1"
+EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
 
 ROOT = Path(__file__).resolve().parent.parent
 results = []
@@ -44,7 +50,7 @@ CRASH_JS = """(setup) => new Promise(done => {
     let last = performance.now(), clock = 0, hitAt = -1, frames = 0;
     const tick = () => {
         const now = performance.now();
-        clock += Math.min(0.05, (now - last) / 1000); last = now; frames++;
+        clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now; frames++;
         if (hitAt < 0 && (c.hp < hp0 || n.wanted.pts !== pts0)) hitAt = clock;
         if ((hitAt >= 0 && clock - hitAt >= 0.55) || clock > 6) {
             const out = { hit: hitAt >= 0, full, lost: hp0 - c.hp, share: (hp0 - c.hp) / full, points: n.wanted.pts - pts0,
@@ -77,7 +83,7 @@ AIM_JS = """(setup) => new Promise(done => {
     let last = performance.now(), clock = 0, prev = c.hp, hits = 0, other = 0;
     const tick = () => {
         const now = performance.now();
-        clock += Math.min(0.05, (now - last) / 1000); last = now;
+        clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now;
         for (const v of n.vehicles.slice()) if (v !== c && v !== cop) n.removeVehicle(v);
         const drop = prev - c.hp; prev = c.hp;
         if (Math.abs(drop - 6) < 0.01) hits++; else if (drop > 0.01) other++;
@@ -99,6 +105,11 @@ AIM_JS = """(setup) => new Promise(done => {
 # A cruiser comes up behind the standing player at top speed with `stars` wanted stars on, and the game's own
 # police driver is left to decide what to do. Officers' shots are made to miss (the dice are fixed at 0.99)
 # and other cars are removed, so health can only be lost to this one cruiser.
+# The cruiser has arrived when it is inside the game's own arrest reach (7.5 m between centres, checkPolice in
+# src/03-systems.js). Up to run 9 this script used 6 m of its own: a two-star cruiser brakes for 8 m and rolls to a
+# stop 5.7 to 6.9 m behind (read in the suites of run 9), so now and then it stopped just outside 6 m, was never
+# seen to arrive, and arrested the standing player 2.4 s later.
+ARREST_REACH = 7.5
 PURSUIT_JS = """(setup) => new Promise(done => {
     const n = NEON, c = n.player.car;
     for (const v of n.vehicles.slice()) if (v !== c) n.removeVehicle(v);
@@ -112,18 +123,21 @@ PURSUIT_JS = """(setup) => new Promise(done => {
     const dice = Math.random;
     Math.random = () => 0.99;
     const full = c.t.hp, pts0 = n.wanted.pts;
-    let last = performance.now(), clock = 0, nearest = 1e9, arrive = -1, arriveAt = 0;
+    let last = performance.now(), clock = 0, nearest = 1e9, arrive = -1, arriveAt = 0, before = 0, approach = 0;
     const tick = () => {
         const now = performance.now();
-        clock += Math.min(0.05, (now - last) / 1000); last = now;
+        clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now;
         for (const v of n.vehicles.slice()) if (v !== c && v !== cop) n.removeVehicle(v);
         const gap = Math.hypot(cop.x - c.x, cop.z - c.z);
-        if (gap < 6 && arrive < 0) { arrive = Math.hypot(cop.vx, cop.vz); arriveAt = clock; }
+        // `approach` is the cruiser's speed one frame earlier: on a slow computer the crash can already be over in the
+        // frame that first sees the cruiser within reach (since 2.0.1 a frame holds up to six steps of the game)
+        if (gap < setup.reach && arrive < 0) { arrive = Math.hypot(cop.vx, cop.vz); arriveAt = clock; approach = before; }
+        before = Math.hypot(cop.vx, cop.vz);
         nearest = Math.min(nearest, gap);
         // stop 0.8 s after the cruiser arrives (one whole crash; an arrest takes 2.4 s), or when time is up
         if ((arrive >= 0 && clock - arriveAt >= 0.8) || clock >= setup.seconds || c.dead || n.state !== 'play') {
             Math.random = dice;
-            const out = { share: (full - c.hp) / full, points: n.wanted.pts - pts0, nearest, arrive, stars: n.wanted.stars,
+            const out = { share: (full - c.hp) / full, points: n.wanted.pts - pts0, nearest, arrive, approach, stars: n.wanted.stars,
                           state: n.state, dead: c.dead };
             n.removeVehicle(cop);
             c.vx = c.vz = 0;
@@ -140,7 +154,7 @@ REST_JS = """(seconds) => new Promise(done => {
     let last = performance.now(), clock = 0;
     const tick = () => {
         const now = performance.now();
-        clock += Math.min(0.05, (now - last) / 1000); last = now;
+        clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now;
         clock >= seconds ? done(clock) : requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -159,8 +173,8 @@ def brief(crash):
 def run(target):
     problems = []
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(channel="chrome", headless=True, args=[
-            "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"])
+        browser = pw.chromium.launch(channel="chrome", headless=not WINDOW, args=[
+            "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] + EXTRA_ARGS)
         page = browser.new_context(viewport={"width": 1280, "height": 720}).new_page()
         page.on("pageerror", lambda e: problems.append(f"pageerror: {e}"))
         page.on("console", lambda m: problems.append(f"{m.type}: {m.text}") if m.type == "error" else None)
@@ -218,14 +232,20 @@ def run(target):
 
         # 6. two stars: the police pursue and do not ram; from three stars they ram
         page.evaluate(REST_JS, 1.0)
-        pursued = page.evaluate(PURSUIT_JS, {"stars": 2, "gap": 48, "police": 40, "seconds": 8})
+        pursued = page.evaluate(PURSUIT_JS, {"stars": 2, "gap": 48, "police": 40, "seconds": 8, "reach": ARREST_REACH})
         check("at two stars a cruiser coming up behind at 40 m/s brakes: it arrives slower than 10 m/s and takes under 5% of the car",
-              pursued["nearest"] < 6 and 0 <= pursued["arrive"] < 10 and pursued["share"] < 0.05 and pursued["points"] == 0,
+              pursued["nearest"] < ARREST_REACH and 0 <= pursued["arrive"] < 10 and pursued["share"] < 0.05 and pursued["points"] == 0,
               brief(pursued))
-        page.evaluate(REST_JS, 1.0)
-        rammed = page.evaluate(PURSUIT_JS, {"stars": 3, "gap": 48, "police": 40, "seconds": 8})
-        check("at three stars the same cruiser rams: it arrives faster than 30 m/s and takes over 20% of the car",
-              rammed["arrive"] > 30 and 0.2 < rammed["share"] <= 0.401 and rammed["points"] == 0, brief(rammed))
+        ramming = "at three stars the same cruiser rams: it arrives faster than 30 m/s and takes over 20% of the car"
+        if pursued["state"] != "play" or pursued["dead"]:
+            # the case above ended the game (an arrest or a wreck): say so instead of failing on a car that is gone
+            check(ramming, False, "not run: the two-star case left the game in state " + str(pursued["state"]))
+        else:
+            page.evaluate(REST_JS, 1.0)
+            rammed = page.evaluate(PURSUIT_JS, {"stars": 3, "gap": 48, "police": 40, "seconds": 8, "reach": ARREST_REACH})
+            check(ramming,
+                  max(rammed["arrive"], rammed["approach"]) > 30 and 0.2 < rammed["share"] <= 0.401 and rammed["points"] == 0,
+                  brief(rammed))
 
         check("no console errors", not problems, "; ".join(problems[:3]))
         browser.close()

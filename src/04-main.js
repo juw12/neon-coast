@@ -204,7 +204,9 @@ function updateCamera(dt) {
 }
 
 // ---------- one simulation step ----------
-function update(dt, realDt) {
+// `shown` is false for the steps of a frame that are not drawn (see frame()): they move the game on and
+// leave the panel, the map and the sound alone.
+function update(dt, realDt, shown) {
   const [fx, fz] = focus();
   updateSky(dt, fx, fz);
   if (state === 'play') {
@@ -242,7 +244,7 @@ function update(dt, realDt) {
     updateMission(dt);
     updateIntro(dt);
   }
-  updateRoute();
+  if (shown) updateRoute();
   if (state === 'dead') {
     deadT -= realDt;
     if (deadT <= 0) respawn();
@@ -263,6 +265,7 @@ function update(dt, realDt) {
     headlight.position.set(car.x + sx * 1.6, 1.2, car.z + cz * 1.6);
     headlight.target.position.set(car.x + sx * 26, 0, car.z + cz * 26);
   }
+  if (!shown) return;
   if (state !== 'title') {
     updateHud();
     if ((frameNo & 1) === 0) drawMap();
@@ -731,17 +734,38 @@ renderSettings();
 resetSession();
 showScreen('title');
 
+// The game moves in steps of about 1/60 s (never more than 1/48 s), however slowly the screen is drawn. Until 2.0 a slow frame was
+// one long step of up to 0.05 s, so where a cruiser's brakes stopped it depended on the frame rate, and
+// under 20 frames a second the game ran in slow motion. A long frame is now cut into equal steps, up to
+// six: the game keeps real time down to 10 frames a second and only then runs slower. A screen at 60 Hz
+// or more takes one step a frame, as before. What a frame longer than six steps leaves over is owed to the
+// next frame (up to six steps more), so frames of uneven length, 60 ms and then 130, lose no time either.
+const STEP = 1 / 60;
+const MAX_STEPS = 6;
+const pace = { steps: 1, step: 0, simMs: 0 };       // read by the checks: steps in the last frame, how long each was, the time they took
 let lastTime = performance.now();
+let owed = 0;
 function frame(now) {
   requestAnimationFrame(frame);
   if (!auto.manual) governor(Math.max(0, (now - lastTime) / 1000));
-  const realDt = Math.min(0.05, Math.max(0, (now - lastTime) / 1000));
+  owed = Math.min(2 * STEP * MAX_STEPS, owed + Math.max(0, (now - lastTime) / 1000));
+  const realDt = Math.min(STEP * MAX_STEPS, owed);
+  owed -= realDt;
   lastTime = now;
   frameNo++;
   if ((frameNo & 15) === 0) refreshLockHint();
   refreshPad();
   // timeScale (part 3c): a ramp take-off and a blast run slower for a moment
-  if (state !== 'paused') update(state === 'dead' ? realDt * 0.4 : realDt * timeScale(realDt), realDt);
+  // a quarter of a step of slack, so a 60 Hz screen that is a little late still takes one step
+  const steps = clamp(Math.ceil(realDt / STEP - 0.25), 1, MAX_STEPS);
+  const part = realDt / steps;
+  const simStart = performance.now();
+  for (let k = 1; k <= steps && state !== 'paused'; k++) {
+    update(state === 'dead' ? part * 0.4 : part * timeScale(part), part, k === steps);
+  }
+  pace.steps = steps;
+  pace.step = part;
+  pace.simMs += (performance.now() - simStart - pace.simMs) * 0.1;
   renderFrame();
 }
 requestAnimationFrame(frame);
@@ -757,9 +781,9 @@ window.NEON = {
   ride, checkPerks, packageSpots, damageVehicle, audio, radio, STATIONS, setStation, anotherJob, offerMission, blocks, TAIL,
   touch, say, keyAction, setTouchMode, view, gfx, auto, governor, LADDER, applySettings, renderSettings, aimAssist,
   addVehicle, removeVehicle, snapLane,
-  props, ramps, fallen, jets, PROP_KINDS, PROP_HIT, PROP_BACK, BLAST, SPIN, RAMP, NITRO, AHEAD, LOOSE_MASS, nitro, warp, kerbTaken, worksAt,
+  props, ramps, fallen, jets, PROP_KINDS, PROP_HIT, PROP_BACK, BARREL_BACK, BLAST, SPIN, RAMP, NITRO, AHEAD, LOOSE_MASS, nitro, warp, kerbTaken, worksAt,
   knockProp, blast, shootProps, rampAt, rampHeight, kerbBusy, nearPlace, stuntJump, resetHavoc, spawnTraffic, roadStop, downPed,
-  addPed, insideBox, lampMesh, lamps, FERRY, START, styleSmash, hint,
+  addPed, insideBox, lampMesh, lamps, FERRY, START, styleSmash, hint, pace, STEP, MAX_STEPS,
   style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, carSound, updateStyle, honk,
   get honks() {
     return honkCount;

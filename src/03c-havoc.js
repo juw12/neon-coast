@@ -8,6 +8,9 @@
 const GRAVITY = 15;                // m/s2 on cars and debris in the air
 const PROP_HIT = 2.5;              // m/s: slower than this a car only tips a prop over, for no pay
 const PROP_BACK = 150;             // m: what was knocked over stands again once the player is this far away
+// s of play: a barrel that went up stands again only after this long as well (since 2.0.1). Until then one
+// shot at the six barrels on the Rustport dock paid $1,505 every time the player came back from 150 m away.
+const BARREL_BACK = 600;
 // r: radius a car touches, h: height standing, lie: centre height lying, pay: $ into the chain,
 // slow: share of its speed the car loses, hz: the sound, trick: counts as a trick (raises the multiplier),
 // need: m/s the car must do to knock it over (a lamp post under that speed is not touched, as before 2.0)
@@ -399,7 +402,7 @@ function updateProps(dt) {
     const p = fallen[n];
     if (p.st !== 1) {
       // lying or gone: it is put back once nobody can see it
-      if (dist2(p.x, p.z, px, pz) > far && dist2(p.hx, p.hz, px, pz) > far) {
+      if (dist2(p.x, p.z, px, pz) > far && dist2(p.hx, p.hz, px, pz) > far && !(p.st === 3 && gameClock - p.upAt < BARREL_BACK)) {
         standProp(p);
         fallen.splice(n, 1);
       }
@@ -422,6 +425,7 @@ function updateProps(dt) {
     }
     if (p.fuse > 0 && (p.fuse -= dt) <= 0) {
       p.st = 3;
+      p.upAt = gameClock;
       placeProp(p);
       blast(p.x, p.y + 0.5, p.z, p.by);
       continue;

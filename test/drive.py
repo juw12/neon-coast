@@ -32,6 +32,7 @@ Traffic is random, so one run is one sample: run it a few times before trusting 
     python test/drive.py 3 2        # three runs of job 2 (result in test/drive-result-job2.json)
     python test/drive.py 3 tail     # three runs of Shadow Run (result in test/drive-result-tail.json)
 """
+import os
 import json
 import math
 import sys
@@ -39,6 +40,11 @@ import time
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+
+# NEON_WINDOW=1 opens a real window instead of a headless browser (a GitHub Mac uses its graphics card in both).
+# NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
+WINDOW = os.environ.get("NEON_WINDOW") == "1"
+EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
 
 ROOT = Path(__file__).resolve().parent.parent
 LANE = 3.2
@@ -198,8 +204,8 @@ def run(job=1):
               "reverses": 0, "yields": 0, "sidesteps": 0, "max_stars": 0}
     problems = []
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(channel="chrome", headless=True, args=[
-            "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"])
+        browser = pw.chromium.launch(channel="chrome", headless=not WINDOW, args=[
+            "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] + EXTRA_ARGS)
         page = browser.new_page(viewport={"width": 1280, "height": 720})
         page.on("pageerror", lambda e: problems.append(f"pageerror: {e}"))
         page.on("console", lambda m: problems.append(f"{m.type}: {m.text}") if m.type == "error" else None)

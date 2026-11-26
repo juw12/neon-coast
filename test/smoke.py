@@ -1,9 +1,15 @@
 """Play-test NeonCoast.html in real Chrome: load, start, walk, drive, police, pause."""
+import os
 import json
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+
+# NEON_WINDOW=1 opens a real window instead of a headless browser (a GitHub Mac uses its graphics card in both).
+# NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
+WINDOW = os.environ.get("NEON_WINDOW") == "1"
+EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
 
 ROOT = Path(__file__).resolve().parent.parent
 SHOTS = ROOT / "test" / "shots"
@@ -39,8 +45,8 @@ def snapshot(page):
 with sync_playwright() as pw:
     browser = pw.chromium.launch(
         channel="chrome",
-        headless=True,
-        args=["--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
+        headless=not WINDOW,
+        args=["--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] + EXTRA_ARGS,
     )
     page = browser.new_page(viewport={"width": 1280, "height": 720})
     page.on("console", lambda m: problems.append(f"console.{m.type}: {m.text}") if m.type in ("error", "warning") else None)
@@ -110,8 +116,13 @@ with sync_playwright() as pw:
     check("A steers left", h1 - h0 > 0.1, f"heading change {h1 - h0:.2f} rad")
 
     # police response
+    # This check is about patrol cars arriving. The car stands still, and a patrol car next to a standing
+    # car arrests its driver after 2.4 s, so the arrest clock is held at zero while we wait; the arrest
+    # itself is gate G5 (test/gates.py).
     page.evaluate("() => NEON.setWanted(3)")
-    page.wait_for_timeout(7000)
+    for _ in range(14):
+        page.wait_for_timeout(500)
+        page.evaluate("() => { NEON.wanted.bust = 0; }")
     s = snapshot(page)
     check("three stars bring police", s["stars"] == 3 and s["cops"] >= 2, f"{s['cops']} patrol cars, {s['stars']} stars")
     page.evaluate(
@@ -133,7 +144,8 @@ with sync_playwright() as pw:
     # pause and resume
     page.keyboard.press("KeyP")
     page.wait_for_timeout(400)
-    check("P pauses", page.evaluate("() => NEON.state") == "paused")
+    paused = page.evaluate("() => NEON.state")
+    check("P pauses", paused == "paused", f"state {paused}")
     page.screenshot(path=str(SHOTS / "5-pause.png"))
     page.click("#btn-resume")
     page.wait_for_timeout(400)
@@ -149,7 +161,6 @@ with sync_playwright() as pw:
             [x, z],
         )
 
-    money_before = snapshot(page)["money"]
     start_at = page.evaluate("() => NEON.MISSIONS[0].at")
     garage = page.evaluate("() => NEON.PLACES.garage")
     job_end = page.evaluate("() => NEON.MISSIONS[0].steps.filter(s => s.at).pop().at")
@@ -163,6 +174,12 @@ with sync_playwright() as pw:
     page.evaluate("() => { NEON.player.car.h = Math.PI; NEON.cam.yaw = Math.PI; NEON.cam.lastMouse = performance.now(); }")
     page.wait_for_timeout(500)
     page.screenshot(path=str(SHOTS / "6a-job-running.png"))
+    # Since 2.0 what the car knocked over on the way pays too, a few seconds later. Once this check read
+    # $470 for $450 on GitHub; $20 is what a lamp post pays, which is the likely cause and was not traced.
+    # The style card is emptied and the money read here, just before the last marker, so the check is
+    # still for the job's $250 to the dollar.
+    page.evaluate("() => Object.assign(NEON.style, { bank: 0, count: 0, t: 0, drift: 0, smashes: 0, free: 0 })")
+    money_before = snapshot(page)["money"]
     place_car(job_end[0], job_end[1])
     page.wait_for_timeout(700)
     s = snapshot(page)

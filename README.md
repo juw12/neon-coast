@@ -23,6 +23,154 @@ and Shift the nitro.
 Follow the arrows on the road to the yellow J marker for the first of six jobs. Press M for the whole map
 and P to pause. Progress is stored in your browser, so use the same browser and file location to resume.
 
+## Version 2.0.1
+
+2.0 was released with a list of things it had not shown. 2.0.1 goes through that list. Three things in the
+game changed because of what the measurements found. The rest is measurement.
+
+What changed in the game:
+
+- **Real time on a slow computer or phone.** 2.0 never moved the game on by more than 0.05 s a frame, so
+  under 20 frames a second the whole game ran in slow motion: at 12 frames a second at 0.62 of real time
+  on the Windows laptop and 0.49 on a GitHub Mac, at 5 frames a second at 0.25. 2.0.1 cuts a slow frame
+  into steps of 1/60 s, up to six a frame. It keeps real time down to 10 frames a second (1.000 at 144,
+  31 and 12.5 frames a second, on both computers) and runs at half speed at 5. A car reaches 30% and 60%
+  of its top speed at the same moments at 12 frames a second as at 60 (0.638 and 2.187 s).
+- **The radio keeps its beat.** At 4 frames a second every note is on the beat, within 1 ms, and none is
+  lost. In the same test 2.0 played notes up to 0.47 of a step late and lost four steps.
+- **A barrel that went up stays gone for ten minutes of play.** In 2.0 it stood again once you were 150 m
+  away, like everything else. `test/barrel_rows.py` found what that was worth. Of the 48 barrels 21 stand
+  alone, 6 in pairs, 15 in threes and 6 together on the Rustport dock. One shot from a car: a single barrel
+  $90 (the blast and a lamp post it knocks over), a pair $165, three $380, the six on the dock $1,505, a
+  chain of seven tricks at x3.5 with one star. That shot paid again on every visit. A story job paid the
+  script that drives it $600 for 110 s. Cones, hydrants and lamp posts still stand again at 150 m.
+
+What the list said, and what is known now:
+
+- **"The sums are first guesses."** `test/economy.py` drives into everything it can find for five minutes.
+  Three runs on a GitHub Mac: $83, $89 and $183 a minute ($24 to $81 after the fines of 8 or 9 arrests),
+  34 to 43 things knocked over a minute, a multiplier of x3 or x4 at most. The script that drives the
+  jobs earns $600 in 110 and 112 s (Hot Delivery) and $700 in 108.5 s (Shadow Run), about $330 to $390 a
+  minute. So smashing pays a quarter to a half of what a job pays, and the sums stay as they are. The one
+  thing that paid more than a job was the row of barrels, changed above. The nitro tank: filled 2.3 to
+  3.2 times a minute, burning 12 to 17% of the time and full 30 to 47% of it. It stays as it is too.
+- **"The older suites ran on a GitHub computer, not on the PC the game is built on."** Now both. On the
+  ASUS, one suite at a time: `gates.py` 10/10 (129 frames a second), `havoc.py` 47/47, `thrill.py` 34/34,
+  `chase.py` 13/13, `city.py` 55/55, `radio.py` 14/14, `smoke.py` 22/22, `touch.py` 10/10, `pace.py`
+  11/11 and the harbor shift. On GitHub the suites moved to a Mac, which has a graphics card: all ten
+  pass at the first attempt for 2.0.1, in two runs of two: the first time every required check is green
+  since the suites run on GitHub. The runs after those were not all first attempts, and one was red. What
+  that was is under "A red run" below.
+- **"Three suites fail there for both builds."** That was the computer. On the Mac the released 2.0 passes
+  `chase.py` 13/13 (the cruiser parks 5.7 to 6.9 m behind the car; the 6 m the script asked for was its
+  own number and too tight, see "A red run"), `radio.py` 14/14, `gates.py`
+  10/10 and `city.py` 55/55 as well. It fails only what 2.0.1 changed on purpose: 5 of 11 in `pace.py`
+  and the barrel check of `havoc.py`.
+- **"Four Shadow Run checks failed; why was not found."** `city.py` read 55/55 in seven runs of seven, on
+  the Mac and on the ASUS, for 2.0 and for 2.0.1. The computer of the failed run drew 8 frames a second, where
+  2.0 ran at 0.39 of real time, and those checks wait a fixed time. The fault itself was not replayed.
+  Later runs showed a second cause, and it is the script's. It puts its car 100 m behind the pink car every
+  30 ms. Nobody gets past the waterline, 477 m from the middle of the map, and the outer road runs 57 m
+  inside it. When the pink car turns inland from the outer road, 100 m behind it is out at sea, and the
+  game puts the car back on the waterline: 57 m behind, which is under the 60 m that count as close. So the
+  game rightly began its eight seconds again and the script's fixed wait ended before the job did. That
+  happened three times (once in the red run, twice in the measuring runs, at 58 and 48 m). One hold was
+  recorded with its place: the car on the waterline, 36 m from where the script had put it, the gap 64 m at
+  its smallest. The two checks now wait for the game to end the job and read the game's own count: 7.95 to
+  8.05 s in 103 holds. In half of all holds the car is also carried 5 to 22 m from its spot away from the
+  shore; what does that was not looked into.
+- **"What the street costs in frames."** On Pretty graphics 1.9 draws 5,931 things in 48 groups, 128,370
+  triangles; 2.0 draws 7,504 in 57 groups, about 169,500 triangles, a third more. On a GitHub Mac the
+  middle frame took 7.5 to 10.0 ms for 1.9, 7.0 to 8.3 for 2.0 and 5.9 to 9.4 for 2.0.1: under the
+  frame cap, no cost that can be measured. With the processor slowed four times: 14.6 to 23.4 ms for 1.9, 22.6 to 26.1 for 2.0,
+  24.6 to 30.4 for 2.0.1; slowed six times the three overlap (23.6 to 27.9, 27.5 to 38.6, 25.3 to 32.1).
+  With the frame cap off the Mac shows a cost after all: `test/fps_ab.py`, two builds in turn, read 124
+  and 138, 140 and 187, 116 and 167, 153 and 153 frames a second for 2.0.1 and 1.9, and 136 and 144, 109
+  and 109 for 2.0.1 and 2.0. So 1.9 draws up to 44% more frames when nothing holds it back, and 2.0.1
+  draws what 2.0 does. On the ASUS (Intel Arc 140V) the same script read 87 to 135 frames a second for
+  2.0.1, 100 and 113 for 1.9 and 122 and 124 for 2.0, on a busy PC: two runs of one build differ more
+  than two builds. All of these are above the 60 a screen shows. On a
+  computer with no graphics card the game draws 8 frames a second on Pretty and 13 on Fast; there 2.0 ran
+  at 0.39 and 0.64 of real time and 2.0.1 runs at 0.78 and 1.00.
+- **"What the police make of it."** `test/chase_bench.py` holds a car at 21 m/s on the avenue with the
+  stars set and reports what is left of it after 30 s. Its first runs on a GitHub Mac said 2.0 had made a
+  three-star chase far harder: 2 of 21 cars still driving for 2.0.1 and 1 of 6 for 2.0, against 14 of 21
+  for 1.9. That was the script, not the game. It removed traffic every frame. The game puts a new car on
+  the road for each one that goes, 7 in 100 of them a patrol car, and the script left those in. Since 2.0
+  the game makes three tries every fifth of a second at speed, not one, and puts 65 in 100 of the new cars
+  on the road ahead. So the script drove 2.0.1 into 10 to 17 police cars and 1.9 into 4 to 7, where three
+  stars send three. The script now moves traffic out of the way and leaves it in the game, so the game
+  adds none. With 3 to 5 police cars for every build the chase is the same: 11 of 16 cars still driving
+  for 2.0.1, 12 of 16 for 1.9 and 5 of 8 for 2.0; 32, 31 and 33 health lost to crashes a run; 28%, 28%
+  and 35% of the car left on average. At two stars 6 of 6 for 2.0.1 and for 1.9. This is a straight
+  chase: the script does not dodge and uses no nitro, ramp or barrel.
+- **A slow computer.** Three suites also run on a GitHub Windows computer with no graphics card (8 to 13
+  frames a second). They are there to compare and fail no pull request. `chase.py`: 12/13 three times in
+  the first run, because the script read the cruiser's speed one frame after the ram; it now reads the
+  frame before as well, and the next run read 13/13. `havoc.py`: 46/47 in five runs of six. A bin hit at
+  15 m/s leaves the car 0.95 of its speed and the check asks for more than 0.96. In the sixth the car was
+  gone half way and 21 checks failed with it. The blast on the dock leaves a star, the suite then rests
+  for 5 s, and in that time the police arrested the player and took the car. The script now takes the
+  star off before it rests; six more runs read 46/47 and kept the car. `thrill.py`: 33, 33, 32, 33 and 33 of
+  34. The getaway seen for 4 s pays $70 where the check expects $60, and once a horn was not heard; a
+  sixth run did not start. The checks that fail here were not patched and no limit was changed.
+- **A red run.** The third run of the suites needed a second attempt for `touch.py` (the FIRE button on a
+  667 x 375 screen; why was not looked into). The fourth ran on a slower Mac and was red for the commit:
+  `city.py` and `pace.py` failed three times and `chase.py` passed at its second attempt. The released 2.0
+  failed `gates.py` in that run and 2.0.1 passed it. Each failure for the commit in that fourth run was
+  traced, on a measuring branch on GitHub, to the script and not to the game:
+  - `city.py`, "the hint says Paper Round is on foot". The check before it starts a new game, so the
+    first-timer's intro is on again and the player has not left the start spot. Getting into a car there
+    makes the intro clear the hint line, and with it the on-foot note the game wrote a moment before. If a
+    stunt ramp stands within 45 m of the beam, the ramp tip takes the line next. `test/foot_beam.py` put a
+    car on all 61 corners where that beam can stand: the note came at 61 of 61, for 2.0 and for 2.0.1. In
+    15 runs of `city.py` the 4 with a ramp within 45 m failed and the other 11 passed, and with the beam
+    held on a corner 44.8 m from a ramp 6 of 6 failed (3 for 2.0.1, 3 for 2.0). The script now lets the
+    player stand beside the car for 0.3 s first, as somebody who walked to it, and the check also asks that
+    the line is on screen: 52 of 52, 12 of them at that corner.
+  - `chase.py`, the two-star cruiser that slows down behind the car. The 6 m it had to come within was the
+    script's number. The cruiser brakes for a gap of 8 m and parks 5.7 to 6.9 m behind. The check now uses
+    the distance at which the game itself makes an arrest, 7.5 m: 13/13 in 6 of 6 runs for 2.0.1 and 6 of
+    6 for 2.0 (it came within 6.10 to 6.41 m, at 4.6 to 7.3 m/s; at three stars it arrives at 41.9 m/s).
+  - `pace.py`. The bands for 30, 12 and 5 frames a second were bands on the script's own brake on the
+    browser, and a slower Mac fell outside them (30.9 to 31.5, 12.67 to 12.72, 4.99 to 5.12 on GitHub).
+    They are wider now (26 to 33, 10.5 to 13.5, 4.5 to 5.2). What is asked of the game, the steps a frame
+    and the speed of its clock, is as it was: 11/11 in 3 of 3 runs.
+  - Shadow Run "loses them": the waterline, above.
+
+  Fixing these turned up four more faults, each in one run of `city.py` among 36: the player out of reach
+  of the car after the 0.3 s (fixed: they get in from the car's own spot); a cab shift that had not
+  started (the player now boards from the cab's own spot and not a cab standing in the job beam, and the
+  script says why if it happens again); "They never showed", the game's own answer when it finds no place
+  for the pink car, twice from one spot; and the two property checks failing without a word. The last two
+  did not come back in 18 runs and now print what they saw. With the scripts as they are now: `city.py`
+  55/55 in 18 of 18 runs on GitHub, and in the suites all ten Mac jobs for the commit passed at the first
+  attempt (run 45764079399; the slow computer's `havoc.py` read 46/47 three times, as before).
+
+Still not shown:
+
+- **Whether it is fun.** Nobody has played 2.0 or 2.0.1. That was the verdict on 1.9 and only Juwen can
+  change it.
+- **The sums were measured by a script, not tuned by play.** They stay because smashing pays less than a
+  job, not because anybody found them right.
+- **Every barrel on the dock in one chain.** `test/barrel_rows.py` shot all nine groups 1.5 s apart: 27 of
+  27 barrels, $10,360 at x4 with four stars. That is an upper bound (the script does not aim and the
+  police are taken off the road), and since 2.0.1 it can be had once in ten minutes of play. Loading the
+  page again stands every barrel up again; that is as it was, and it is not closed.
+- **A chase with nitro, ramps and barrels in it,** and what the patrol cars that the game now puts on the
+  road ahead do to a real drive. Both need a script that dodges traffic, and there is none.
+- **A real phone.** Still Chrome's phone emulation and WebKit only.
+- **The slow computer's failures** listed above.
+- **The chase bench and `economy.py` on the ASUS.** It went over its load limit before they ran; their
+  numbers are from the GitHub Mac.
+- **The hint line at the start spot.** In a new game, getting into a car within 3 m of the start spot
+  clears the hint line, whatever is on it. In play that needs a car within reach of that spot, and the red
+  car stands 11 m away. Found by the red run and not changed: the game could not be rebuilt and tested on
+  the ASUS in this run.
+- **Four things in the scripts.** Why `touch.py` once needed a second attempt for FIRE; why the game once
+  found no place for the pink car; why the two property checks once failed; what carries a held car 5 to
+  22 m from its spot inland. The last three print their own answer the next time they happen.
+
 ## Version 2.0 · Havoc
 
 Juwen played 1.9 and said it was still not good enough, with no word on which part. 1.9 had changed how
@@ -35,7 +183,8 @@ moved, a lamp post let a car straight through, a crash stopped the car dead. 2.0
   card of 1.9: a cone $5; a bin, box or crate $10; a lamp post $20 (it needs 7 m/s, and its light goes
   out); a hydrant $25, with a jet of water. Seven cones at 20 m/s: $35, no health and no speed lost. A
   lamp post costs the car 7% of its speed and no health.
-  Slower than 2.5 m/s a thing is only tipped over. It all stands again once you are 150 m away.
+  Slower than 2.5 m/s a thing is only tipped over. It all stands again once you are 150 m away (since
+  2.0.1 a barrel that went up stays gone for ten minutes of play).
 - **Barrels blow up.** Ram or shoot a red barrel: BLAST, $40, a flash, a moment of slow motion. The blast
   reaches 7.5 m, takes up to 26 health off a car (16 at 3 m, and the car is thrown 6 m), throws people,
   and sets off the barrels next to it. One shot at the row of four on the Rustport dock sets off all four
@@ -66,7 +215,7 @@ moved, a lamp post let a car straight through, a crash stopped the car dead. 2.0
   `touch.py`, that a new hint named a key on a phone; `city.py`, that the tip said once near the first ramp
   took the hint line from a job. A tip now waits until the line is free, and check 46 holds that.
 
-What this does not show:
+What this did not show when it was released (2.0.1, above, goes through this list):
 
 - **Whether it is good enough now.** A script can check that a barrel takes 16 health at 3 m. It cannot
   say whether that is fun. Nobody has played 2.0 yet.
@@ -371,26 +520,48 @@ Needs Python with Playwright and Chrome. Run from this folder after `python buil
   from a driver who has to wait, a patrol car on a call, five gears, wind, the wider lens, **J** before and
   after the first story job, the number of cars and people, and the phone controls for the slide. Give it
   another build to see which rules are new: `python test/thrill.py old.html` reads 11 of 34 on 1.8.
-- `python test/havoc.py` - 46 checks on what 2.0 added, all waiting on the game's own clock: how many
+- `python test/havoc.py` - 47 checks on what 2.0 added, all waiting on the game's own clock: how many
   things stand on the street and that none stands in a tree, at a job stop, a shop or a door; what a cone,
   a lamp post and a barrel cost the car and pay; that a slow car only tips a thing over; a blast by
   distance, on a parked car, on people and on the next barrel; a ramp at 30 m/s and at 10 m/s, the map
   marks and the reward for all twelve; that a tip said once waits for a free hint line; the nitro tank,
   what fills it and what it adds; a parked car shoved, a car spun and its driver stunned; a person thrown;
-  traffic put ahead at speed; the NITRO button on a phone; a save from 1.9. `python test/havoc.py old.html`
-  reads 2 of the first 45 on 1.9 (check 46 came later and was not run on 1.9).
-- `.github/workflows/suites.yml` (since 2.0) runs every suite above on a GitHub computer for each pull
+  traffic put ahead at speed; the NITRO button on a phone; a save from 1.9; since 2.0.1 that a barrel
+  that went up stays gone for ten minutes of play. `python test/havoc.py old.html` reads 2 of the first
+  45 on 1.9 (check 46 came later and was not run on 1.9) and 46 of 47 on 2.0.
+- `python test/pace.py` (since 2.0.1) - 11 checks on how fast the game runs when the screen is drawn
+  slowly. The script holds every frame back to get about 30, 12 and 5 frames a second, and reads the
+  game's clock against the real one, the number of steps a frame, how long a car takes to reach a speed
+  and to brake, and whether the radio's notes stay on the beat at 4 frames a second. 2.0 passes 5 of 11.
+- `python test/economy.py` (since 2.0.1) - not pass/fail. A script drives into everything it can find
+  for five minutes and prints what that paid a minute, how many things it knocked over, the highest
+  multiplier, how often the nitro tank filled and how long the nitro burned.
+- `python test/barrel_rows.py` (since 2.0.1) - not pass/fail. One shot at every group of barrels that
+  go up together, from a car 14 m away, and what each chain paid; then one shot at every group 1.5 s
+  apart, all in one chain. The last number is an upper bound: the script does not aim, the car is moved
+  by script and the police are taken off the road.
+- `.github/workflows/suites.yml` (since 2.0) runs ten suites on a GitHub computer for each pull
   request that changes more than Markdown: once for the build of the commit and once for the last release from its own tag, up to three
-  attempts each, with the logs kept. That computer has no graphics card (9 to 13 frames a second), so a
-  check that also fails for the last release says something about the computer, not about the change.
+  attempts each, with the logs kept. For 2.0 that was a Windows computer with no graphics card (9 to 13
+  frames a second). Since 2.0.1 it is a GitHub Mac, which has one. A browser without a window draws
+  there at 14 to 28 frames a second under its own frame cap and at 75 to 210 with the cap off, so the
+  suites run with the cap off (`NEON_CHROME_ARGS`). With the cap off a screenshot now and then waits 30 s
+  for a frame, so the three suites that take screenshots (gates, smoke, touch) keep the cap, and the
+  frame-rate gate alone is measured in a browser of its own (`NEON_FPS_UNCAPPED=1`). Three suites
+  (chase, havoc, thrill) also run on the Windows computer as "a slow computer"; they are there to
+  compare and do not fail the pull request, and neither do the runs for the last release.
   `test/thrill.py` had three set-ups made steady for it (a patrol car put in a lane, the crowd counted as
   a median over 4 s, the horn taken from a car that drives towards the player; no limit changed), and
   `test/harbor.py` prints where the van is when a stop does not load.
 - `python test/chase_bench.py NeonCoast.html 2 21` - how long a car lasts in a chase. It holds a Vanta GT
   at a set speed (here 21 m/s) at a set number of stars (here two) for 30 s of game time, with the other
-  traffic removed, and reports whether the car was wrecked, the stars at the end and the damage from
-  crashes and from gunfire. Police arrive at random, so some runs are never found; those are listed, not
-  counted as survived.
+  traffic out of the way, and reports whether the car was wrecked, the stars at the end, the damage from
+  crashes and from gunfire, the most police cars on the map and where each crash was. Police arrive at
+  random, so some runs are never found; those are listed, not counted as survived. Until 2.0.1 the script
+  removed traffic every frame, and the game then put new cars on the road, 7 in 100 of them patrol cars
+  the script left in (`... 3 21 8 old` still counts that way). The table below was measured like that.
+  1.7 and 1.8 put new cars on the road in the same way, so the two were compared under the same fault;
+  the numbers for 1.9, 2.0 and 2.0.1 measured the new way are under Version 2.0.1.
 
   | stars | build | runs | never found | chased and wrecked | stars at the end |
   |---|---|---|---|---|---|
@@ -475,6 +646,8 @@ Needs Python with Playwright and Chrome. Run from this folder after `python buil
 
 - `python test/fps_ab.py NeonCoast.html other-build.html` - frame rate of two builds measured in turn, for
   when the PC is busy and the frame-rate gate reads low.
+- Every suite reads two switches: `NEON_WINDOW=1` opens a real window instead of a headless browser, and
+  `NEON_CHROME_ARGS` adds Chrome flags.
 
 Apart from the six story jobs and Shadow Run, jobs are passed by script (the car or the player is moved
 between markers), so the tests do not measure how hard the other odd jobs, the cab fares or the courier

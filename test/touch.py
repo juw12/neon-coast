@@ -6,6 +6,7 @@ two thumbs. Then: the desktop page must be untouched by all this, the home-scree
 the game offline, and, where Playwright's WebKit is installed, the page must run on Safari's engine too.
 This is an emulation. It cannot tell how the game runs or feels on a real phone.
 """
+import os
 import functools
 import http.server
 import json
@@ -15,6 +16,11 @@ import threading
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+
+# NEON_WINDOW=1 opens a real window instead of a headless browser (a GitHub Mac uses its graphics card in both).
+# NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
+WINDOW = os.environ.get("NEON_WINDOW") == "1"
+EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
 
 ROOT = Path(__file__).resolve().parent.parent
 SHOTS = ROOT / "test" / "shots"
@@ -640,7 +646,7 @@ def run_webkit(pw):
 
 def main():
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(channel="chrome", headless=True, args=CHROME_ARGS)
+        browser = pw.chromium.launch(channel="chrome", headless=not WINDOW, args=CHROME_ARGS + EXTRA_ARGS)
         for name, width, height in SCREENS:
             try:
                 failed = play_on_phone(browser, name, width, height)
