@@ -250,7 +250,10 @@ SOFTWARE.
   body.touch #delta { position: static; font-size: 13px; margin-top: 2px; }
   body.touch #perk { width: 172px; margin-top: 6px; padding: 6px 9px 7px; }
   body.touch #perk b, body.touch #perk span { font-size: 11.5px; }
-  body.touch #br { position: static; margin: 3px 0 0 4px; text-align: left; }
+  body.touch #br { position: static; margin: 9px 0 0 4px; text-align: left; }
+  /* one name at a time on a phone: the district first, then the car, then the radio station */
+  body.touch #br:has(#zone.show) #veh, body.touch #br:has(#zone.show) #radio,
+  body.touch #br:has(#veh.show) #radio { display: none; }
   body.touch #zone { font-size: 17px; }
   body.touch #veh { font-size: 14px; }
   body.touch #radio { font-size: 11.5px; }
@@ -483,6 +486,7 @@ SOFTWARE.
     <details class="news">
       <summary><strong>Version 2.0 · Havoc</strong> — the street breaks: cones, bins, hydrants, barrels and lamp posts fly and pay, twelve stunt ramps, a nitro tank that tricks fill, and a hard hit spins a car round. What changed, release by release</summary>
       <ul>
+        <li><strong>2.1 · Way Out</strong> — A chase you can read. At one star a cruiser now slows down behind you, as it does at two stars; it used to ram at full speed. From three stars the police still ram, but one at a time: after a police car has hit you the others hold off for 10 seconds at three stars, 7 at four and 4 at five, and up to three stars one such crash takes at most 25% of your car on Normal, not 40%. An officer in a cruiser on the move shoots half as often and gets nothing for being close; one who has stopped shoots as before. A car at zero health now says so: “Your car is on fire! Get out”, and with you in it the fuse is 5.5 seconds, not 3.6. You can leave a burning car at any speed: a jump from a fast one costs up to 30 health, and you then have at least 2.6 seconds to run. On a phone the corner under the map shows one name at a time: the district, then the car, then the radio station.</li>
         <li><strong>2.0.1</strong> — On a slow computer or phone the game no longer runs in slow motion. A slow frame is now cut into steps of a sixtieth of a second, so the game keeps real time down to 10 frames a second; at 12 frames a second 2.0 ran at half to six tenths of its speed. The radio keeps its beat when a frame comes late. One rule changed: a barrel that went up now stands again after ten minutes of play, not as soon as you are 150 m away. One shot at the six barrels on the Rustport dock paid $1,505 every time you came back. Nothing else in the game changed.</li>
         <li><strong>2.0 · Havoc</strong> — The street breaks. Cones, bins, news boxes, crates, hydrants, barrels and lamp posts no longer stand like walls or like air: a car knocks them flying. What your car knocks over pays into the chain ($5 to $25), a hydrant throws water, a lamp post comes down and its light goes out, and a red barrel goes up, throws the cars round it and sets off the barrels next to it; a shot sets one off too. Twelve stunt ramps stand on the parking strips and on the Rustport dock: the further the jump, the more it pays, the big map marks them, and all twelve pay $2,500. Tricks, smashes and jumps fill a nitro tank: Shift, or the NITRO button, burns it for a harder pull and a higher top speed. A hard hit off the middle turns a car round and its driver loses it for a moment, so a cruiser can be spun out; a parked car is shoved down the street. Somebody hit at speed is thrown into the air. At speed most new traffic appears on the road ahead, and nothing parks on a ramp.</li>
         <li><strong>1.9 · Sideways</strong> — Hold the handbrake with the wheel turned and the car slides round the corner and keeps most of its speed; with the wheel straight it is the brake it was. Passing another car closely at speed is a near miss worth $25 ($50 past a police car), and a slide pays $30 a second. Tricks in a row multiply, up to four times; the sum is paid when the bar on the card runs out, and a crash loses it. With wanted stars on, every trick pays double. Losing the police on the road pays $150 at two stars, $400, $800 and $1,400 above, in full when they had you in sight for ten seconds; a bar under the stars shows how close you are to losing them. At two stars officers no longer shoot at a moving car. Odd jobs open after the first story job: J goes from the story job to an odd job and back. More cars and people on the streets, drivers sound their horns, and now and then a patrol car runs past on a call. The engine has gears, tyres squeal, wind is heard at speed, the car body leans, and the view widens and darkens at the edges when you drive fast. On a phone a slide keeps the power on by itself and the stick is finer near its middle.</li>
@@ -3101,6 +3105,10 @@ const HORN_HZ = { sedan: 370, taxi: 415, sports: 494, muscle: 311, pickup: 277, 
 let honkCount = 0;           // horns played so far (read by the checks)
 let gameClock = 0;           // seconds of play, advanced by the main loop
 
+const RAM_REST = [0, 0, 0, 10, 7, 4];   // s after a police ram in which no police car rams again, by stars
+const FUSE = 3.6;            // s a car burns before it blows up
+const FUSE_DRIVER = 5.5;     // the same with the player at the wheel: time to read the warning and get out
+const FUSE_RUN = 2.6;        // s left at least after the player has got out
 const PURSUIT_CLOSE = 4;     // m/s: how much faster than the player's car a two-star cruiser arrives
 const PURSUIT_GAP = 8;       // m between car centres at which it has slowed to that (bumpers meet at about 5)
 const PURSUIT_BRAKE = 18;    // m/s2 of the 30 its brakes can do: it starts to slow down about 60 m out
@@ -3132,7 +3140,10 @@ function aiDrive(v, dt) {
       tz = a.cz;
       want = a.want;
     }
-    if (wanted.stars === 2 && player.car) {
+    if ((wanted.stars <= 2 || wanted.ramRest > 0) && player.car) {
+      // Since 2.1 this also holds at one star (before, a one-star cruiser came in at full speed and hit harder
+      // than a two-star one), and from three stars for RAM_REST seconds after any police car has hit the
+      // player's car: they ram one at a time, and between two rams they sit behind.
       // two stars: pursue, do not ram. The cruiser brakes on its way in, seen or not, so that it reaches the
       // player's car no more than PURSUIT_CLOSE m/s faster than the car drives away from it, and then holds
       // that speed. From three stars it rams at full speed, as before.
@@ -3207,6 +3218,7 @@ function damageVehicle(v, amount) {
 // Every hit in the CRASH_WINDOW seconds after the first one is the same crash, also the wall the car is
 // shoved into. Crashes without a police car are not capped.
 const CRASH_SHARE = 0.4;
+const CRASH_SHARE_LOW = 0.25;   // up to three stars (since 2.1): four rams wreck a car, not three
 const CRASH_WINDOW = 0.6;
 function impact(v, speed, police) {
   if (speed < 4) return;
@@ -3217,8 +3229,9 @@ function impact(v, speed, police) {
       v.crashSum = 0;
     }
     if (v.crashT > 0) {
-      amount = Math.min(amount, Math.max(0, v.t.hp * CRASH_SHARE - v.crashSum));
+      amount = Math.min(amount, Math.max(0, v.t.hp * (wanted.stars <= 3 ? CRASH_SHARE_LOW : CRASH_SHARE) - v.crashSum));
       v.crashSum += amount;
+      wanted.took.ram += amount;      // read by the checks: what the police took by ramming
     }
   }
   damageVehicle(v, amount);
@@ -3373,7 +3386,9 @@ function updateVehicle(v, dt) {
     if (v.hp <= 0) {
       if (v.driver && v.driver !== 'player') ejectDriver(v);
       v.burn += dt;
-      if (v.burn > 3.6) explode(v);
+      // the engine is dead and the car will blow: say so for as long as the player sits in it
+      if (v === player.car && state === 'play') hint('Your car is on fire! Get out: [F]', 0.6);
+      if (v.burn > (v === player.car ? FUSE_DRIVER : FUSE)) explode(v);
     }
   } else {
     v.deadT += dt;
@@ -3490,6 +3505,7 @@ function collideVehicles() {
               const own = mine === B ? closeA : closeB;
               const theirs = mine === B ? closeB : closeA;
               if (own > 5 && own >= theirs) crime(1.3);
+              if (wanted.stars >= 3) wanted.ramRest = RAM_REST[wanted.stars];
             } else {
               crime(mine.driver ? 0.3 : 0);
             }
@@ -3587,11 +3603,20 @@ function exitCar() {
 
 function tryEnterExit() {
   if (player.car) {
-    if (Math.hypot(player.car.vx, player.car.vz) > 7) {
+    const car = player.car;
+    const speed = Math.hypot(car.vx, car.vz);
+    const burning = car.hp <= 0 && !car.dead;
+    if (speed > 7 && !burning) {
       hint('Slow down to get out');
       return;
     }
     exitCar();
+    if (burning) {
+      // out of a burning car at any speed: a jump from a fast one hurts, and there is time left to run
+      car.burn = Math.min(car.burn, FUSE - FUSE_RUN);
+      if (speed > 7) hurt(Math.min(30, speed * 0.8), 'wasted');
+      if (state === 'play') hint('Run! It is about to blow.', 2.6);
+    }
     return;
   }
   let best = null;
@@ -4294,9 +4319,10 @@ function checkPerks(quiet) {
 }
 
 // ---------- wanted level ----------
-const wanted = { pts: 0, stars: 0, evade: 0, bust: 0, spawnT: 0, peak: 0, seenT: 0, callT: 20 };
+const wanted = { pts: 0, stars: 0, evade: 0, bust: 0, spawnT: 0, peak: 0, seenT: 0, callT: 20, ramRest: 0, took: { ram: 0, shot: 0 } };
 const STAR_PTS = [0, 1, 3, 6, 10, 15];
 const COPS_PER_STAR = [0, 1, 2, 3, 4, 6];
+const ROLLING_SPEED = 6;                         // m/s: a cruiser faster than this is on the move (its officer aims worse)
 const HOLD_FIRE_SPEED = 8;                       // m/s: at two stars officers do not shoot at a car faster than this
 const GETAWAY_PAY = [0, 0, 150, 400, 800, 1400]; // cash for losing the police on the road, by the most stars the chase reached
 const GETAWAY_SEEN = 10;                         // seconds the police must have had you in sight for the full sum
@@ -4474,6 +4500,7 @@ function updateHeli(dt) {
 
 function updateWanted(dt) {
   const [px, pz] = focus();
+  wanted.ramRest = Math.max(0, wanted.ramRest - dt);
   const fromAbove = updateHeli(dt);
   if (wanted.stars === 0) {
     wanted.pts = Math.max(0, wanted.pts - dt * 0.03);
@@ -4510,16 +4537,21 @@ function updateWanted(dt) {
     if (wanted.stars >= 2 && d < 36 && v.ai.direct && !holdFire) {
       v.ai.fire -= dt;
       if (v.ai.fire <= 0) {
-        v.ai.fire = rand(0.5, 1.1);
+        // an officer in a cruiser on the move shoots half as often and gets nothing for being close (2.1):
+        // a cruiser that sits on the player's bumper is a pursuit, not a firing squad
+        const rolling = Math.abs(v.vf) > ROLLING_SPEED;
+        v.ai.fire = rand(0.5, 1.1) * (rolling ? 2 : 1);
         // a moving car is harder to hit: the chance falls with its speed, to 40% of the standing chance from 30 m/s
         const moving = player.car ? 1 - 0.6 * clamp(Math.hypot(player.car.vx, player.car.vz) / 30, 0, 1) : 1;
-        const hit = Math.random() < diff().aim * (d < 15 ? 1.4 : 1) * moving;
+        const hit = Math.random() < diff().aim * (d < 15 && !rolling ? 1.4 : 1) * moving;
         const ex = px + (hit ? 0 : rand(-2.5, 2.5));
         const ez = pz + (hit ? 0 : rand(-2.5, 2.5));
         tracer(v.x, 1.4, v.z, ex, 1.1, ez);
         sfx.shot(clamp(1 - d / 50, 0.15, 0.6));
-        if (hit && player.car) damageVehicle(player.car, 6);
-        else if (hit) hurt(7, 'wasted');
+        if (hit && player.car) {
+          damageVehicle(player.car, 6);
+          wanted.took.shot += 6;
+        } else if (hit) hurt(7, 'wasted');
       }
     }
   }
@@ -7613,7 +7645,8 @@ function updateIntro(dt) {
   if (!intro.on) return;
   if (player.car || dist2(player.x, player.z, START.x, START.z) > 9) {
     intro.on = false;
-    if (intro.shown && player.car) $('hint').classList.remove('show');
+    // in the car: take the walking keys off the line, but leave any other hint that has come up since
+    if (intro.shown && player.car) { if ($('hint').textContent === intro.text) $('hint').classList.remove('show'); }
     else if (intro.shown) hint('The red car is yours: stand beside it and press F.', 4);
     return;
   }
@@ -7621,6 +7654,7 @@ function updateIntro(dt) {
   if (intro.idle > 3.5 && !intro.shown) {
     intro.shown = true;
     hint('W A S D to walk, mouse to look around.', 600);
+    intro.text = $('hint').textContent;      // as shown: a phone names thumbs, not keys
   }
 }
 
@@ -7828,7 +7862,7 @@ window.NEON = {
   props, ramps, fallen, jets, PROP_KINDS, PROP_HIT, PROP_BACK, BARREL_BACK, BLAST, SPIN, RAMP, NITRO, AHEAD, LOOSE_MASS, nitro, warp, kerbTaken, worksAt,
   knockProp, blast, shootProps, rampAt, rampHeight, kerbBusy, nearPlace, stuntJump, resetHavoc, spawnTraffic, roadStop, downPed,
   addPed, insideBox, lampMesh, lamps, FERRY, START, styleSmash, hint, pace, STEP, MAX_STEPS,
-  style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, carSound, updateStyle, honk,
+  style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, ROLLING_SPEED, RAM_REST, FUSE, FUSE_DRIVER, FUSE_RUN, CRASH_SHARE, CRASH_SHARE_LOW, carSound, updateStyle, honk,
   get honks() {
     return honkCount;
   },

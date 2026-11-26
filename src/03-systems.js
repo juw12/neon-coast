@@ -641,9 +641,10 @@ function checkPerks(quiet) {
 }
 
 // ---------- wanted level ----------
-const wanted = { pts: 0, stars: 0, evade: 0, bust: 0, spawnT: 0, peak: 0, seenT: 0, callT: 20 };
+const wanted = { pts: 0, stars: 0, evade: 0, bust: 0, spawnT: 0, peak: 0, seenT: 0, callT: 20, ramRest: 0, took: { ram: 0, shot: 0 } };
 const STAR_PTS = [0, 1, 3, 6, 10, 15];
 const COPS_PER_STAR = [0, 1, 2, 3, 4, 6];
+const ROLLING_SPEED = 6;                         // m/s: a cruiser faster than this is on the move (its officer aims worse)
 const HOLD_FIRE_SPEED = 8;                       // m/s: at two stars officers do not shoot at a car faster than this
 const GETAWAY_PAY = [0, 0, 150, 400, 800, 1400]; // cash for losing the police on the road, by the most stars the chase reached
 const GETAWAY_SEEN = 10;                         // seconds the police must have had you in sight for the full sum
@@ -821,6 +822,7 @@ function updateHeli(dt) {
 
 function updateWanted(dt) {
   const [px, pz] = focus();
+  wanted.ramRest = Math.max(0, wanted.ramRest - dt);
   const fromAbove = updateHeli(dt);
   if (wanted.stars === 0) {
     wanted.pts = Math.max(0, wanted.pts - dt * 0.03);
@@ -857,16 +859,21 @@ function updateWanted(dt) {
     if (wanted.stars >= 2 && d < 36 && v.ai.direct && !holdFire) {
       v.ai.fire -= dt;
       if (v.ai.fire <= 0) {
-        v.ai.fire = rand(0.5, 1.1);
+        // an officer in a cruiser on the move shoots half as often and gets nothing for being close (2.1):
+        // a cruiser that sits on the player's bumper is a pursuit, not a firing squad
+        const rolling = Math.abs(v.vf) > ROLLING_SPEED;
+        v.ai.fire = rand(0.5, 1.1) * (rolling ? 2 : 1);
         // a moving car is harder to hit: the chance falls with its speed, to 40% of the standing chance from 30 m/s
         const moving = player.car ? 1 - 0.6 * clamp(Math.hypot(player.car.vx, player.car.vz) / 30, 0, 1) : 1;
-        const hit = Math.random() < diff().aim * (d < 15 ? 1.4 : 1) * moving;
+        const hit = Math.random() < diff().aim * (d < 15 && !rolling ? 1.4 : 1) * moving;
         const ex = px + (hit ? 0 : rand(-2.5, 2.5));
         const ez = pz + (hit ? 0 : rand(-2.5, 2.5));
         tracer(v.x, 1.4, v.z, ex, 1.1, ez);
         sfx.shot(clamp(1 - d / 50, 0.15, 0.6));
-        if (hit && player.car) damageVehicle(player.car, 6);
-        else if (hit) hurt(7, 'wasted');
+        if (hit && player.car) {
+          damageVehicle(player.car, 6);
+          wanted.took.shot += 6;
+        } else if (hit) hurt(7, 'wasted');
       }
     }
   }

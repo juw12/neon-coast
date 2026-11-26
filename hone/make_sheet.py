@@ -25,6 +25,8 @@ lines = [
     + (" From v8 also: the game on a phone held on its side and upright (an emulated phone in Chrome)."
        if number >= 8 else "")
     + (" From v9 also: the Rustport dock apron and a Shadow Run in progress." if number >= 9 else "")
+    + (" From v12 also: a stunt jump off a ramp, the barrel row going up, a road works site and the nitro burning."
+       if number >= 12 else "")
     if number >= 2
     else "driving, a police chase, night, pause menu.",
     "",
@@ -109,6 +111,9 @@ if drive_lines:
 else:
     lines += ["- Jobs are passed by script (the car is moved between markers), so their difficulty is not measured."]
 lines += [
+    "- Tested in Chrome on one Windows laptop and, since 2.0.1, on GitHub's Mac test computers (every suite on every"
+    "\n  change; these have a graphics card, the laptop does not). Since 1.5 there are touch controls for"
+    if number >= 12 else
     "- Tested in Chrome on one Windows laptop and (release 1.5) on one Mac. Since 1.5 there are touch controls for"
     if number >= 8 else "- Only tested in Chrome on one Windows laptop; no phone or gamepad controls.",
 ] + ([
@@ -116,7 +121,13 @@ lines += [
     "  No real phone or tablet has run the game yet, so thumb reach, heat and frame rate on a phone are not known.",
     "  No gamepad controls.",
 ] if number >= 8 else []) + [
+] + ([
+    "- One person has played it: the owner. He played 1.8 and said 'not fun enough', played 1.9 and said 'not good",
+    "  enough', and did not say which part. 2.0 and later were made in answer to that; he has not said anything about",
+    "  them yet. No one else has played any version. The scores are from AI judges reading this sheet and the",
+    "  screenshots.",
+] if number >= 12 else [
     "- No real players have tried it yet. The scores are from AI judges reading this sheet and the screenshots.",
-]
+])
 (ROOT / "hone" / f"{version}.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 print("wrote", ROOT / "hone" / f"{version}.md")

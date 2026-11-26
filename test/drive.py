@@ -44,6 +44,8 @@ from playwright.sync_api import sync_playwright
 # NEON_WINDOW=1 opens a real window instead of a headless browser (a GitHub Mac uses its graphics card in both).
 # NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
 WINDOW = os.environ.get("NEON_WINDOW") == "1"
+# another build of the game to play (a released one, to compare with): NEON_HTML=path
+PAGE = Path(os.environ["NEON_HTML"]).resolve() if os.environ.get("NEON_HTML") else Path(__file__).resolve().parent.parent / "NeonCoast.html"
 EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -67,7 +69,7 @@ STATE_JS = """(fast) => {
   const n = NEON, p = n.player, c = p.car;
   // the car to walk to: the red starter car on a new game, otherwise the nearest parked one
   const away = (v) => Math.hypot(v.x - p.x, v.z - p.z);
-  const parked = n.vehicles.filter(v => (n.save.mission > 0 || v.type === 'muscle') && !v.dead && v.driver !== 'ai' && v.driver !== 'cop')
+  const parked = n.vehicles.filter(v => (n.save.mission > 0 || v.type === 'muscle') && !v.dead && v.hp > 0 && v.driver !== 'ai' && v.driver !== 'cop')
     .sort((a, b) => away(a) - away(b));
   // "get in something fast": for a race, a sports or muscle car is worth a short walk
   const starter = (fast && parked.find(v => (v.type === 'sports' || v.type === 'muscle') && away(v) < 60)) || parked[0];
@@ -91,6 +93,11 @@ STATE_JS = """(fast) => {
     // what the game says when a try ends: read from the banner a player sees
     card: document.querySelector('#banner b').textContent, why: document.querySelector('#banner span').textContent,
     type: c ? c.type : '',
+    // for the note of what ended a try: how far each police car is, and how long out of their sight
+    cops: n.vehicles.filter(v => v.driver === 'cop' && !v.dead).map(v => Math.round(Math.hypot(v.x - (c || p).x, v.z - (c || p).z))),
+    evade: n.wanted.evade, took: n.wanted.took || null,
+    // the line of text a player reads at the bottom of the screen, when it is showing
+    hint: document.getElementById('hint').classList.contains('show') ? document.getElementById('hint').textContent : '',
   };
 }"""
 
@@ -209,7 +216,7 @@ def run(job=1):
         page = browser.new_page(viewport={"width": 1280, "height": 720})
         page.on("pageerror", lambda e: problems.append(f"pageerror: {e}"))
         page.on("console", lambda m: problems.append(f"{m.type}: {m.text}") if m.type == "error" else None)
-        page.goto((ROOT / "NeonCoast.html").as_uri())
+        page.goto(PAGE.as_uri())
         page.wait_for_timeout(1200)
         if job > 1:
             # the one thing that is set up, not played: a save file with the earlier jobs done
@@ -243,6 +250,10 @@ def run(job=1):
         side_sign = 1
         side_count = 0
         side_gap = None
+        last_alive = {}
+        chase_note = 0.0
+        no_car_since = None
+        fire_since = None
         while time.time() - started < plan["limit"]:
             s = page.evaluate(STATE_JS, bool(plan.get("race")))
             now = time.time()
@@ -275,11 +286,26 @@ def run(job=1):
                 # arrested or taken out: the game puts the player back on foot after a few seconds
                 if not down:
                     result["downs"] += 1
+                    # what the try looked like just before it ended (the last state read while still playing)
+                    result.setdefault("down_log", []).append(dict(last_alive, card=s["card"], at=round(now - started, 1)))
                 down = True
                 keys.hold([])
                 page.wait_for_timeout(200)
                 continue
             down = False
+            near = sorted(s["cops"])
+            last_alive = {
+                "stars": s["stars"], "step": s["step"] if s["active"] else None, "on_foot": not s["car"],
+                "car_health": round(s["car"]["hp"] / s["car"]["max"], 2) if s["car"] else None,
+                "speed": round(math.hypot(s["car"]["vx"], s["car"]["vz"]), 1) if s["car"] else 0,
+                "player_health": round(s["hp"]), "police_on_map": len(near),
+                "police_within_60m": sum(1 for d in near if d < 60), "nearest_police": near[:3],
+                "out_of_sight_s": round(s["evade"], 1),
+                "police_took": {k: round(v) for k, v in s["took"].items()} if s["took"] else None,
+            }
+            if s["stars"] and now - chase_note > 5:
+                chase_note = now
+                result.setdefault("chase_log", []).append(dict(last_alive, at=round(now - started, 1)))
             if s["state"] != "play":
                 result["phase"] = "stopped: game state " + s["state"]
                 break
@@ -288,7 +314,14 @@ def run(job=1):
                 # on foot: walk to the driver's side of the red car, then F
                 result["phase"] = "walking to the car"
                 if not (s["marked"] or s["starter"]):
-                    break
+                    # no car in reach yet (the street is still filling after a release): a person waits a moment
+                    no_car_since = no_car_since or now
+                    if now - no_car_since > 6:
+                        break
+                    keys.hold([])
+                    page.wait_for_timeout(200)
+                    continue
+                no_car_since = None
                 tx, tz = s["marked"] or s["starter"]
                 if math.hypot(tx - s["x"], tz - s["z"]) < 3.2:
                     keys.hold([])
@@ -340,6 +373,20 @@ def run(job=1):
                 continue
             foot_spot = None
             foot_goal = None
+
+            # the game says the car is on fire: a person reads that (0.7 s) and gets out with F. A build that
+            # does not say it gets no such help from the script
+            if "on fire" in s["hint"]:
+                fire_since = fire_since or now
+                if now - fire_since > 0.7:
+                    keys.hold([])
+                    page.keyboard.press("f")
+                    result["bailed"] = result.get("bailed", 0) + 1
+                    fire_since = None
+                    page.wait_for_timeout(150)
+                    continue
+            else:
+                fire_since = None
 
             result["phase"] = "driving to " + (s["job"] or "the job beam") + (" step " + str(s["step"]) if s["active"] else "")
             speed = math.hypot(car["vx"], car["vz"])
