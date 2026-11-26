@@ -74,6 +74,37 @@ jobs:
             id: drivetail
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             run: python test/drive.py 3 tail
+          - name: chase bench, 3 stars, eight runs
+            id: bench3
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            run: python test/chase_bench.py NeonCoast.html 3 21 8
+          - name: 2.0.1 chase bench, 3 stars, eight runs
+            id: oldbench3
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            html: v2.0.1
+            run: python test/chase_bench.py base.html 3 21 8
+          - name: chase bench, 4 stars, eight runs
+            id: bench4
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            run: python test/chase_bench.py NeonCoast.html 4 21 8
+          - name: 2.0.1 chase bench, 4 stars, eight runs
+            id: oldbench4
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            html: v2.0.1
+            run: python test/chase_bench.py base.html 4 21 8
+          - name: chase bench, 5 stars, eight runs
+            id: bench5
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            run: python test/chase_bench.py NeonCoast.html 5 21 8
+          - name: 2.0.1 chase bench, 5 stars, eight runs
+            id: oldbench5
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            html: v2.0.1
+            run: python test/chase_bench.py base.html 5 21 8
+          - name: economy, three runs of five minutes
+            id: economy
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            run: python test/economy.py
     env:
       PYTHONUTF8: "1"
       NEON_CHROME_ARGS: ${{ matrix.args }}
