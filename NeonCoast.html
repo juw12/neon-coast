@@ -362,8 +362,8 @@ SOFTWARE.
   <div class="tb in-car" data-hold="Space" style="--s:15;--r:27;--b:25">HAND<br>BRAKE</div>
   <div class="tb act in-car" data-tap="KeyF" style="--s:13;--r:5;--b:31">EXIT</div>
   <div class="tb in-car" data-tap="KeyH" style="--s:11;--r:5;--b:47">HORN</div>
-  <div class="tb go in-car near" id="tb-nitro" data-hold="ShiftLeft" style="--s:12;--r:44;--b:25">NITRO</div>
-  <div class="tb in-car" data-tap="KeyR" style="--s:11;--r:53;--b:43">RADIO</div>
+  <div class="tb go in-car ctx" id="tb-nitro" data-hold="ShiftLeft" style="--s:12;--r:44;--b:25">NITRO</div>
+  <div class="tb in-car ctx" id="tb-radio" data-tap="KeyR" style="--s:11;--r:53;--b:43">RADIO</div>
   <div class="tb stop in-car ctx" id="tb-carfire" data-fire style="--s:13;--r:21;--b:43">FIRE</div>
   <div class="tb act in-car ctx" id="tb-cab" data-tap="KeyT" style="--s:13;--r:37;--b:43">CAB</div>
   <div class="tb stop on-foot" id="tb-fire" data-fire style="--s:22;--r:4;--b:6">FIRE</div>
@@ -486,6 +486,7 @@ SOFTWARE.
     <details class="news">
       <summary><strong>Version 2.0 · Havoc</strong> — the street breaks: cones, bins, hydrants, barrels and lamp posts fly and pay, twelve stunt ramps, a nitro tank that tricks fill, and a hard hit spins a car round. What changed, release by release</summary>
       <ul>
+        <li><strong>2.2 · Second Car</strong> — Jump out of a burning car with the police on you and they hold their fire for 8 seconds: time to reach another car. On a phone the NITRO button is there only with nitro in the tank and RADIO only while nobody is after you. The courier shift is offered on the title once the first job is done.</li>
         <li><strong>2.1 · Way Out</strong> — A chase you can read. At one star a cruiser now slows down behind you, as it does at two stars; it used to ram at full speed. From three stars the police still ram, but one at a time: after a police car has hit you the others hold off for 10 seconds at three stars, 7 at four and 4 at five, and up to three stars one such crash takes at most 25% of your car on Normal, not 40%. An officer in a cruiser on the move shoots half as often and gets nothing for being close; one who has stopped shoots as before. A car at zero health now says so: “Your car is on fire! Get out”, and with you in it the fuse is 5.5 seconds, not 3.6. You can leave a burning car at any speed: a jump from a fast one costs up to 30 health, and you then have at least 2.6 seconds to run. On a phone the corner under the map shows one name at a time: the district, then the car, then the radio station.</li>
         <li><strong>2.0.1</strong> — On a slow computer or phone the game no longer runs in slow motion. A slow frame is now cut into steps of a sixtieth of a second, so the game keeps real time down to 10 frames a second; at 12 frames a second 2.0 ran at half to six tenths of its speed. The radio keeps its beat when a frame comes late. One rule changed: a barrel that went up now stands again after ten minutes of play, not as soon as you are 150 m away. One shot at the six barrels on the Rustport dock paid $1,505 every time you came back. Nothing else in the game changed.</li>
         <li><strong>2.0 · Havoc</strong> — The street breaks. Cones, bins, news boxes, crates, hydrants, barrels and lamp posts no longer stand like walls or like air: a car knocks them flying. What your car knocks over pays into the chain ($5 to $25), a hydrant throws water, a lamp post comes down and its light goes out, and a red barrel goes up, throws the cars round it and sets off the barrels next to it; a shot sets one off too. Twelve stunt ramps stand on the parking strips and on the Rustport dock: the further the jump, the more it pays, the big map marks them, and all twelve pay $2,500. Tricks, smashes and jumps fill a nitro tank: Shift, or the NITRO button, burns it for a harder pull and a higher top speed. A hard hit off the middle turns a car round and its driver loses it for a moment, so a cruiser can be spun out; a parked car is shoved down the street. Somebody hit at speed is thrown into the air. At speed most new traffic appears on the road ahead, and nothing parks on a ramp.</li>
@@ -3615,7 +3616,9 @@ function tryEnterExit() {
       // out of a burning car at any speed: a jump from a fast one hurts, and there is time left to run
       car.burn = Math.min(car.burn, FUSE - FUSE_RUN);
       if (speed > 7) hurt(Math.min(30, speed * 0.8), 'wasted');
-      if (state === 'play') hint('Run! It is about to blow.', 2.6);
+      // with the police on you: they keep back from the car too, and that is the time to reach another one
+      if (wanted.stars >= 2) wanted.bail = BAIL_GRACE;
+      if (state === 'play') hint(wanted.stars >= 2 ? 'Run! It is about to blow. The police hold their fire: take another car.' : 'Run! It is about to blow.', wanted.stars >= 2 ? 4 : 2.6);
     }
     return;
   }
@@ -4319,10 +4322,11 @@ function checkPerks(quiet) {
 }
 
 // ---------- wanted level ----------
-const wanted = { pts: 0, stars: 0, evade: 0, bust: 0, spawnT: 0, peak: 0, seenT: 0, callT: 20, ramRest: 0, took: { ram: 0, shot: 0 } };
+const wanted = { pts: 0, stars: 0, evade: 0, bust: 0, spawnT: 0, peak: 0, seenT: 0, callT: 20, ramRest: 0, bail: 0, took: { ram: 0, shot: 0 } };
 const STAR_PTS = [0, 1, 3, 6, 10, 15];
 const COPS_PER_STAR = [0, 1, 2, 3, 4, 6];
 const ROLLING_SPEED = 6;                         // m/s: a cruiser faster than this is on the move (its officer aims worse)
+const BAIL_GRACE = 8;                            // s: after the player jumps out of a burning car no officer fires (2.2)
 const HOLD_FIRE_SPEED = 8;                       // m/s: at two stars officers do not shoot at a car faster than this
 const GETAWAY_PAY = [0, 0, 150, 400, 800, 1400]; // cash for losing the police on the road, by the most stars the chase reached
 const GETAWAY_SEEN = 10;                         // seconds the police must have had you in sight for the full sum
@@ -4501,6 +4505,7 @@ function updateHeli(dt) {
 function updateWanted(dt) {
   const [px, pz] = focus();
   wanted.ramRest = Math.max(0, wanted.ramRest - dt);
+  wanted.bail = Math.max(0, wanted.bail - dt);       // runs out with no stars on too, so a later chase starts without it
   const fromAbove = updateHeli(dt);
   if (wanted.stars === 0) {
     wanted.pts = Math.max(0, wanted.pts - dt * 0.03);
@@ -4523,7 +4528,8 @@ function updateWanted(dt) {
   let arresting = false;
   const carSpeed = player.car ? Math.hypot(player.car.vx, player.car.vz) : 0;
   // two stars is a pursuit: officers shoot at you on foot or in a car that has all but stopped, not at a car on the move
-  const holdFire = wanted.stars === 2 && carSpeed > HOLD_FIRE_SPEED;
+  // out of a burning car: the officers keep back from a car that is about to blow, and hold their fire (2.2)
+  const holdFire = (wanted.stars === 2 && carSpeed > HOLD_FIRE_SPEED) || wanted.bail > 0;
   for (const v of vehicles) {
     if (v.driver !== 'cop' || v.dead) continue;
     v.siren = true;
@@ -6259,7 +6265,8 @@ function refreshPad() {
   padSet('tb-fire', true, armed ? 'FIRE' : 'PUNCH');
   padSet('tb-carfire', !!player.car && armed);
   padSet('tb-cab', !!player.car && player.car.type === 'taxi');
-  padSet('tb-nitro', !!player.car && nitro.tank > NITRO.min);      // bright while there is nitro to burn
+  padSet('tb-nitro', !!player.car && nitro.tank > NITRO.min);      // there only while there is nitro to burn (2.2)
+  padSet('tb-radio', !!player.car && wanted.stars === 0);          // nobody changes the station with the police behind (2.2)
   padSet('tb-car', mode === 'foot' && carInReach());        // bright when a car is close enough to take
   padSet('tb-use', mode === 'foot' && (wheelGate.inside || PROPERTIES.some((p) => p.marker.inside)));
 }
@@ -7616,6 +7623,8 @@ function renderSettings() {
   }
   const hasSave = save.mission > 0 || save.packages.length > 0 || save.tune > 0 || save.fares > 0 || have > 0 || save.money !== SAVE_DEFAULTS.money;
   $('btn-continue').style.display = hasSave ? '' : 'none';
+  // the courier shift starts with a clock running: not offered on the title before the first job is done (2.2)
+  $('btn-ferry').style.display = save.mission > 0 ? '' : 'none';
 }
 
 function showScreen(id) {
@@ -7862,7 +7871,7 @@ window.NEON = {
   props, ramps, fallen, jets, PROP_KINDS, PROP_HIT, PROP_BACK, BARREL_BACK, BLAST, SPIN, RAMP, NITRO, AHEAD, LOOSE_MASS, nitro, warp, kerbTaken, worksAt,
   knockProp, blast, shootProps, rampAt, rampHeight, kerbBusy, nearPlace, stuntJump, resetHavoc, spawnTraffic, roadStop, downPed,
   addPed, insideBox, lampMesh, lamps, FERRY, START, styleSmash, hint, pace, STEP, MAX_STEPS,
-  style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, ROLLING_SPEED, RAM_REST, FUSE, FUSE_DRIVER, FUSE_RUN, CRASH_SHARE, CRASH_SHARE_LOW, carSound, updateStyle, honk,
+  style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, ROLLING_SPEED, BAIL_GRACE, RAM_REST, FUSE, FUSE_DRIVER, FUSE_RUN, CRASH_SHARE, CRASH_SHARE_LOW, carSound, updateStyle, honk,
   get honks() {
     return honkCount;
   },

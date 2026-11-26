@@ -53,7 +53,7 @@ jobs:
       fail-fast: false
       matrix:
         suite: [pace, havoc, thrill, gates, chase, city, harbor, smoke, radio, touch]
-        game: [this commit, v2.0.1]
+        game: [this commit, v2.1.0]
         os: [macos-latest]
         include:
           - { suite: chase, game: this commit, os: windows-latest }

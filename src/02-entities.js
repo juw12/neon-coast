@@ -1060,7 +1060,9 @@ function tryEnterExit() {
       // out of a burning car at any speed: a jump from a fast one hurts, and there is time left to run
       car.burn = Math.min(car.burn, FUSE - FUSE_RUN);
       if (speed > 7) hurt(Math.min(30, speed * 0.8), 'wasted');
-      if (state === 'play') hint('Run! It is about to blow.', 2.6);
+      // with the police on you: they keep back from the car too, and that is the time to reach another one
+      if (wanted.stars >= 2) wanted.bail = BAIL_GRACE;
+      if (state === 'play') hint(wanted.stars >= 2 ? 'Run! It is about to blow. The police hold their fire: take another car.' : 'Run! It is about to blow.', wanted.stars >= 2 ? 4 : 2.6);
     }
     return;
   }

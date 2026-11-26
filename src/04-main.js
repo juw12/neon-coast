@@ -540,6 +540,8 @@ function renderSettings() {
   }
   const hasSave = save.mission > 0 || save.packages.length > 0 || save.tune > 0 || save.fares > 0 || have > 0 || save.money !== SAVE_DEFAULTS.money;
   $('btn-continue').style.display = hasSave ? '' : 'none';
+  // the courier shift starts with a clock running: not offered on the title before the first job is done (2.2)
+  $('btn-ferry').style.display = save.mission > 0 ? '' : 'none';
 }
 
 function showScreen(id) {
@@ -786,7 +788,7 @@ window.NEON = {
   props, ramps, fallen, jets, PROP_KINDS, PROP_HIT, PROP_BACK, BARREL_BACK, BLAST, SPIN, RAMP, NITRO, AHEAD, LOOSE_MASS, nitro, warp, kerbTaken, worksAt,
   knockProp, blast, shootProps, rampAt, rampHeight, kerbBusy, nearPlace, stuntJump, resetHavoc, spawnTraffic, roadStop, downPed,
   addPed, insideBox, lampMesh, lamps, FERRY, START, styleSmash, hint, pace, STEP, MAX_STEPS,
-  style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, ROLLING_SPEED, RAM_REST, FUSE, FUSE_DRIVER, FUSE_RUN, CRASH_SHARE, CRASH_SHARE_LOW, carSound, updateStyle, honk,
+  style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, ROLLING_SPEED, BAIL_GRACE, RAM_REST, FUSE, FUSE_DRIVER, FUSE_RUN, CRASH_SHARE, CRASH_SHARE_LOW, carSound, updateStyle, honk,
   get honks() {
     return honkCount;
   },

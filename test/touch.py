@@ -115,7 +115,7 @@ OVERLAPS = """() => {
     if (!NEON.player.car) show('weapon', 'Pistol  48');
     document.getElementById('way-dist').textContent = 'JOB  1250 m';
     show('way');
-    for (const id of ['tb-use', 'tb-cab', 'tb-carfire']) document.getElementById(id).classList.add('on');
+    for (const id of ['tb-use', 'tb-cab', 'tb-carfire', 'tb-nitro', 'tb-radio']) document.getElementById(id).classList.add('on');
     const boxes = [];
     for (const id of ['tr', 'map', 'objective', 'way', 'timer', 'hint', 'stick'].concat(NEON.player.car ? ['drive'] : [])) {
         boxes.push([id, document.getElementById(id).getBoundingClientRect()]);
@@ -278,9 +278,13 @@ def play_on_phone(browser, name, width, height):
     fingers.up(2)
     fingers.up(1)
     want(page.evaluate("!NEON.keys.KeyW && NEON.touch.sx === 0"), "GAS or the stick stayed on")
+    # the picture is what a player sees at the wheel; the overlap check after it then shows every line and
+    # button at once (the worst case), which up to 2.1 was also what the picture showed
+    page.wait_for_timeout(120)
+    page.screenshot(path=str(SHOTS / f"touch-{name}-car.png"))
     overlaps = page.evaluate(OVERLAPS)
     want(not overlaps, "in a car: " + ", ".join(overlaps))
-    page.screenshot(path=str(SHOTS / f"touch-{name}-car.png"))
+    page.screenshot(path=str(SHOTS / f"touch-{name}-car-all.png"))
     page.evaluate("for (const id of ['hint', 'timer', 'perk']) document.getElementById(id).classList.remove('show')")
     bx, by = centre(page, ".tb[data-hold=Space]")
     fingers.down(1, bx, by)
@@ -289,6 +293,31 @@ def play_on_phone(browser, name, width, height):
     station = page.evaluate("NEON.radio.station")
     fingers.tap(*centre(page, ".tb[data-tap=KeyR]"))
     want(page.evaluate("NEON.radio.station") != station, "RADIO did not change the station")
+
+    # (2.2) fewer buttons at once: NITRO only with nitro in the tank, RADIO only while nobody is after you
+    seen = "document.getElementById('%s').getClientRects().length > 0"
+    page.evaluate("NEON.nitro.tank = 0")
+    page.wait_for_function("!" + seen % "tb-nitro", timeout=3000)
+    page.evaluate("NEON.nitro.tank = 0.5")
+    page.wait_for_function(seen % "tb-nitro", timeout=3000)
+    want(page.evaluate(seen % "tb-radio"), "RADIO is not there with no stars on")
+    page.evaluate("NEON.setWanted(1)")
+    page.wait_for_function("!" + seen % "tb-radio", timeout=3000)
+    page.evaluate("NEON.setWanted(0); NEON.wanted.pts = 0")
+    page.wait_for_function(seen % "tb-radio", timeout=3000)
+    # (2.1, unchecked until now) under the map one name at a time: the district, then the car, then the station
+    names = page.evaluate("""() => {
+        const ids = ['zone', 'veh', 'radio'], out = [];
+        const shown = () => ids.filter(id => getComputedStyle(document.getElementById(id)).display !== 'none'
+            && document.getElementById(id).classList.contains('show')).join('+');
+        for (const id of ids) document.getElementById(id).classList.add('show');
+        out.push(shown());
+        document.getElementById('zone').classList.remove('show'); out.push(shown());
+        document.getElementById('veh').classList.remove('show'); out.push(shown());
+        document.getElementById('radio').classList.remove('show');
+        return out;
+    }""")
+    want(names == ['zone', 'veh', 'radio'], f"under the map more than one name shows, or the wrong one: {names}")
 
     # the round map opens the whole island; a tap closes it
     fingers.tap(*centre(page, "#map"))
