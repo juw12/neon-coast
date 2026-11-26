@@ -39,12 +39,16 @@
   and 16 road works. A car knocks them flying; what the player's car knocks over pays into the style chain
   (cone $5; bin, box, crate $10; lamp post $20; hydrant $25, with a jet of water). Slower than 2.5 m/s a
   thing is only tipped over; a lamp post needs 7 m/s and its light goes out. Smashes are not tricks: the
-  multiplier stays where it is. What was knocked over stands again once the player is 150 m away. Nothing
+  multiplier stays where it is. What was knocked over stands again once the player is 150 m away (a barrel
+  that went up: after ten minutes of play, since 2.0.1). Nothing
   that can be knocked over stands within 2 m of a tree trunk or within 6 m of a job stop, shop or door.
 - Barrels (release 2.0): rammed or shot, a red barrel goes up (BLAST, $40, a flash, a moment of slow
   motion). It reaches 7.5 m, takes up to 26 health off a car (less with distance; 40% of it for the
   player's car that set it off), throws cars and people, and sets off the barrels beside it: one shot at
-  the row of four on the Rustport dock set off all four in 0.8 s.
+  the row of four on the Rustport dock set off all four in 0.8 s. Of the 48 barrels 21 stand alone, 6 in
+  pairs, 15 in threes and 6 together on the dock; one shot at those six from a car pays $1,505 (a chain
+  of 7 tricks at x3.5, with a star). Since 2.0.1 a barrel that went up stays gone for ten minutes of
+  play, because in 2.0 that shot paid again every time the player came back from 150 m away.
 - Stunt ramps (release 2.0): twelve, on the parking strips of eleven streets and on the Rustport dock, each
   with 40 m of clear run-up and a clear landing. At 30 m/s the car flies 37 m, 3.1 m high, for 1.1 s and
   lands unhurt: STUNT JUMP, $40 plus $5 for every 1.25 m ($190). Under 8 m is a hop and pays nothing. Both
@@ -175,13 +179,19 @@
   hold-fire, getaway pay, the patrol call, horns, lens and edge darkening, the engine's gears, odd jobs
   from job one, the crowd; the 1.8 build passes 11 of them). In `test/chase.py` the two checks of gunfire
   at a moving car now run at three stars, because two stars no longer fires at one. New in 2.0:
-  `test/havoc.py` (46 checks on the game's own clock: what stands on the street and where it may not
+  `test/havoc.py` (47 checks since 2.0.1, 46 before, on the game's own clock: what stands on the street and where it may not
   stand, cones, a bin, a hydrant, a lamp post, a barrel and its blast, the chain of four on the dock,
   the ramps from both ends and on foot, the nitro tank and its button on a phone, a shoved and a spun
   car, a thrown person, traffic put ahead, a save from 1.9, a tip that waits for a free hint line; the 1.9
   build passes 2 of the first 45) and
   `.github/workflows/suites.yml`, which runs every suite on a GitHub computer for each pull request,
-  for the new build and for the last release side by side.
+  for the new build and for the last release side by side. New in 2.0.1: `test/pace.py` (11 checks: the
+  game keeps real time at 30 and 12 frames a second and the radio its beat at 4), `test/economy.py` and
+  `test/barrel_rows.py` (not pass/fail: what a minute of smashing and what a group of barrels pay); the
+  suites run on GitHub's Macs, which have a graphics card, and three of them also on a computer without
+  one, to compare. `test/chase_bench.py` now keeps traffic out of the way instead of removing it (removed
+  traffic made the game put patrol cars on the road, and the script counted them as the chase) and
+  prints the most police cars on the map and where each crash was.
 - Phones and tablets (release 1.5): the page switches to touch by itself when a touch screen is the main
   pointer. A thumb stick appears under the left thumb (walk, steer, a full push sprints); buttons on the
   right press the same keys as the keyboard (GAS, BRAKE, HAND BRAKE, CAR / EXIT, FIRE / PUNCH, SWAP, JUMP,
@@ -194,6 +204,9 @@
   the power on (one thumb cannot hold GAS and HAND BRAKE together), the stick is finer near its middle
   (half the stick is a third of the wheel) and on Android a crash is felt as a short vibration.
   `test/touch.py` checks all of this on an emulated phone and on WebKit; no real phone has run it yet.
+- A slow screen does not slow the game (release 2.0.1): a frame that comes late is cut into steps of
+  1/60 s, up to six a frame, so the game keeps real time down to 10 frames a second (2.0 ran at 0.49 to
+  0.62 of it at 12 frames a second) and the radio keeps its beat.
 - Graphics: Fast, Pretty or Auto (release 1.6). Auto is where a phone starts: 2 drawn pixels per point with
   the glow pass, shadows when the frame rate allows. It measures the frame rate in play and walks a ladder:
   shadows off first, then glow and half the crowd, drawn pixels last (never under 1.5 per point on a touch
