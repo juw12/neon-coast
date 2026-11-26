@@ -1026,3 +1026,33 @@ start spot) and is not fixed.
 - Branch `probe/runner` holds the measuring workflow (`.github/workflows/probe.yml`) and is not for main.
 - Left from before: R6-7; R5-11.
 - Next command: `/hone neon-coast` (run 10 starts from what Juwen says about 2.0.1).
+
+## Sync (run 9, 2026-11-26)
+
+- GitHub repo: [PR 17](https://github.com/juw12/neon-coast/pull/17) squash-merged, main `48b7058`; release
+  [v2.0.1](https://github.com/juw12/neon-coast/releases/tag/v2.0.1) with `NeonCoast.html` (950,691 bytes).
+  Merged green: every Mac job for the commit passed at the first attempt in run 45764079399 (head
+  `52a8948`) and again in run 45766576286 (head `314ec12`, the same scripts and build plus the docs):
+  smoke 22, touch 10/10, chase 13/13, radio 14/14, havoc 47/47, city 55/55, pace 11/11, harbor, thrill
+  34/34, gates 10/10. Not green, and not required: the slow computer's `havoc.py` 46/47 three times in
+  each run and its `thrill.py` 32, 33, 33 of 34 in the first (still running in the second at the merge);
+  v2.0.0 `pace.py` 5/11 and `havoc.py` 46/47 (both by design: those checks are new in 2.0.1); v2.0.0
+  `smoke.py` 21/22 three times in the first run and once in the second, `gates.py` 9/10 once, `thrill.py`
+  33/34 once. Which smoke check 2.0 fails was not read.
+- Suites runs of this pull request: 45747416138, 45749410867, 45754460878, 45756452739 (red), 45760735823
+  and 45762131101 (both cancelled by the next push), 45764079399, 45766576286.
+- Measuring runs on `probe/runner`: 45749437604, 45751184460, 45752351153, 45757963402, 45759448751,
+  45760721640, 45762112458, 45764063483.
+- Live check: https://juw12.github.io/neon-coast/NeonCoast.html has the same bytes as the build on main
+  (950,691 bytes, sha256 `b9baf54d`) and `sw.js` names the cache `neon-coast-2.0.1` (read over HTTP). The
+  live page was not opened in a browser this run.
+- Profile README: unchanged.
+- Portfolio: catalog `juw12/projects` unchanged (the description names 2.0; 2.0.1 adds nothing to it).
+- Landing page: `juw12/juw12.github.io` [PR 6](https://github.com/juw12/juw12.github.io/pull/6), `0f4dcf3`;
+  https://juw12.github.io/p/neon-coast/ shows HAVOC / 02.0.1 and two 2.0.1 items above the 2.0 ones
+  (read over HTTP).
+- Obsidian: a line in `journal/2026-11-26.md`, saved through Cairn.
+- Not done: nothing was built or tested on the ASUS after 10:28 (over its load limit), so the game source
+  is as it was when the suites first passed; the hint line at the start spot is not fixed; the
+  four-versions gate (`platforms.py`), Featured (`featured.py`), a fact sheet and a council score, as in
+  run 8.

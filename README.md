@@ -145,7 +145,8 @@ What the list said, and what is known now:
   for the pink car, twice from one spot; and the two property checks failing without a word. The last two
   did not come back in 18 runs and now print what they saw. With the scripts as they are now: `city.py`
   55/55 in 18 of 18 runs on GitHub, and in the suites all ten Mac jobs for the commit passed at the first
-  attempt (run 45764079399; the slow computer's `havoc.py` read 46/47 three times, as before).
+  attempt in two runs in a row (45764079399 and 45766576286; the slow computer's `havoc.py` read 46/47
+  three times in each, as before).
 
 Still not shown:
 
