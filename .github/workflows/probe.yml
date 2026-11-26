@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest, macos-13]
+        os: [macos-latest, windows-latest]
     env:
       PYTHONUTF8: "1"
     steps:
@@ -27,12 +27,11 @@ jobs:
         with:
           python-version: "3.13"
       - run: python -m pip install --quiet playwright
-      - name: The 1.9 build, from its tag
+      - name: The builds of 1.9 and 2.0, from their tags
         shell: bash
-        run: git show v1.9.0:NeonCoast.html > old.html
-      - name: Probe (Linux needs a display for the run with a window)
-        if: runner.os == 'Linux'
-        run: xvfb-run -a python test/probe.py NeonCoast.html old.html
+        run: |
+          git show v1.9.0:NeonCoast.html > v19.html
+          git show v2.0.0:NeonCoast.html > v20.html
+          cp NeonCoast.html steps.html
       - name: Probe
-        if: runner.os != 'Linux'
-        run: python test/probe.py NeonCoast.html old.html
+        run: python test/probe.py steps.html v20.html v19.html

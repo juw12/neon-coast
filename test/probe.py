@@ -22,21 +22,18 @@ RENDERER = """() => { const c = document.createElement('canvas').getContext('web
     return e ? c.getParameter(e.UNMASKED_RENDERER_WEBGL) : 'unknown'; }"""
 
 BASE = ["--autoplay-policy=no-user-gesture-required"]
-SETS = {
-    "as the suites start it": (True, ["--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"]),
-    "gpu asked for": (True, ["--ignore-gpu-blocklist", "--enable-gpu"]),
-    "with a window": (False, ["--ignore-gpu-blocklist"]),
-}
+SUITE_ARGS = ["--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"]
+NO_CAP = ["--disable-gpu-vsync", "--disable-frame-rate-limit"]
 system = platform.system()
 if system == "Darwin":
-    SETS["metal"] = (True, ["--ignore-gpu-blocklist", "--enable-gpu", "--use-angle=metal"])
-    SETS["metal with a window"] = (False, ["--ignore-gpu-blocklist", "--use-angle=metal"])
-elif system == "Windows":
-    SETS["d3d11"] = (True, ["--ignore-gpu-blocklist", "--enable-gpu", "--use-angle=d3d11"])
-    SETS["d3d11 warp"] = (True, ["--ignore-gpu-blocklist", "--enable-gpu", "--use-angle=d3d11-warp"])
+    SETS = {
+        "window": (False, SUITE_ARGS),
+        "window, no frame cap": (False, SUITE_ARGS + NO_CAP),
+        "window, no frame cap, again": (False, SUITE_ARGS + NO_CAP),
+        "no window, no frame cap": (True, SUITE_ARGS + NO_CAP),
+    }
 else:
-    SETS["gl egl"] = (True, ["--ignore-gpu-blocklist", "--enable-gpu", "--use-gl=angle", "--use-angle=gl-egl"])
-    SETS["vulkan swiftshader"] = (True, ["--ignore-gpu-blocklist", "--use-angle=swiftshader"])
+    SETS = {"no window": (True, SUITE_ARGS)}
 
 print(f"{system} {platform.machine()} {platform.version()}", flush=True)
 with sync_playwright() as pw:
@@ -47,7 +44,7 @@ with sync_playwright() as pw:
             print(f"{name}: did not start: {str(error)[:200]}", flush=True)
             continue
         try:
-            for label, target in (("new", sys.argv[1]), ("old", sys.argv[2])):
+            for label, target in [(Path(argument).stem, argument) for argument in sys.argv[1:]]:
                 page = browser.new_page(viewport={"width": 1280, "height": 720})
                 page.goto(Path(target).resolve().as_uri())
                 page.wait_for_timeout(1200)
@@ -58,8 +55,21 @@ with sync_playwright() as pw:
                 for quality, word in ((1, "Pretty"), (0, "Fast")):
                     page.evaluate("(q) => { NEON.save.quality = q; NEON.applySettings(); }", quality)
                     page.wait_for_timeout(700)
-                    got = page.evaluate(MEASURE, 4)
-                    line.append(f"{word} {got['fps']:.1f} fps, worst frame {got['worst']:.0f} ms, game runs at {got['game']:.2f} of real time")
+                    got = page.evaluate(MEASURE, 5)
+                    pace = page.evaluate("() => NEON.pace ? `, ${NEON.pace.steps} step(s) a frame, ${NEON.pace.simMs.toFixed(2)} ms in them` : ''")
+                    line.append(f"{word} {got['fps']:.1f} fps, worst frame {got['worst']:.0f} ms, game runs at {got['game']:.2f} of real time{pace}")
+                # the same at speed down a street, where the kerbs are full: the car is held at 30 m/s
+                page.evaluate("() => { NEON.save.quality = 1; NEON.applySettings(); }")
+                drive = page.evaluate("""(seconds) => new Promise(done => { const n = NEON, p = n.player;
+                    const car = n.vehicles.filter(v => !v.driver && !v.dead && v.type !== 'police')
+                      .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
+                    p.x = car.x + 2.2; p.z = car.z; n.tryEnterExit();
+                    if (n.snapLane) n.snapLane(car);
+                    let frames = 0; const t0 = performance.now(); const fx = Math.sin(car.h), fz = Math.cos(car.h);
+                    const tick = () => { frames++; car.vx = fx * 30; car.vz = fz * 30; car.hp = car.t.hp;
+                        performance.now() - t0 < seconds * 1000 ? requestAnimationFrame(tick) : done(frames / seconds); };
+                    requestAnimationFrame(tick); })""", 5)
+                line.append(f"Pretty at 30 m/s down the street {drive:.1f} fps")
                 print(" | ".join(line), flush=True)
                 page.close()
         except Exception as error:
