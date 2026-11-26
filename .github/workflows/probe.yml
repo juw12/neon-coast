@@ -17,41 +17,36 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - name: city three times with how far the game moves the held car, 2.0.1 (a)
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            corner: ""
+            run: python test/city.py;python test/city.py;python test/city.py
+          - name: city three times with how far the game moves the held car, 2.0.1 (b)
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            corner: ""
+            run: python test/city.py;python test/city.py;python test/city.py
+          - name: city three times with how far the game moves the held car, 2.0.1 (c)
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            corner: ""
+            run: python test/city.py;python test/city.py;python test/city.py
+          - name: city three times with how far the game moves the held car, 2.0.1 (d)
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            corner: ""
+            run: python test/city.py;python test/city.py;python test/city.py
+          - name: city three times with how far the game moves the held car, 2.0
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            corner: ""
+            run: cp v20.html NeonCoast.html;python test/city.py;python test/city.py;python test/city.py
           - name: city with the Paper Round beam 44.8 m from a ramp, 2.0.1
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
             corner: "ramp"
             run: python test/city.py;python test/city.py;python test/city.py
-          - name: city with the Paper Round beam 44.8 m from a ramp, 2.0
-            args: "--disable-gpu-vsync --disable-frame-rate-limit"
-            window: ""
-            corner: "ramp"
-            run: cp v20.html NeonCoast.html;python test/city.py;python test/city.py;python test/city.py
-          - name: city three times, 2.0.1 (a)
-            args: "--disable-gpu-vsync --disable-frame-rate-limit"
-            window: ""
-            corner: ""
-            run: python test/city.py;python test/city.py;python test/city.py
-          - name: city three times, 2.0.1 (b)
-            args: "--disable-gpu-vsync --disable-frame-rate-limit"
-            window: ""
-            corner: ""
-            run: python test/city.py;python test/city.py;python test/city.py
-          - name: city three times, 2.0.1 (c)
-            args: "--disable-gpu-vsync --disable-frame-rate-limit"
-            window: ""
-            corner: ""
-            run: python test/city.py;python test/city.py;python test/city.py
-          - name: city three times, 2.0
-            args: "--disable-gpu-vsync --disable-frame-rate-limit"
-            window: ""
-            corner: ""
-            run: cp v20.html NeonCoast.html;python test/city.py;python test/city.py;python test/city.py
-          - name: pace three times, 2.0.1
-            args: "--disable-gpu-vsync --disable-frame-rate-limit"
-            window: ""
-            corner: ""
-            run: python test/pace.py;python test/pace.py;python test/pace.py
     env:
       PYTHONUTF8: "1"
       NEON_CHROME_ARGS: ${{ matrix.args }}
