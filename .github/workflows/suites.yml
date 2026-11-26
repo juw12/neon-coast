@@ -105,6 +105,11 @@ jobs:
             "::endgroup::"
             $seconds = [int]((Get-Date) - $started).TotalSeconds
             $count = (Select-String -Path $log -Pattern "\d+ ?/ ?\d+ checks|GATES \d+/\d+|TOUCH \d+/\d+|^PASS .*offline" | Select-Object -Last 1).Line
+            if (-not $count) {
+              $passes = @(Select-String -Path $log -CaseSensitive -Pattern "^PASS").Count
+              $fails = @(Select-String -Path $log -CaseSensitive -Pattern "^FAIL").Count
+              $count = "$passes PASS, $fails FAIL"
+            }
             $summary += "- attempt ${attempt}: exit $code, $seconds s. $count"
             foreach ($line in (Select-String -Path $log -CaseSensitive -Pattern "^FAIL|Error:|^STATE" | Select-Object -First 12)) {
               $text = $line.Line

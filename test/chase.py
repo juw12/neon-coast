@@ -118,18 +118,21 @@ PURSUIT_JS = """(setup) => new Promise(done => {
     const dice = Math.random;
     Math.random = () => 0.99;
     const full = c.t.hp, pts0 = n.wanted.pts;
-    let last = performance.now(), clock = 0, nearest = 1e9, arrive = -1, arriveAt = 0;
+    let last = performance.now(), clock = 0, nearest = 1e9, arrive = -1, arriveAt = 0, before = 0, approach = 0;
     const tick = () => {
         const now = performance.now();
         clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now;
         for (const v of n.vehicles.slice()) if (v !== c && v !== cop) n.removeVehicle(v);
         const gap = Math.hypot(cop.x - c.x, cop.z - c.z);
-        if (gap < 6 && arrive < 0) { arrive = Math.hypot(cop.vx, cop.vz); arriveAt = clock; }
+        // `approach` is the cruiser's speed one frame earlier: on a slow computer the crash can already be over in the
+        // frame that first sees the cruiser within 6 m (since 2.0.1 a frame holds up to six steps of the game)
+        if (gap < 6 && arrive < 0) { arrive = Math.hypot(cop.vx, cop.vz); arriveAt = clock; approach = before; }
+        before = Math.hypot(cop.vx, cop.vz);
         nearest = Math.min(nearest, gap);
         // stop 0.8 s after the cruiser arrives (one whole crash; an arrest takes 2.4 s), or when time is up
         if ((arrive >= 0 && clock - arriveAt >= 0.8) || clock >= setup.seconds || c.dead || n.state !== 'play') {
             Math.random = dice;
-            const out = { share: (full - c.hp) / full, points: n.wanted.pts - pts0, nearest, arrive, stars: n.wanted.stars,
+            const out = { share: (full - c.hp) / full, points: n.wanted.pts - pts0, nearest, arrive, approach, stars: n.wanted.stars,
                           state: n.state, dead: c.dead };
             n.removeVehicle(cop);
             c.vx = c.vz = 0;
@@ -231,7 +234,7 @@ def run(target):
         page.evaluate(REST_JS, 1.0)
         rammed = page.evaluate(PURSUIT_JS, {"stars": 3, "gap": 48, "police": 40, "seconds": 8})
         check("at three stars the same cruiser rams: it arrives faster than 30 m/s and takes over 20% of the car",
-              rammed["arrive"] > 30 and 0.2 < rammed["share"] <= 0.401 and rammed["points"] == 0, brief(rammed))
+              max(rammed["arrive"], rammed["approach"]) > 30 and 0.2 < rammed["share"] <= 0.401 and rammed["points"] == 0, brief(rammed))
 
         check("no console errors", not problems, "; ".join(problems[:3]))
         browser.close()
