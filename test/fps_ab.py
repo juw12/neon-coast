@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
-# A GitHub Mac draws with its graphics card only in a real window: NEON_WINDOW=1 opens one.
+# NEON_WINDOW=1 opens a real window instead of a headless browser (a GitHub Mac uses its graphics card in both).
 # NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
 WINDOW = os.environ.get("NEON_WINDOW") == "1"
 EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()

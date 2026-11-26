@@ -16,7 +16,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-# A GitHub Mac draws with its graphics card only in a real window: NEON_WINDOW=1 opens one.
+# NEON_WINDOW=1 opens a real window instead of a headless browser (a GitHub Mac uses its graphics card in both).
 # NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
 WINDOW = os.environ.get("NEON_WINDOW") == "1"
 EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
@@ -31,17 +31,23 @@ HOLD = """
 """
 
 # For `seconds`: frames drawn, how far the game's clock went, the steps a frame took, the longest step.
+# The first three frames are left out, because the change of pace itself is not what is measured. From the
+# fourth on, the clock is read once a frame against that frame's own time stamp, the one the game counts
+# with, so the first and the last frame are not half counted. (Until this was done the suite read 0.96
+# of real time at 12 frames a second for a game that kept it: two frames of fifty.)
 PACE_JS = """(setup) => new Promise(done => { const n = NEON;""" + HOLD + """
-    const t0 = performance.now(), clock0 = n.clock, steps = {};
-    let frames = 0, longest = 0;
-    const tick = () => {
+    const t0 = performance.now(), steps = {};
+    let frames = 0, longest = 0, from = null;
+    const tick = (stamp) => {
         if (setup.ms) hold(setup.ms);
         frames++;
-        if (n.pace) { steps[n.pace.steps] = (steps[n.pace.steps] || 0) + 1; if (frames > 2) longest = Math.max(longest, n.pace.step || 0); }
+        if (frames === 4) from = { stamp, clock: n.clock, frames };
+        if (n.pace && frames > 4) { steps[n.pace.steps] = (steps[n.pace.steps] || 0) + 1; longest = Math.max(longest, n.pace.step || 0); }
         const real = (performance.now() - t0) / 1000;
-        if (real < setup.seconds) return requestAnimationFrame(tick);
+        if (real < setup.seconds || frames < 8) return requestAnimationFrame(tick);
         const most = Object.keys(steps).sort((a, b) => steps[b] - steps[a])[0];
-        done({ fps: frames / real, speed: (n.clock - clock0) / real, perFrame: (n.clock - clock0) / frames,
+        const span = (stamp - from.stamp) / 1000, moved = n.clock - from.clock, count = frames - from.frames;
+        done({ fps: count / span, speed: moved / span, perFrame: moved / count,
                steps: most ? +most : 0, longest, state: n.state });
     };
     requestAnimationFrame(tick);

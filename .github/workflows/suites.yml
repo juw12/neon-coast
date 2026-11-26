@@ -1,13 +1,19 @@
 name: suites
 
-# Every suite of test/ on a GitHub computer, for the build of this commit and for the last release, one job
-# for each suite and build. The last release runs its own suites from its own tag: a check that fails there
-# too says something about this computer (no graphics card, about 12 frames a second), not about the change.
-# A suite that fails is run again, up to three times: checks that wait a fixed time fail by chance on a
-# computer this slow, and the summary says on which attempt a suite passed.
+# Every suite of test/ on a GitHub computer, one job for each suite: for the game of this commit, and for
+# the game of the last release under the same checks. A check that fails for the release too is either
+# something this commit changed on purpose (test/pace.py is that) or says something about the computer.
+#
+# They run on GitHub's Macs, the only free GitHub computer with a graphics card. A browser without a window
+# draws there at 14 to 28 frames a second under its own frame cap and at 75 to 210 with the cap off
+# (NEON_CHROME_ARGS). With the cap off a screenshot now and then waits 30 s for a frame and times out, so
+# the three suites that take screenshots (gates, smoke, touch) keep the cap, and the frame-rate gate alone
+# is measured in a browser of its own with the cap off (NEON_FPS_UNCAPPED). The other suites run with it off.
+# The Windows computers have no graphics card and draw the game at 8 to 13 frames a second: three suites
+# that count on the game's own clock run there as well, as "a slow computer", and do not fail the pull request.
+# A suite that fails is run again, up to three times, and the summary says on which attempt it passed.
 
-# A pull request that changes only text (README, hone/) does not start the suites: they take half an hour
-# and read no Markdown.
+# A pull request that changes only text (README, hone/) does not start the suites: they read no Markdown.
 on:
   pull_request:
     paths-ignore:
@@ -38,27 +44,38 @@ jobs:
           if ($LASTEXITCODE -ne 0) { Write-Error "NeonCoast.html is not the build of src/"; exit 1 }
 
   suite:
-    name: ${{ matrix.suite }} (${{ matrix.ref || 'this commit' }})
-    runs-on: windows-latest
+    name: ${{ matrix.suite }} (${{ matrix.game }}${{ matrix.os != 'macos-latest' && ', a slow computer' || '' }})
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 40
-    # the last release is there to compare with: its failures do not fail the pull request
-    continue-on-error: ${{ matrix.ref != '' }}
+    # the last release and the slow computer are there to compare with: they do not fail the pull request
+    continue-on-error: ${{ matrix.game != 'this commit' || matrix.os != 'macos-latest' }}
     strategy:
       fail-fast: false
       matrix:
-        suite: [havoc, thrill, gates, chase, city, harbor, smoke, radio, touch]
-        ref: ["", v1.9.0]
-        exclude:
-          - suite: havoc        # new in 2.0
-            ref: v1.9.0
+        suite: [pace, havoc, thrill, gates, chase, city, harbor, smoke, radio, touch]
+        game: [this commit, v2.0.0]
+        os: [macos-latest]
+        include:
+          - { suite: chase, game: this commit, os: windows-latest }
+          - { suite: havoc, game: this commit, os: windows-latest }
+          - { suite: thrill, game: this commit, os: windows-latest }
     env:
       PYTHONUTF8: "1"
       SUITE: ${{ matrix.suite }}
-      BUILD: ${{ matrix.ref || 'this commit' }}
+      BUILD: ${{ matrix.game }}${{ matrix.os != 'macos-latest' && ', a slow computer' || '' }}
+      # the frame cap of a browser without a window: off, except for the suites that take screenshots
+      NEON_CHROME_ARGS: ${{ matrix.os == 'macos-latest' && !contains(fromJSON('["gates", "smoke", "touch"]'), matrix.suite) && '--disable-gpu-vsync --disable-frame-rate-limit' || '' }}
+      # gate G7 asks for 60 frames a second or more: measured in a browser of its own with the cap off
+      NEON_FPS_UNCAPPED: ${{ matrix.os == 'macos-latest' && '1' || '' }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ matrix.ref }}
+
+      - name: The game of the last release, under the checks of this commit
+        if: matrix.game != 'this commit'
+        shell: bash
+        run: |
+          git fetch --depth 1 origin "refs/tags/${{ matrix.game }}:refs/tags/${{ matrix.game }}"
+          git checkout "${{ matrix.game }}" -- NeonCoast.html index.html sw.js manifest.webmanifest src icons vendor build.py README.md
 
       - uses: actions/setup-python@v5
         with:
@@ -106,7 +123,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: logs-${{ matrix.suite }}-${{ matrix.ref || 'head' }}
+          name: logs-${{ matrix.suite }}-${{ matrix.game == 'this commit' && 'head' || matrix.game }}${{ matrix.os != 'macos-latest' && '-slow' || '' }}
           path: |
             logs/
             test/*-result*.json
