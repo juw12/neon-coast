@@ -116,6 +116,8 @@ PURSUIT_JS = """(setup) => new Promise(done => {
     n.save.mission = Math.max(1, n.save.mission);
     n.save.difficulty = 1;
     n.setWanted(0); n.wanted.pts = 0; n.setWanted(setup.stars);
+    // (2.1) `rest` seconds in which the police hold off ramming, as after a crash; older builds do not know it
+    if ('ramRest' in n.wanted) n.wanted.ramRest = setup.rest || 0;
     c.hp = c.t.hp; c.crashT = 0;
     c.x = -3.2; c.z = -42; c.h = 0; c.vx = c.vz = 0;
     const cop = n.addVehicle('police', -3.2, -42 - setup.gap, 0, 'cop');
@@ -138,7 +140,7 @@ PURSUIT_JS = """(setup) => new Promise(done => {
         if ((arrive >= 0 && clock - arriveAt >= 0.8) || clock >= setup.seconds || c.dead || n.state !== 'play') {
             Math.random = dice;
             const out = { share: (full - c.hp) / full, points: n.wanted.pts - pts0, nearest, arrive, approach, stars: n.wanted.stars,
-                          state: n.state, dead: c.dead };
+                          state: n.state, dead: c.dead, rest: n.wanted.ramRest || 0 };
             n.removeVehicle(cop);
             c.vx = c.vz = 0;
             n.setWanted(0); n.wanted.pts = 0;
@@ -156,6 +158,41 @@ REST_JS = """(seconds) => new Promise(done => {
         const now = performance.now();
         clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now;
         clock >= seconds ? done(clock) : requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+})"""
+
+
+# The player's car is set to zero health at `speed` m/s with the player in it. What the hint line says, whether the
+# car is still whole after `sit` seconds, then the game's own enter/exit key at that speed: is the player out, what
+# did the jump cost, and how long until the car blows.
+BURN_JS = """(setup) => new Promise(done => {
+    const n = NEON, c = n.player.car;
+    for (const v of n.vehicles.slice()) if (v !== c) n.removeVehicle(v);
+    n.setWanted(0); n.wanted.pts = 0;
+    n.player.hp = 100;
+    c.x = -3.2; c.z = -42; c.h = 0; c.vx = 0; c.vz = setup.speed;
+    c.hp = 0; c.burn = 0;
+    const began = n.clock, line = document.getElementById('hint');
+    const out = { said: '', saidAt: -1, whole: false, left: false, hurt: 0, ran: '', blewAfter: -1, playerHp: 0, state: '' };
+    let leftAt = -1;
+    const end = () => { out.state = n.state; out.playerHp = n.player.hp; done(out); };
+    const tick = () => {
+        const t = n.clock - began;
+        for (const v of n.vehicles.slice()) if (v !== c) n.removeVehicle(v);
+        const text = line.classList.contains('show') ? line.textContent : '';
+        if (out.saidAt < 0 && /on fire/i.test(text)) { out.said = text; out.saidAt = t; }
+        if (leftAt < 0 && t >= setup.sit) {
+            out.whole = !c.dead;
+            if (c.dead || n.state !== 'play') return end();
+            c.vx = 0; c.vz = setup.speed;
+            const before = n.player.hp;
+            n.tryEnterExit();
+            out.left = !n.player.car; out.hurt = before - n.player.hp; out.ran = line.textContent; leftAt = t;
+        }
+        if (leftAt >= 0 && c.dead) { out.blewAfter = t - leftAt; return end(); }
+        if (t > setup.sit + 8 || n.state !== 'play') return end();
+        requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
 })"""
@@ -246,6 +283,25 @@ def run(target):
             check(ramming,
                   max(rammed["arrive"], rammed["approach"]) > 30 and 0.2 < rammed["share"] <= 0.401 and rammed["points"] == 0,
                   brief(rammed))
+            # 7. (2.1) a chase you can read: one ram at a time, no ram at one star, a burning car says so
+            check("that ram takes at most 25% of the car (40% from four stars), and the police then hold off for 10 s",
+                  0.2 < rammed["share"] <= 0.251 and 8 < rammed["rest"] <= 10, brief(rammed))
+            page.evaluate(REST_JS, 1.0)
+            held = page.evaluate(PURSUIT_JS, {"stars": 3, "gap": 48, "police": 40, "seconds": 8, "reach": ARREST_REACH, "rest": 10})
+            check("while they hold off, the next three-star cruiser brakes like a two-star one (under 10 m/s, under 5% of the car)",
+                  held["nearest"] < ARREST_REACH and 0 <= held["arrive"] < 10 and held["share"] < 0.05, brief(held))
+            page.evaluate(REST_JS, 1.0)
+            one = page.evaluate(PURSUIT_JS, {"stars": 1, "gap": 48, "police": 40, "seconds": 8, "reach": ARREST_REACH})
+            check("at one star a cruiser brakes too (2.0.1: it rammed at full speed)",
+                  one["nearest"] < ARREST_REACH and 0 <= one["arrive"] < 10 and one["share"] < 0.05, brief(one))
+            page.evaluate(REST_JS, 1.0)
+            fire = page.evaluate(BURN_JS, {"speed": 20, "sit": 4.2})
+            check("a car at zero health says it is on fire within half a second, and is still whole 4.2 s later (2.0.1: gone at 3.6 s, unsaid)",
+                  0 <= fire["saidAt"] < 0.5 and "[F]" in fire["said"] and fire["whole"], brief(fire))
+            check("the player can leave it at 20 m/s: out, hurt by the jump but by no more than 30, and told to run",
+                  fire["left"] and 0 < fire["hurt"] <= 30 and "Run" in fire["ran"], brief(fire))
+            check("the car then blows 2.6 s later, with the player alive and the game still on",
+                  2.4 < fire["blewAfter"] < 3.0 and fire["playerHp"] > 0 and fire["state"] == "play", brief(fire))
 
         check("no console errors", not problems, "; ".join(problems[:3]))
         browser.close()
