@@ -91,6 +91,9 @@ STATE_JS = """(fast) => {
     // what the game says when a try ends: read from the banner a player sees
     card: document.querySelector('#banner b').textContent, why: document.querySelector('#banner span').textContent,
     type: c ? c.type : '',
+    // for the note of what ended a try: how far each police car is, and how long out of their sight
+    cops: n.vehicles.filter(v => v.driver === 'cop' && !v.dead).map(v => Math.round(Math.hypot(v.x - p.x, v.z - p.z))),
+    evade: n.wanted.evade,
   };
 }"""
 
@@ -243,6 +246,8 @@ def run(job=1):
         side_sign = 1
         side_count = 0
         side_gap = None
+        last_alive = {}
+        chase_note = 0.0
         while time.time() - started < plan["limit"]:
             s = page.evaluate(STATE_JS, bool(plan.get("race")))
             now = time.time()
@@ -275,11 +280,25 @@ def run(job=1):
                 # arrested or taken out: the game puts the player back on foot after a few seconds
                 if not down:
                     result["downs"] += 1
+                    # what the try looked like just before it ended (the last state read while still playing)
+                    result.setdefault("down_log", []).append(dict(last_alive, card=s["card"], at=round(now - started, 1)))
                 down = True
                 keys.hold([])
                 page.wait_for_timeout(200)
                 continue
             down = False
+            near = sorted(s["cops"])
+            last_alive = {
+                "stars": s["stars"], "step": s["step"] if s["active"] else None, "on_foot": not s["car"],
+                "car_health": round(s["car"]["hp"] / s["car"]["max"], 2) if s["car"] else None,
+                "speed": round(math.hypot(s["car"]["vx"], s["car"]["vz"]), 1) if s["car"] else 0,
+                "player_health": round(s["hp"]), "police_on_map": len(near),
+                "police_within_60m": sum(1 for d in near if d < 60), "nearest_police": near[:3],
+                "out_of_sight_s": round(s["evade"], 1),
+            }
+            if s["stars"] and now - chase_note > 5:
+                chase_note = now
+                result.setdefault("chase_log", []).append(dict(last_alive, at=round(now - started, 1)))
             if s["state"] != "play":
                 result["phase"] = "stopped: game state " + s["state"]
                 break

@@ -43,6 +43,14 @@ jobs:
             id: drive5
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             run: python test/drive.py 3 5
+          - name: drive job 5, three more runs
+            id: drive5b
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            run: python test/drive.py 3 5
+          - name: drive job 5, another three runs
+            id: drive5c
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            run: python test/drive.py 3 5
           - name: drive job 6, two runs
             id: drive6
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
@@ -55,6 +63,8 @@ jobs:
       PYTHONUTF8: "1"
       NEON_CHROME_ARGS: ${{ matrix.args }}
       NEON_FPS_UNCAPPED: "1"
+      # a commit message with "[only: drive5 drive5b ]" (ids with a space on both sides) runs just those jobs
+      HEAD_MESSAGE: ${{ github.event.head_commit.message }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -68,6 +78,10 @@ jobs:
         run: |
           set +e
           mkdir -p logs
+          if [[ "$HEAD_MESSAGE" == *"[only:"* && "$HEAD_MESSAGE" != *" ${{ matrix.id }} "* ]]; then
+            echo "not asked for in this commit" | tee "logs/${{ matrix.id }}-skipped.txt"
+            exit 0
+          fi
           IFS=';' read -ra COMMANDS <<< "${{ matrix.run }}"
           index=0
           for command in "${COMMANDS[@]}"; do
