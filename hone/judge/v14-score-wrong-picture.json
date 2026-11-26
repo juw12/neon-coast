@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "'The first job... beam... in the first view' and 'A new player who stands still for 3.5 seconds is shown the walking keys'",
+        "C2": "'Pretty graphics adds a glow pass' but 'Radio... tone check... fails by chance'",
+        "C3": "'Perks... tie the side activities together' but 'No one else has played any version'",
+        "C4": "'HUD boxes do not overlap' and 'stars appear only when you are wanted'",
+        "C5": "'Not covered by the tests' section details limitations plainly"
+      },
+      "fixes": [
+        "Conduct external playtesting to verify fun factor, as only the owner has played recent versions.",
+        "Test touch controls on physical devices, currently only emulated.",
+        "Stabilize radio tone generation to consistently pass audio differentiation checks."
+      ],
+      "total": 8.85,
+      "seconds": 32.0
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 9.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen shows keys you need first; first job beam stands 40 m ahead in the car's own lane in the first view; learner phase prevents early arrest; first job is short and ends at a landmark (Sol Wheel pier); walking keys shown after 3.5 s of standing still.",
+        "C2": "Four districts with their own look (Meridian towers in aqua/coral/cream/lilac, Sol Beach pastel hotels, Rustport rust/ochre/sea-green, suburb pitched roofs); 86 painted walls; day/night cycle with lit windows, neon trim, moon, drifting clouds; glow pass at night; screenshot shows moody neon-lit Meridian street with glowing tail lights and shop signs.",
+        "C3": "Six story jobs ($250-$3,500), six odd job kinds (Rush Order, Repo Run, Block Dash, Hot Parcel, Paper Round, Shadow Run), cab fares, property, 12 stunt ramps, nitro, 15 hidden packages, 2,197 smashables, exploding barrels, 5-star police with helicopter, perks that tie activities together (5 packages = 25% less damage, 10 fares = double tips, all 6 story jobs = +50% rent).",
+        "C4": "HUD is cash and health only by default; stars appear only when wanted; weapon line only for 5 s after change; clock moved to map/pause; G8 passes at 1024x640, 1280x720, 1920x1080; screenshot shows clean layout with speed, condition, nitro, minimap, job distance, trick card and hint all readable without overlap.",
+        "C5": "Own names only (G9 passes); one line on title screen states it is original and not affiliated; fact sheet openly states 'One person has played it: the owner' and 'No one else has played any version'; limits and what was tested are stated plainly throughout."
+      },
+      "fixes": [
+        "Get more than one human to play it — the owner is the only player and has not given feedback on 2.0 or later, so the fun factor and difficulty balance (especially at 4-5 stars) are unvalidated.",
+        "Make the two similar radio stations (Neon FM and Coast 98) more distinct in tone — the tone check passes or fails by chance (0.006 to 0.032 across reads) because they sit too close together.",
+        "Test touch controls on a real phone — test/touch.py only runs on an emulated phone in Chrome, the FIRE check failed once, and thumb reach, heat and real frame rate on a device are unknown."
+      ],
+      "total": 8.85,
+      "seconds": 14.5
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 8.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "Job beam 'stands 40 m ahead... in the first view', idle 3.5 s shows walking keys, first car 'cannot be wrecked', G10 clear first view - but the multi-step first job still chains several hint lines, and no stranger has ever been watched doing it ('No one else has played any version').",
+        "C2": "Screenshot shows a coherent night mood: 'NOODLE BAR' neon, lit windows, glow pass, nitro flames; sheet claims '86 painted walls, two designs per district' and distinct district palettes - but the look is a fairly generic low-poly neon city, not something you would recognise from one screenshot.",
+        "C3": "'Six story jobs', six odd-job kinds, cab fares, property, ramps, barrels, packages, plus 'Perks... tie the side activities together' and heat that 'reaches the other systems' - held back from 10 by 'The sums are first guesses, not tuned by play' and no human confirmation that ten minutes feel varied.",
+        "C4": "'the HUD is cash and health; the stars appear only when you are wanted'; G8 'no overlaps at 3 sizes'; the 121 km/h screenshot reads at a glance - the one element that does not earn its place is the SMASH card floating mid-screen over the road ahead.",
+        "C5": "'Own city, names and art' with the one permitted 'not affiliated' line; limits stated plainly: 'No one else has played any version', 'No real phone or tablet has run the game yet', payouts 'not tuned by play', flaky checks reported openly."
+      },
+      "fixes": [
+        "Put a stranger in front of the game and watch: the only player is the owner, whose verdicts ('not fun enough', 'not good enough') predate 2.0, so the first-minute and ten-minute experience that C1 and C3 reward is entirely unverified by a human.",
+        "Tune money and difficulty by play instead of first guesses: smashing pays ~$74/min median against a $250 first job, style sums are untuned, and two checks (bin hit 95% vs 96% asked, getaway $70 vs $60 expected) fail on the slow machine.",
+        "Give the world a single recognisable signature and separate the pop stations: Neon FM vs Coast 98 spectral distance (0.006-0.032) straddles the 0.01 pass line, and the otherwise clean night city has no one-glance identifier."
+      ],
+      "total": 8.6,
+      "seconds": 92.1
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.85,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 9.0,
+    "C5": 10.0
+  },
+  "criterion_spread": {
+    "C1": 1.0,
+    "C2": 1.0,
+    "C3": 0.0,
+    "C4": 1.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.6,
+    8.85
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Conduct external playtesting to verify fun factor, as only the owner has played recent versions."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Test touch controls on physical devices, currently only emulated."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Stabilize radio tone generation to consistently pass audio differentiation checks."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Get more than one human to play it — the owner is the only player and has not given feedback on 2.0 or later, so the fun factor and difficulty balance (especially at 4-5 stars) are unvalidated."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Make the two similar radio stations (Neon FM and Coast 98) more distinct in tone — the tone check passes or fails by chance (0.006 to 0.032 across reads) because they sit too close together."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Test touch controls on a real phone — test/touch.py only runs on an emulated phone in Chrome, the FIRE check failed once, and thumb reach, heat and real frame rate on a device are unknown."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Put a stranger in front of the game and watch: the only player is the owner, whose verdicts ('not fun enough', 'not good enough') predate 2.0, so the first-minute and ten-minute experience that C1 and C3 reward is entirely unverified by a human."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Tune money and difficulty by play instead of first guesses: smashing pays ~$74/min median against a $250 first job, style sums are untuned, and two checks (bin hit 95% vs 96% asked, getaway $70 vs $60 expected) fail on the slow machine."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Give the world a single recognisable signature and separate the pop stations: Neon FM vs Coast 98 spectral distance (0.006-0.032) straddles the 0.01 pass line, and the otherwise clean night city has no one-glance identifier."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}
