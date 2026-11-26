@@ -8,6 +8,10 @@ This script tries every block in turn, with the ramp tip not yet said (the first
 
 One line for each corner where the hint was not the on-foot one, and a count at the end. It measures; it checks
 nothing and its exit code is always 0.
+
+Run 9 (2.0.1 and 2.0, a GitHub Mac): the on-foot hint at 61 of 61 corners, tip said or not, 8 of them with a ramp
+within 45 m. So the corner was not the cause. The cause was in city.py's own set-up: it got into the car from the
+spot where a new game starts, which clears the hint line (see check 13 there).
 """
 import json
 import os

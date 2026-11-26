@@ -27,21 +27,26 @@ jobs:
             window: ""
             corner: "ramp"
             run: cp v20.html NeonCoast.html;python test/city.py;python test/city.py;python test/city.py
-          - name: city with the Paper Round beam far from every ramp, 2.0.1
+          - name: city three times, 2.0.1 (a)
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            corner: "far"
+            corner: ""
             run: python test/city.py;python test/city.py;python test/city.py
-          - name: chase six times, 2.0.1
+          - name: city three times, 2.0.1 (b)
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
             corner: ""
-            run: python test/chase.py;python test/chase.py;python test/chase.py;python test/chase.py;python test/chase.py;python test/chase.py
-          - name: chase six times, 2.0
+            run: python test/city.py;python test/city.py;python test/city.py
+          - name: city three times, 2.0.1 (c)
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
             corner: ""
-            run: python test/chase.py v20.html;python test/chase.py v20.html;python test/chase.py v20.html;python test/chase.py v20.html;python test/chase.py v20.html;python test/chase.py v20.html
+            run: python test/city.py;python test/city.py;python test/city.py
+          - name: city three times, 2.0
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            corner: ""
+            run: cp v20.html NeonCoast.html;python test/city.py;python test/city.py;python test/city.py
           - name: pace three times, 2.0.1
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
