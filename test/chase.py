@@ -243,6 +243,49 @@ BAIL_JS = """(setup) => new Promise(done => {
 })"""
 
 
+# (2.2) The player on foot at three stars, one cruiser `gap` m behind doing `police` m/s straight at them, the game's
+# own police driver at its wheel. Officers' shots are made to miss (the dice are fixed at 0.99) and other cars are
+# removed, so health can only be lost to this one car. `grace` seconds of the bail-out grace are put on the clock
+# (0 = none). Health is put back to 100 after every hit, so a run counts what was taken and never ends the game.
+FOOT_JS = """(setup) => new Promise(done => {
+    const n = NEON;
+    if (n.player.car) { n.player.car.vx = n.player.car.vz = 0; n.tryEnterExit(); }
+    for (const v of n.vehicles.slice()) n.removeVehicle(v);
+    n.save.mission = Math.max(1, n.save.mission);
+    n.save.difficulty = 1;
+    n.setWanted(0); n.wanted.pts = 0; n.setWanted(3);
+    n.wanted.bail = setup.grace || 0;
+    n.player.hp = 100;
+    const px = -3.2, pz = -42;
+    n.player.x = px; n.player.z = pz;
+    const cop = n.addVehicle('police', px, pz - setup.gap, 0, 'cop');
+    cop.vz = setup.police;
+    const dice = Math.random;
+    Math.random = () => 0.99;
+    const began = n.clock;
+    let nearest = 1e9, fastClose = 0, lost = 0, hits = 0;
+    const tick = () => {
+        const t = n.clock - began;
+        for (const v of n.vehicles.slice()) if (v !== cop) n.removeVehicle(v);
+        n.wanted.bust = 0;
+        if (n.player.hp < 99.99) { lost += 100 - n.player.hp; hits++; n.player.hp = 100; }
+        const gap = Math.hypot(cop.x - n.player.x, cop.z - n.player.z);
+        nearest = Math.min(nearest, gap);
+        if (gap < 5) fastClose = Math.max(fastClose, Math.hypot(cop.vx, cop.vz));
+        if (t >= setup.seconds || n.state !== 'play') {
+            Math.random = dice;
+            const out = { onFoot: !n.player.car, lost, hits, nearest, fastClose, endGap: gap, state: n.state, stars: n.wanted.stars };
+            n.removeVehicle(cop);
+            n.setWanted(0); n.wanted.pts = 0; n.wanted.bail = 0;
+            n.player.hp = 100;
+            return done(out);
+        }
+        requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+})"""
+
+
 def check(name, ok, detail=""):
     results.append((name, bool(ok), detail))
     print(("PASS  " if ok else "FAIL  ") + name + (("  |  " + str(detail)) if detail else ""), flush=True)
@@ -367,6 +410,17 @@ def run(target):
                   bail.get("left") and "hold their fire" in bail.get("said", "") and 7.5 < bail.get("grace", 0) <= 8 and bail.get("hpAtSeven") == 100, brief(bail))
             check("the grace ends: the first hit comes 8 to 9.5 s after the jump, and the player is still alive at 11 s",
                   8 <= bail.get("firstHit", -1) <= 9.5 and 0 < bail.get("hpAtEnd", 0) < 100 and bail.get("state") == "play", brief(bail))
+            pulled = page.evaluate(FOOT_JS, {"gap": 60, "police": 30, "seconds": 7})
+            check("on foot at three stars a cruiser that comes from 60 m at 30 m/s pulls up short: the player is not hurt, and it is "
+                  "slower than 5 m/s whenever it is within 5 m (2.1: it drove through the player)",
+                  pulled["onFoot"] and pulled["lost"] == 0 and pulled["fastClose"] < 5 and pulled["nearest"] < 20 and pulled["state"] == "play",
+                  brief(pulled))
+            shoved = page.evaluate(FOOT_JS, {"gap": 6, "police": 20, "seconds": 2.5})
+            spared = page.evaluate(FOOT_JS, {"gap": 6, "police": 20, "seconds": 2.5, "grace": 8})
+            check("a cruiser 6 m behind at 20 m/s cannot stop and hurts the player on foot; in the 8 s after a jump out of a burning "
+                  "car the same cruiser shoves and takes no health",
+                  shoved["onFoot"] and shoved["lost"] > 0 and spared["onFoot"] and spared["lost"] == 0 and spared["nearest"] < 4,
+                  brief({"no grace": shoved, "grace": spared}))
 
         check("no console errors", not problems, "; ".join(problems[:3]))
         browser.close()
