@@ -557,6 +557,7 @@ const FUSE_RUN = 2.6;        // s left at least after the player has got out
 const PURSUIT_CLOSE = 4;     // m/s: how much faster than the player's car a two-star cruiser arrives
 const PURSUIT_GAP = 8;       // m between car centres at which it has slowed to that (bumpers meet at about 5)
 const PURSUIT_BRAKE = 18;    // m/s2 of the 30 its brakes can do: it starts to slow down about 60 m out
+const FOOT_GAP = 6.5;        // m from the player on foot at which a chasing cruiser has pulled up (2.2); an arrest reaches 7.5
 function aiDrive(v, dt) {
   const a = v.ai;
   let tx;
@@ -595,6 +596,12 @@ function aiDrive(v, dt) {
       const away = (player.car.vx * (px - v.x) + player.car.vz * (pz - v.z)) / (d || 1);
       const room = Math.max(0, d - PURSUIT_GAP);
       want = Math.min(want, Math.max(0, away + (room > 0 ? PURSUIT_CLOSE : 0) + Math.sqrt(2 * PURSUIT_BRAKE * room)));
+    }
+    if (!player.car) {
+      // (2.2) the player on foot: a cruiser pulls up FOOT_GAP m short, at any number of stars, seen or not.
+      // Before, it drove through the player at full speed: 100 health gone in under two seconds after a jump
+      // out of a burning car, with nothing to read and nothing to do (the played Heat Wave runs of run 11).
+      want = Math.min(want, Math.sqrt(2 * PURSUIT_BRAKE * Math.max(0, d - FOOT_GAP)));
     }
   } else {
     if (a.wasDirect) {
@@ -989,7 +996,9 @@ function vehiclesVsPeople(dt) {
       player.x += (dx / d) * (reach - d);
       player.z += (dz / d) * (reach - d);
       if (closing > 5) {
-        hurt(closing * 1.5, 'wasted');
+        // (2.2) in the BAIL_GRACE seconds after a jump out of a burning car a police car that cannot stop in
+        // time shoves the player aside and does not hurt: the hint has just said there is time to reach a car
+        if (!(v.driver === 'cop' && wanted.bail > 0)) hurt(closing * 1.5, 'wasted');
         player.x += (v.vx / speed) * 1.5;
         player.z += (v.vz / speed) * 1.5;
       }
@@ -1060,7 +1069,8 @@ function tryEnterExit() {
       // out of a burning car at any speed: a jump from a fast one hurts, and there is time left to run
       car.burn = Math.min(car.burn, FUSE - FUSE_RUN);
       if (speed > 7) hurt(Math.min(30, speed * 0.8), 'wasted');
-      // with the police on you: they keep back from the car too, and that is the time to reach another one
+      // with the police on you: they hold their fire and their cars do not run you down, and that is the time
+      // to reach another car (a cruiser that has pulled up will do)
       if (wanted.stars >= 2) wanted.bail = BAIL_GRACE;
       if (state === 'play') hint(wanted.stars >= 2 ? 'Run! It is about to blow. The police hold their fire: take another car.' : 'Run! It is about to blow.', wanted.stars >= 2 ? 4 : 2.6);
     }
