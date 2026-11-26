@@ -829,6 +829,26 @@ None of this says the game is good enough now: that was Juwen's verdict on 1.9 a
   now prints where the van is when a stop does not load.
 - Left: the sums and the tank were not tuned. Watch whether a street of cones out-earns the jobs.
 - Left: `test/fps_ab.py NeonCoast.html <1.9 build>` on a quiet PC with a graphics card, and on a phone.
-- Left: a push that changes only text starts the whole 30 minute workflow; `paths-ignore` would stop that.
+- Done after the release: a pull request that changes only Markdown no longer starts the 30 minute
+  workflow (`paths-ignore` in `suites.yml`).
 - Left from run 7: "installs and plays offline" on the ASUS (it passed on GitHub for 2.0); R6-7; R5-11.
 - Next command: `/hone neon-coast` (run 9 starts from what Juwen says about 2.0).
+
+## Sync (run 8, 2026-11-26)
+
+- GitHub repo: [PR 15](https://github.com/juw12/neon-coast/pull/15) squash-merged, main `ff0a0c1`; release
+  [v2.0.0](https://github.com/juw12/neon-coast/releases/tag/v2.0.0) with `NeonCoast.html` (947,900 bytes).
+  The PR was merged red: the build job passed on the merged head; the suites that fail are the ones listed
+  above, which fail for v1.9.0 on the same computer.
+- Live check: https://juw12.github.io/neon-coast/NeonCoast.html has the same bytes as the local build
+  (sha256 `10f4f0bf`) and `sw.js` names the cache `neon-coast-2.0.0` (read over HTTP). The live
+  page was not opened in a browser this run.
+- Profile README: unchanged.
+- Portfolio: catalog `juw12/projects` [PR 137](https://github.com/juw12/projects/pull/137), `dd483a2`: the
+  description names 2.0; the summary, the order and the card are unchanged. Card sync run 45736648273 passed.
+- Landing page: `juw12/juw12.github.io` [PR 5](https://github.com/juw12/juw12.github.io/pull/5), `7040840`;
+  https://juw12.github.io/p/neon-coast/ shows HAVOC / 02.0 and five items of 2.0 above the 1.9 ones.
+- Obsidian: a line in `journal/2026-11-26.md`, saved through Cairn.
+- Not done: the four-versions gate (`platforms.py`), Featured (`featured.py`), a fact sheet, a council
+  score. `check_versions.py` fails here as before (it looks for a `versions.json`; this game keeps its
+  release history in `src/template.html`, which has the 2.0 entry).
