@@ -569,7 +569,8 @@ function updateIntro(dt) {
   if (!intro.on) return;
   if (player.car || dist2(player.x, player.z, START.x, START.z) > 9) {
     intro.on = false;
-    if (intro.shown && player.car && $('hint').textContent.startsWith('W A S D to walk')) $('hint').classList.remove('show');
+    // in the car: take the walking keys off the line, but leave any other hint that has come up since
+    if (intro.shown && player.car) { if ($('hint').textContent === intro.text) $('hint').classList.remove('show'); }
     else if (intro.shown) hint('The red car is yours: stand beside it and press F.', 4);
     return;
   }
@@ -577,6 +578,7 @@ function updateIntro(dt) {
   if (intro.idle > 3.5 && !intro.shown) {
     intro.shown = true;
     hint('W A S D to walk, mouse to look around.', 600);
+    intro.text = $('hint').textContent;      // as shown: a phone names thumbs, not keys
   }
 }
 
