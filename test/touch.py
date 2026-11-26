@@ -108,14 +108,27 @@ OVERLAPS = """() => {
     show('veh', 'Patrol Cruiser');
     show('zone', 'North Maren');
     if (NEON.player.car) show('drive');
-    document.getElementById('money').textContent = '$128,450';
+    const money = document.getElementById('money');
+    if (window.__money === undefined && money.textContent !== '$128,450') window.__money = money.textContent;
+    money.textContent = '$128,450';
     document.querySelector('#perk b').textContent = 'Body armour  ·  4 / 5';
     document.querySelector('#perk span').textContent = 'You take 25% less damage';
     show('perk');
     if (!NEON.player.car) show('weapon', 'Pistol  48');
     document.getElementById('way-dist').textContent = 'JOB  1250 m';
     show('way');
-    for (const id of ['tb-use', 'tb-cab', 'tb-carfire', 'tb-nitro', 'tb-radio']) document.getElementById(id).classList.add('on');
+    // every button that comes and goes is switched on for this check. What the game itself last asked for is
+    // kept (the game writes a button's class only when its own answer changes), so PLAYER_VIEW can put it back.
+    window.__real = window.__real || {};
+    for (const id of ['tb-use', 'tb-cab', 'tb-carfire', 'tb-nitro', 'tb-radio']) {
+        const list = document.getElementById(id).classList;
+        if (!(id in window.__real)) {
+            window.__real[id] = list.contains('on');
+            const toggle = list.toggle.bind(list);
+            list.toggle = (name, on) => { if (name === 'on') window.__real[id] = !!on; return toggle(name, on); };
+        }
+        list.add('on');
+    }
     const boxes = [];
     for (const id of ['tr', 'map', 'objective', 'way', 'timer', 'hint', 'stick'].concat(NEON.player.car ? ['drive'] : [])) {
         boxes.push([id, document.getElementById(id).getBoundingClientRect()]);
@@ -160,6 +173,16 @@ EMPTY_STREET = """() => {
     const n = NEON, p = n.player;
     for (const v of n.vehicles) if (v.driver && v !== p.car && Math.hypot(v.x - p.x, v.z - p.z) < 110) v.x -= 600;
     for (const ped of n.peds) if (Math.hypot(ped.x - p.x, ped.z - p.z) < 110) ped.x -= 600;
+}"""
+
+# Undo what OVERLAPS switched on: the buttons the game itself has on, and the player's own money. For the one
+# picture that is meant to show what a player sees at the wheel. (Found in run 11: an earlier OVERLAPS call
+# had left CAB and FIRE on in a car that is no cab, with the pistol put away, and that was in the picture.)
+PLAYER_VIEW = """() => {
+    for (const id in (window.__real || {})) document.getElementById(id).classList[window.__real[id] ? 'add' : 'remove']('on');
+    const money = document.getElementById('money');
+    if (window.__money !== undefined && money.textContent === '$128,450') money.textContent = window.__money;
+    return Object.keys(window.__real || {}).filter(id => window.__real[id]).map(id => document.getElementById(id).textContent.trim());
 }"""
 
 # The same on every frame, for as long as a check needs the street empty. One clearing is not enough:
@@ -292,6 +315,8 @@ def play_on_phone(browser, name, width, height):
     want(page.evaluate("!NEON.keys.KeyW && NEON.touch.sx === 0"), "GAS or the stick stayed on")
     # the picture is what a player sees at the wheel; the overlap check after it then shows every line and
     # button at once (the worst case), which up to 2.1 was also what the picture showed
+    shown = page.evaluate(PLAYER_VIEW)
+    print(f"      at the wheel on {name}, of the buttons that come and go: {', '.join(shown) or 'none'}")
     page.wait_for_timeout(120)
     page.screenshot(path=str(SHOTS / f"touch-{name}-car.png"))
     overlaps = page.evaluate(OVERLAPS)
