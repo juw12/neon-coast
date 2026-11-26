@@ -171,7 +171,7 @@
   nothing moved by script). Since 1.4 it plays three story jobs instead of one: job 1 First Wheels, job 2
   Hot Delivery (against the 80 s clock) and job 4 Borrowed Time (a car theft with the police after it).
   Since 1.7 it also plays job 3 Midnight Sprint and job 6 Coastline Run (the two races), job 5 Heat Wave
-  (the three-star getaway) and Shadow Run. New in 1.8: `test/chase.py` (26 checks since 2.2, 22 in 2.1, 13 before, that set up crashes with
+  (the three-star getaway) and Shadow Run. New in 1.8: `test/chase.py` (25 checks since 2.2, 22 in 2.1, 13 before, that set up crashes with
   a patrol car, police gunfire and a pursuit and let the game run them: who gets the wanted points, the 40%
   limit of one crash, hits on a standing and on a fast car, braking at two stars and ramming at three) and
   `test/chase_bench.py` (not pass/fail: how long a car lasts with the police after it). New in 1.9:

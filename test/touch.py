@@ -162,6 +162,15 @@ EMPTY_STREET = """() => {
     for (const ped of n.peds) if (Math.hypot(ped.x - p.x, ped.z - p.z) < 110) ped.x -= 600;
 }"""
 
+# The same on every frame, for as long as a check needs the street empty. One clearing is not enough:
+# the game puts new walkers 45 to 150 m from the player within frames, and a shot on a phone turns the
+# view onto anyone within 0.4 rad and 70 m of the crosshair (aimAssist). That is the likely cause of the
+# FIRE check failing now and then since run 9 (R9-12, R11-4): shots fired, but the view not where the thumb
+# alone would have put it. Not reproduced on purpose; the check now prints how far the view turned.
+KEEP_EMPTY = ("() => { const clear = " + EMPTY_STREET + "; const again = () => { clear();"
+              " window.__emptyStreet = requestAnimationFrame(again); }; again(); }")
+STOP_EMPTY = "() => cancelAnimationFrame(window.__emptyStreet)"
+
 # feed the frame-rate governor a run of frames of one length, as the game loop would
 FEED = """([seconds, frame]) => { for (let t = 0; t < seconds; t += frame) NEON.governor(frame); return NEON.auto.level; }"""
 
@@ -227,7 +236,7 @@ def play_on_phone(browser, name, width, height):
     want(abs(turned - 90 * 0.0058) < 0.02, f"look drag turned {turned:.3f} rad")
 
     # fire: held, the pistol goes off; the thumb sliding on the button aims (nobody near the crosshair to snap to)
-    page.evaluate(EMPTY_STREET)
+    page.evaluate(KEEP_EMPTY)
     ammo, yaw = page.evaluate("[NEON.player.ammo, NEON.cam.yaw]")
     fx, fy = centre(page, "#tb-fire")
     fingers.down(3, fx, fy)
@@ -237,8 +246,11 @@ def play_on_phone(browser, name, width, height):
     except Exception:  # noqa: BLE001 - reported just below
         pass
     fingers.up(3)
+    page.evaluate(STOP_EMPTY)
     shots = ammo - page.evaluate("NEON.player.ammo")
-    want(shots >= 2 and abs(page.evaluate("NEON.cam.yaw") - yaw - 30 * 0.0058) < 0.02, f"FIRE: {shots} shots")
+    turned = page.evaluate("NEON.cam.yaw") - yaw
+    want(shots >= 2 and abs(turned - 30 * 0.0058) < 0.02,
+         f"FIRE: {shots} shots, the view turned {turned:.3f} rad for a thumb that slid 30 px (0.174 rad)")
     page.wait_for_timeout(400)
     shots_after = page.evaluate("NEON.player.ammo")
     page.wait_for_timeout(700)
