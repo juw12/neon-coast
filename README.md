@@ -23,6 +23,50 @@ and Shift the nitro.
 Follow the arrows on the road to the yellow J marker for the first of six jobs. Press M for the whole map
 and P to pause. Progress is stored in your browser, so use the same browser and file location to resume.
 
+## Version 2.2 · Second Car
+
+A way to live through leaving a burning car. In 2.1 the car says when it burns and lets you out, but a
+script playing Heat Wave lost every try in which it got out: dead on foot within seconds. What changed:
+
+- **The police hold their fire.** For 8 s after you jump out of a burning car with two or more stars
+  on, no officer shoots and no police car hurts you. The hint line says: "Run! It is about to blow. The
+  police hold their fire: take another car."
+- **A police car pulls up for a person.** A cruiser chasing you on foot now stops 6.5 m short, at any
+  number of stars. It used to drive through you at full speed. The 8 s alone did not help: measured on
+  their own, 7 jumps out of a burning car, none saved, six of them run over about 1.5 s after the jump.
+- **On a phone** the NITRO button is there only with nitro in the tank, and the RADIO button only with
+  no stars on.
+- **The title screen** offers the courier shift only after the first job is done. It starts with a
+  clock running, and a new player could start it by mistake.
+
+What was measured, all on GitHub's Macs:
+
+- Heat Wave by key presses: **9 of 9, all at the first try**. 2.1 the same day with the same script:
+  8 of 8 counted runs finished, **3 at the first try**, 5 tries lost.
+- Jumps out of a burning car: 3 in 2.2, **3 saved** (the script ran to a police car that had pulled up
+  and drove on). In 2.1: 5 jumps, 1 saved.
+- Four and five stars, measured for the first time (a fast car held at 21 m/s for 30 s, eight runs
+  each): wrecked 0 of 8 at three stars, 0 of 8 at four, 1 of 8 at five. In 2.0.1: 6, 7 and 7 of 8.
+  These are the rules of 2.1; 2.2 does not change them.
+- `test/chase.py` has 25 checks (22 before); 25 of 25 on a Mac and on the slow Windows computer.
+- Three council judges compared the fact sheets of 2.1 and 2.2 blind: two chose 2.2 in both orders, one
+  chose it once and called a tie once. Scored 8.78 against 8.73 for 2.1, a gain the loop does not
+  count as a step up.
+
+What this does not show:
+
+- **Whether it is fun.** Nobody has played 2.0, 2.0.1, 2.1 or 2.2. No real phone has run it.
+- **The rescue rests on one run.** All three saved jumps happened in a single try. In the other eight
+  runs the car never burned, and why is not explained: 2.2 changes nothing while you are in the car.
+- The script takes the nearest standing car, and each time that was a police car. A person might not
+  think of it. The 8 s and the 6.5 m are first guesses.
+- Job 6 by key presses needed a second try in both runs (out of time on the first).
+- The radio check that compares the tone of Neon FM and Coast 98 passes or fails by chance (six reads,
+  three each way). The sound is unchanged; nobody has listened to it.
+- Two faults of the tests were found on the way and fixed: the phone FIRE check failed once because
+  the script let walkers back into the street, and the phone pictures showed buttons the game did not
+  have on. The judges' first pass was made with those pictures and was thrown away.
+
 ## Version 2.1 · Way Out
 
 A chase you can read. A script that plays the fifth job, Heat Wave (the three-star getaway), with key

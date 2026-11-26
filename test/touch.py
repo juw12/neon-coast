@@ -108,14 +108,27 @@ OVERLAPS = """() => {
     show('veh', 'Patrol Cruiser');
     show('zone', 'North Maren');
     if (NEON.player.car) show('drive');
-    document.getElementById('money').textContent = '$128,450';
+    const money = document.getElementById('money');
+    if (window.__money === undefined && money.textContent !== '$128,450') window.__money = money.textContent;
+    money.textContent = '$128,450';
     document.querySelector('#perk b').textContent = 'Body armour  ·  4 / 5';
     document.querySelector('#perk span').textContent = 'You take 25% less damage';
     show('perk');
     if (!NEON.player.car) show('weapon', 'Pistol  48');
     document.getElementById('way-dist').textContent = 'JOB  1250 m';
     show('way');
-    for (const id of ['tb-use', 'tb-cab', 'tb-carfire']) document.getElementById(id).classList.add('on');
+    // every button that comes and goes is switched on for this check. What the game itself last asked for is
+    // kept (the game writes a button's class only when its own answer changes), so PLAYER_VIEW can put it back.
+    window.__real = window.__real || {};
+    for (const id of ['tb-use', 'tb-cab', 'tb-carfire', 'tb-nitro', 'tb-radio']) {
+        const list = document.getElementById(id).classList;
+        if (!(id in window.__real)) {
+            window.__real[id] = list.contains('on');
+            const toggle = list.toggle.bind(list);
+            list.toggle = (name, on) => { if (name === 'on') window.__real[id] = !!on; return toggle(name, on); };
+        }
+        list.add('on');
+    }
     const boxes = [];
     for (const id of ['tr', 'map', 'objective', 'way', 'timer', 'hint', 'stick'].concat(NEON.player.car ? ['drive'] : [])) {
         boxes.push([id, document.getElementById(id).getBoundingClientRect()]);
@@ -161,6 +174,25 @@ EMPTY_STREET = """() => {
     for (const v of n.vehicles) if (v.driver && v !== p.car && Math.hypot(v.x - p.x, v.z - p.z) < 110) v.x -= 600;
     for (const ped of n.peds) if (Math.hypot(ped.x - p.x, ped.z - p.z) < 110) ped.x -= 600;
 }"""
+
+# Undo what OVERLAPS switched on: the buttons the game itself has on, and the player's own money. For the one
+# picture that is meant to show what a player sees at the wheel. (Found in run 11: an earlier OVERLAPS call
+# had left CAB and FIRE on in a car that is no cab, with the pistol put away, and that was in the picture.)
+PLAYER_VIEW = """() => {
+    for (const id in (window.__real || {})) document.getElementById(id).classList[window.__real[id] ? 'add' : 'remove']('on');
+    const money = document.getElementById('money');
+    if (window.__money !== undefined && money.textContent === '$128,450') money.textContent = window.__money;
+    return Object.keys(window.__real || {}).filter(id => window.__real[id]).map(id => document.getElementById(id).textContent.trim());
+}"""
+
+# The same on every frame, for as long as a check needs the street empty. One clearing is not enough:
+# the game puts new walkers 45 to 150 m from the player within frames, and a shot on a phone turns the
+# view onto anyone within 0.4 rad and 70 m of the crosshair (aimAssist). That is the likely cause of the
+# FIRE check failing now and then since run 9 (R9-12, R11-4): shots fired, but the view not where the thumb
+# alone would have put it. Not reproduced on purpose; the check now prints how far the view turned.
+KEEP_EMPTY = ("() => { const clear = " + EMPTY_STREET + "; const again = () => { clear();"
+              " window.__emptyStreet = requestAnimationFrame(again); }; again(); }")
+STOP_EMPTY = "() => cancelAnimationFrame(window.__emptyStreet)"
 
 # feed the frame-rate governor a run of frames of one length, as the game loop would
 FEED = """([seconds, frame]) => { for (let t = 0; t < seconds; t += frame) NEON.governor(frame); return NEON.auto.level; }"""
@@ -227,7 +259,7 @@ def play_on_phone(browser, name, width, height):
     want(abs(turned - 90 * 0.0058) < 0.02, f"look drag turned {turned:.3f} rad")
 
     # fire: held, the pistol goes off; the thumb sliding on the button aims (nobody near the crosshair to snap to)
-    page.evaluate(EMPTY_STREET)
+    page.evaluate(KEEP_EMPTY)
     ammo, yaw = page.evaluate("[NEON.player.ammo, NEON.cam.yaw]")
     fx, fy = centre(page, "#tb-fire")
     fingers.down(3, fx, fy)
@@ -237,8 +269,11 @@ def play_on_phone(browser, name, width, height):
     except Exception:  # noqa: BLE001 - reported just below
         pass
     fingers.up(3)
+    page.evaluate(STOP_EMPTY)
     shots = ammo - page.evaluate("NEON.player.ammo")
-    want(shots >= 2 and abs(page.evaluate("NEON.cam.yaw") - yaw - 30 * 0.0058) < 0.02, f"FIRE: {shots} shots")
+    turned = page.evaluate("NEON.cam.yaw") - yaw
+    want(shots >= 2 and abs(turned - 30 * 0.0058) < 0.02,
+         f"FIRE: {shots} shots, the view turned {turned:.3f} rad for a thumb that slid 30 px (0.174 rad)")
     page.wait_for_timeout(400)
     shots_after = page.evaluate("NEON.player.ammo")
     page.wait_for_timeout(700)
@@ -278,9 +313,15 @@ def play_on_phone(browser, name, width, height):
     fingers.up(2)
     fingers.up(1)
     want(page.evaluate("!NEON.keys.KeyW && NEON.touch.sx === 0"), "GAS or the stick stayed on")
+    # the picture is what a player sees at the wheel; the overlap check after it then shows every line and
+    # button at once (the worst case), which up to 2.1 was also what the picture showed
+    shown = page.evaluate(PLAYER_VIEW)
+    print(f"      at the wheel on {name}, of the buttons that come and go: {', '.join(shown) or 'none'}")
+    page.wait_for_timeout(120)
+    page.screenshot(path=str(SHOTS / f"touch-{name}-car.png"))
     overlaps = page.evaluate(OVERLAPS)
     want(not overlaps, "in a car: " + ", ".join(overlaps))
-    page.screenshot(path=str(SHOTS / f"touch-{name}-car.png"))
+    page.screenshot(path=str(SHOTS / f"touch-{name}-car-all.png"))
     page.evaluate("for (const id of ['hint', 'timer', 'perk']) document.getElementById(id).classList.remove('show')")
     bx, by = centre(page, ".tb[data-hold=Space]")
     fingers.down(1, bx, by)
@@ -289,6 +330,31 @@ def play_on_phone(browser, name, width, height):
     station = page.evaluate("NEON.radio.station")
     fingers.tap(*centre(page, ".tb[data-tap=KeyR]"))
     want(page.evaluate("NEON.radio.station") != station, "RADIO did not change the station")
+
+    # (2.2) fewer buttons at once: NITRO only with nitro in the tank, RADIO only while nobody is after you
+    seen = "document.getElementById('%s').getClientRects().length > 0"
+    page.evaluate("NEON.nitro.tank = 0")
+    page.wait_for_function("!" + seen % "tb-nitro", timeout=3000)
+    page.evaluate("NEON.nitro.tank = 0.5")
+    page.wait_for_function(seen % "tb-nitro", timeout=3000)
+    want(page.evaluate(seen % "tb-radio"), "RADIO is not there with no stars on")
+    page.evaluate("NEON.setWanted(1)")
+    page.wait_for_function("!" + seen % "tb-radio", timeout=3000)
+    page.evaluate("NEON.setWanted(0); NEON.wanted.pts = 0")
+    page.wait_for_function(seen % "tb-radio", timeout=3000)
+    # (2.1, unchecked until now) under the map one name at a time: the district, then the car, then the station
+    names = page.evaluate("""() => {
+        const ids = ['zone', 'veh', 'radio'], out = [];
+        const shown = () => ids.filter(id => getComputedStyle(document.getElementById(id)).display !== 'none'
+            && document.getElementById(id).classList.contains('show')).join('+');
+        for (const id of ids) document.getElementById(id).classList.add('show');
+        out.push(shown());
+        document.getElementById('zone').classList.remove('show'); out.push(shown());
+        document.getElementById('veh').classList.remove('show'); out.push(shown());
+        document.getElementById('radio').classList.remove('show');
+        return out;
+    }""")
+    want(names == ['zone', 'veh', 'radio'], f"under the map more than one name shows, or the wrong one: {names}")
 
     # the round map opens the whole island; a tap closes it
     fingers.tap(*centre(page, "#map"))

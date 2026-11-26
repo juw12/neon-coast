@@ -64,6 +64,10 @@ with sync_playwright() as pw:
     print("renderer:", gpu)
     check("page loads with game handle", page.evaluate("() => !!window.NEON && NEON.state === 'title'"))
     page.screenshot(path=str(SHOTS / "1-title.png"))
+    check(
+        "a new player is not offered the courier shift on the title (2.2)",
+        page.evaluate("() => NEON.save.mission === 0 && getComputedStyle(document.getElementById('btn-ferry')).display === 'none'"),
+    )
 
     page.click("#btn-new")
     page.wait_for_timeout(1500)
@@ -113,7 +117,9 @@ with sync_playwright() as pw:
     page.keyboard.up("KeyA")
     page.keyboard.up("KeyW")
     h1 = page.evaluate("() => NEON.player.car.h")
-    check("A steers left", h1 - h0 > 0.1, f"heading change {h1 - h0:.2f} rad")
+    # what the car was doing, to read if this fails: 9/10 gates once in run 10 with 0.04 rad, never explained
+    steer_note = page.evaluate("() => { const c = NEON.player.car; return 'speed ' + Math.hypot(c.vx, c.vz).toFixed(1) + ' m/s at ' + c.x.toFixed(0) + ', ' + c.z.toFixed(0) + ', health ' + Math.round(c.hp) + ', cars within 8 m: ' + NEON.vehicles.filter(v => v !== c && Math.hypot(v.x - c.x, v.z - c.z) < 8).length; }")
+    check("A steers left", h1 - h0 > 0.1, f"heading change {h1 - h0:.2f} rad; {steer_note}")
 
     # police response
     # This check is about patrol cars arriving. The car stands still, and a patrol car next to a standing
@@ -288,6 +294,10 @@ with sync_playwright() as pw:
     check(
         "progress is saved and Continue is offered",
         page.evaluate("() => NEON.save.mission === 1 && getComputedStyle(document.getElementById('btn-continue')).display !== 'none'"),
+    )
+    check(
+        "with the first job done the title offers the courier shift (2.2)",
+        page.evaluate("() => getComputedStyle(document.getElementById('btn-ferry')).display !== 'none'"),
     )
     page.click("#title .seg:text-is('Fast')")
     page.click("#btn-continue")

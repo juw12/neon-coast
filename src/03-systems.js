@@ -641,10 +641,11 @@ function checkPerks(quiet) {
 }
 
 // ---------- wanted level ----------
-const wanted = { pts: 0, stars: 0, evade: 0, bust: 0, spawnT: 0, peak: 0, seenT: 0, callT: 20, ramRest: 0, took: { ram: 0, shot: 0 } };
+const wanted = { pts: 0, stars: 0, evade: 0, bust: 0, spawnT: 0, peak: 0, seenT: 0, callT: 20, ramRest: 0, bail: 0, took: { ram: 0, shot: 0 } };
 const STAR_PTS = [0, 1, 3, 6, 10, 15];
 const COPS_PER_STAR = [0, 1, 2, 3, 4, 6];
 const ROLLING_SPEED = 6;                         // m/s: a cruiser faster than this is on the move (its officer aims worse)
+const BAIL_GRACE = 8;                            // s: after the player jumps out of a burning car no officer fires and no police car hurts (2.2)
 const HOLD_FIRE_SPEED = 8;                       // m/s: at two stars officers do not shoot at a car faster than this
 const GETAWAY_PAY = [0, 0, 150, 400, 800, 1400]; // cash for losing the police on the road, by the most stars the chase reached
 const GETAWAY_SEEN = 10;                         // seconds the police must have had you in sight for the full sum
@@ -823,6 +824,7 @@ function updateHeli(dt) {
 function updateWanted(dt) {
   const [px, pz] = focus();
   wanted.ramRest = Math.max(0, wanted.ramRest - dt);
+  wanted.bail = Math.max(0, wanted.bail - dt);       // runs out with no stars on too, so a later chase starts without it
   const fromAbove = updateHeli(dt);
   if (wanted.stars === 0) {
     wanted.pts = Math.max(0, wanted.pts - dt * 0.03);
@@ -845,7 +847,8 @@ function updateWanted(dt) {
   let arresting = false;
   const carSpeed = player.car ? Math.hypot(player.car.vx, player.car.vz) : 0;
   // two stars is a pursuit: officers shoot at you on foot or in a car that has all but stopped, not at a car on the move
-  const holdFire = wanted.stars === 2 && carSpeed > HOLD_FIRE_SPEED;
+  // out of a burning car: the officers keep back from a car that is about to blow, and hold their fire (2.2)
+  const holdFire = (wanted.stars === 2 && carSpeed > HOLD_FIRE_SPEED) || wanted.bail > 0;
   for (const v of vehicles) {
     if (v.driver !== 'cop' || v.dead) continue;
     v.siren = true;

@@ -1222,3 +1222,126 @@ Read plainly:
 - Obsidian: a line in `journal/2026-11-26.md`, saved through Cairn.
 - Not done: nothing run on the ASUS; no person has played 2.1; the four-versions gate (`platforms.py`)
   and Featured (`featured.py`), as in runs 8 and 9.
+
+## Run 11 (2026-11-26, "continue next round till nothing is left", from the shipped 2.1 build)
+
+Ask: Juwen said to continue with the next round until nothing is left. What is left is the handoff of
+run 10: the judges' open fixes, the things not measured, and the two reads nobody explained. This run
+works through that list. What it cannot do stays on the list and is named: a person playing, a real phone.
+
+Goal beyond the goal, unchanged: a stranger opens one link, knows what to do, and wants to keep going.
+
+### Run queue (run 11)
+
+- [x] R11-1 Round 17: leaving a burning car is worth it (the police hold their fire for 8 s, and a
+      police car pulls up short of a player on foot); fewer phone buttons at once; the courier shift on
+      the title after the first job; `suites.yml` compares with v2.1.0. Built, suites, kit, sheet v14,
+      scored twice, blind pair against v13
+- [x] R11-2 Not measured in run 10: four and five stars (chase bench at 3, 4 and 5 stars, 2.2 against
+      2.0.1); R9-10 (chase bench and `economy.py`, on GitHub Macs since the ASUS is over its limit).
+      Measured, nothing changed after reading
+- [x] R11-3 A check for one name at a time under the map on a phone (in `test/touch.py`, passes)
+- [x] R11-4 The two unexplained reads. The FIRE check: a likely cause read from the code, the script
+      changed, passed twice since; not reproduced. The steering check (gates 9/10 once): not seen again
+      in the gate runs of this round (two kit runs and the suites); `smoke.py` now prints speed, place, health and cars near, so the
+      next miss explains itself. Not explained
+- [x] R11-5 Further rounds while a round gains 0.3 and wins its pair (at most 5).
+      stop: round 17 won its pair and gained 0.05, under 0.3. No round 18
+- [ ] R11-6 Sync: PR, release, live check, landing page, log, memory
+
+### Assumptions (run 11)
+
+- Assumed: "till nothing is left" means the handoff list of run 10, not a score of 10. The loop's own
+  stops still hold (rubric v1 frozen, five rounds at most, two rounds without gain).
+- Assumed: the ASUS is still over its load limit; every browser run is on GitHub's computers.
+- Assumed: 8 s without police gunfire after a bail-out. The script's lost tries in 2.1 all ended within
+  seconds of the jump with three police cars inside 10 m; 8 s at a run is about 50 m, the distance to a
+  parked car on most streets. A first guess, to be read against the played job.
+- Assumed: the phone picture `touch-*-car.png` now shows what a player sees at the wheel. Up to v13 it was
+  taken after the overlap check had switched every button and every line on at once (CAB and FIRE
+  included), so the judges counted buttons a player never sees together. The worst case is kept as
+  `touch-*-car-all.png`. The rubric is unchanged; the sheet says which picture is which.
+
+- Assumed: a police car pulls up for a player on foot at any number of stars, not only in the 8 s. A
+  cruiser that drives through a person standing in the street reads as a fault at one star as well.
+- Assumed: in the 8 s no police car hurts the player at all (it shoves). Half measures were not tried.
+- Assumed: after a bail-out the script takes the nearest standing car, a police car included. A person
+  may not think of that; the sheet says so.
+- Assumed: the first council pass of v14 does not count. It was made with phone pictures that showed
+  buttons and money the game did not have on (a fault of `test/touch.py`, found by looking at the
+  picture). It is kept as `hone/judge/v14-score-wrong-picture.json` (8.85) and is not in the mean.
+
+### Rounds (run 11)
+
+| round | change | gates | judge score | pairwise win | kept? | note |
+|---|---|---|---|---|---|---|
+| 17 (v14, release 2.2 Second Car) | 8 s without police gunfire or police-car harm after a jump out of a burning car; a police car pulls up 6.5 m short of a player on foot; on a phone NITRO only with nitro and RADIO only with no stars; the courier shift on the title after the first job | 10/10 in both kit runs and in the suites | 8.85 and 8.70, mean 8.78 | yes: 2 judges for v14, 1 tie, none for v13 | no by the loop rule (+0.05, under 0.3); shipped as 2.2 on the measured fault | Heat Wave 9 of 9 at the first try by key presses, 2.1 with the same script 3 of 8 at the first try |
+
+### Round 17 (run 11): v14 = release 2.2 "Second Car"
+
+The change, from the handoff of run 10 (leaving a burning car has not yet saved a try; fewer phone
+buttons; the courier shift before any first job):
+
+- `src/03-systems.js`, `src/02-entities.js`: `BAIL_GRACE = 8` s after a jump out of a burning car with
+  two or more stars on: no officer fires, no police car hurts (it shoves), and the hint says so.
+  `FOOT_GAP = 6.5` m: a police car chasing a player on foot pulls up that far short, at any stars.
+- `src/03b-touch.js`: NITRO is on screen only with nitro in the tank, RADIO only with no stars.
+- `src/04-main.js`, `src/template.html`: the title offers the courier shift only after the first job.
+- `test/chase.py` 25 checks (22 before); `test/smoke.py` and `test/touch.py` check the title, the two
+  buttons and one name at a time under the map; `test/drive.py` runs to the nearest standing car after
+  a bail-out. `.github/workflows/suites.yml` compares with `v2.1.0`.
+
+It was built in two steps, and the first was measured alone (probe run 45831404287, the script of v13):
+with only the 8 s without gunfire, Heat Wave finished 7 of 9, with 7 jumps out of a burning car and
+none saved. Six of the seven were dead about 1.5 s after the jump: the police cars drove through the
+player (1.5 health for every m/s). So the first idea alone did not work. The second step is the pull-up.
+
+Measured on the release build `ec018a0` (probe run 45848411827, GitHub Macs):
+
+- Heat Wave by key presses: 9 of 9, all at the first try, 100 to 139 s, never arrested or taken out.
+  The car caught fire in 1 of the 9 runs, three times in that one try; each time the script got out,
+  ran to a police car that had pulled up (1.2, 0.8 and 10.0 s on foot) and drove on, from three to five
+  stars. 2.1 the same day with the same script: 8 counted runs (a ninth broke in the test tool), 8
+  finished, 3 at the first try, 13 tries, 5 lost (4 dead on foot after the jump, 1 arrested in the
+  car), 5 jumps, 1 saved.
+- Jobs 1 to 4 and Shadow Run: all runs finished (3, 2, 2, 2 and 3). Job 6: 2 of 2, both at the second
+  try, the first lost on time ("You ran out of time"); in v13 it was one of two.
+- Chase bench (30 s at 21 m/s, eight runs each): cars wrecked, 2.2 against 2.0.1: three stars 0 of 8
+  against 6 of 8; four stars 0 against 7; five stars 1 against 7. The rules behind this are those of
+  2.1; this is their first measurement at four and five stars.
+- Economy (three runs of five minutes of driving into everything): $74 a minute at the median, $30 a
+  minute after fines and fees; the script was arrested or taken out 7 to 9 times per five minutes.
+- Suites on the head `a6f459f` (run 45861927086): every job of this commit green on the Macs, harbor
+  and pace included, and `chase.py` on the slow Windows computer. Red, and expected: `thrill.py` (33 of
+  34) and `havoc.py` (46 of 47) on the slow computer, as in 2.1; touch, chase, smoke and gates of
+  v2.1.0, which fail the new 2.2 checks as they should (gates through its core-loop check, which now
+  asks for the title without the courier shift).
+
+Reads that are not clean, all in the sheet:
+
+- Thin evidence for the rescue: three saved jumps in one run. Why the car burned in only 1 of 9 runs
+  (2.1 the same day: 5 of 8) is not explained; nothing in 2.2 changes a chase with the player in the car.
+- The radio tone check (Neon FM against Coast 98) read 0.005, 0.006, 0.009, 0.019, 0.024 and 0.032 in
+  six runs against a line of 0.01: it passes or fails by chance. The sound was not changed, because
+  nobody has listened to it; two judges asked for a steadier check (a longer take or another measure).
+- The FIRE check on a phone failed once (kit of run 45848411827). Read from the code: walkers come back
+  45 to 150 m away within frames and a shot on a phone turns the view onto anyone within 70 m. The
+  script now keeps the street clear while the thumb is down (`b2f89ca`); 10 of 10 twice since.
+- A fault of the test, found by looking at the picture: `touch-*-car.png` still showed CAB, FIRE and
+  $128,450 from an earlier overlap check. Fixed in `a6f459f`; the pictures were taken again (probe run
+  45861963703) and the first council pass was thrown away.
+- G7 frame rate read 95 and 74 frames a second for the same build on two GitHub Macs (v13: 123). The
+  gate asks for 60. Whether the build is slower was not looked into; `pace.py` is green.
+
+Judged (council of three, rubric v1, sheet `hone/judge/v14.md`, 16 pictures of probe run 45861963703):
+8.85 and 8.70, mean 8.78 (v13: 8.73). Blind pair against v13: two judges for v14 in both orders, one
+judge v14 once and a tie once, none for v13. Not a new best by the loop rule (9.03 needed). The best
+sheet for a next pair stays v13 by the rule; the shipped build is v14.
+
+What the judges ask for now: people other than the owner to play (all three, both passes); a real
+phone (two); a steadier radio tone check and someone to listen (two); day streets that look less like
+any low-poly city (one, both passes); the walking keys at once and the first job's red car marked
+(one each).
+
+- Assumed: 2.2 ships although it is not a new best by the rule, as 2.1 did: the pair is won, the suites
+  are green and the played job supports it.

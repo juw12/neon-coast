@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 10.0,
+        "C2": 10.0,
+        "C3": 9.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "Prompts like 'Get into the red car ahead [F]' and 'Follow the beach road' guide the player visibly without text walls.",
+        "C2": "Distinct districts (Sol Beach, Rustport) and lighting ('neon trim', 'glow pass') create a recognizable mood in screenshots.",
+        "C3": "Systems feed each other (smashing -> style -> money), but 'No one else has played any version' leaves the 'varied feel' unverified.",
+        "C4": "Desktop HUD is clean, but mobile view shows 10+ buttons which risks clutter ('reads at a glance' anchor).",
+        "C5": "Fact sheet explicitly states 'Limits and what was tested are stated plainly' including untested audio and lack of external players."
+      },
+      "fixes": [
+        "Conduct external playtesting to validate the 'fun' factor and onboarding flow, as currently 'No one else has played any version'.",
+        "Test touch controls on physical devices to confirm thumb reach and screen heat, as currently only emulated.",
+        "Perform a human listen-test on the radio stations to ensure aesthetic quality, as currently 'nobody has listened to it'."
+      ],
+      "total": 9.6,
+      "seconds": 39.0
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 8.0
+      },
+      "evidence": {
+        "C1": "Title screen shows keys needed first; first view shows 'Get into the red car ahead [F]' with the car visible; learner phase prevents early arrest; first job is short and ends at the Sol Wheel landmark; new player who stands still 3.5s is shown walking keys.",
+        "C2": "Four districts with distinct looks (Meridian towers, Sol Beach pastels, Rustport industry, suburbs); day/night cycle with lit windows and neon trim; 86 painted walls; buildings have awnings, window frames, balcony bands, saw-tooth roofs; screenshots show recognizable neon-lit beach city aesthetic.",
+        "C3": "Six story jobs, six odd job kinds (Rush Order, Repo Run, Block Dash, Hot Parcel, Paper Round, Shadow Run), cab fares, four properties, police 1-5 stars with helicopter at 4, 12 stunt ramps, barrel chains, nitro, 15 hidden packages, Tune-up shop, perks that tie activities together.",
+        "C4": "HUD is cash and health only; stars appear only when wanted; weapon line only for 5s; clock moved to map/pause; pause screen is three buttons plus settings and perks; G8 passes no overlaps at 3 sizes; phone HUD moves to top edge.",
+        "C5": "Own city and names (Neon Coast, Meridian, Sol Beach, Rustport); title screen has 'not affiliated' line; G9 passes own names only; fact sheet states 'Own city, names and art'; limits stated plainly (only owner has played, radio not listened to, no real phone tested)."
+      },
+      "fixes": [
+        "Get more human playtesting beyond the owner — only one person has played any version and they said 1.8 was 'not fun enough' and 1.9 'not good enough'; scripts cannot measure whether jobs are fun or whether five stars is now too easy.",
+        "Resolve the radio tone check flakiness — it passes/fails by chance (3 of 6 reads over the threshold) and nobody has actually listened to the music to judge if it is pleasant.",
+        "Test touch controls on a real phone or tablet — only emulated in Chrome; thumb reach, heat, and real-device frame rate are explicitly unknown, and the FIRE check already failed once on the 844x390 screen."
+      ],
+      "total": 8.5,
+      "seconds": 14.3
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "First view shows 'Get into the red car ahead [F]' with 'JOB 40 m' and the car visible; job 1 finishes in '27.6 to 30.5 s' by keys; learner phase means 'crimes bring no stars'. Gap: walking keys appear only if 'a new player ... stands still for 3.5 seconds', so movement is a small guess, and a 3-line style explainer stacks under the hint during the first drive.",
+        "C2": "Strong signature shots: Sol Wheel at dusk (lit wheel, palms, pink sky), '86 painted walls, two designs per district', 'Meridian towers are aqua, coral, cream and lilac instead of grey', glow pass at night. Gap: the daytime street-level screenshots read as competent generic low-poly city; the identity lives in landmarks, not every view.",
+        "C3": "'Six story jobs', 'six kinds' of odd jobs, cab fares, property, 12 ramps, barrels, 15 packages, and 'Perks ... tie the side activities together'; police heat blocks cab/wheel/tune-up. Gaps: 'The sums are first guesses, not tuned by play', smashing nets '$30 a minute after fines', and odd jobs come only 'taken in turn', not chosen.",
+        "C4": "G8 'no overlaps at 3 sizes'; 'the HUD is cash and health' with stars and weapon line contextual; clock moved off the HUD; legend on the map. Gap: while driving at speed a 3-line explainer stacks under the job hint (screenshot 3) and desktop stacks three name lines (radio/car/district) bottom-right, fixed on phone only.",
+        "C5": "'Own city, names and art' plus the single not-affiliated line (G9 pass); limits stated plainly: 'The sums are first guesses, not tuned by play', 'No real phone or tablet has run the game yet', the owner's 'not fun enough' verdict, flaky radio check and script changes after red runs all disclosed."
+      },
+      "fixes": [
+        "Put the game in front of real players and tune the admitted-untuned economy: 'The sums are first guesses, not tuned by play', the only human verdict was 'not fun enough' with no specifics, and smashing pays '$30 a minute after fines' against job 1's $250.",
+        "Give street-level daytime views the recognisability the landmarks have: the dusk Sol Wheel and neon night shots carry the mood, but ordinary day streets could be from any low-poly city; push district-specific grading, street furniture and silhouettes.",
+        "Lead the first minute with one message at a time: show the walking keys the moment play starts instead of after 3.5 s standing still, and defer the multi-line near-miss/slide explainer until after the first job."
+      ],
+      "total": 8.85,
+      "seconds": 98.0
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.85,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 9.0,
+    "C4": 9.0,
+    "C5": 10.0
+  },
+  "criterion_spread": {
+    "C1": 1.0,
+    "C2": 2.0,
+    "C3": 0.0,
+    "C4": 1.0,
+    "C5": 2.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.5,
+    9.6
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Conduct external playtesting to validate the 'fun' factor and onboarding flow, as currently 'No one else has played any version'."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Test touch controls on physical devices to confirm thumb reach and screen heat, as currently only emulated."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Perform a human listen-test on the radio stations to ensure aesthetic quality, as currently 'nobody has listened to it'."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Get more human playtesting beyond the owner — only one person has played any version and they said 1.8 was 'not fun enough' and 1.9 'not good enough'; scripts cannot measure whether jobs are fun or whether five stars is now too easy."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Resolve the radio tone check flakiness — it passes/fails by chance (3 of 6 reads over the threshold) and nobody has actually listened to the music to judge if it is pleasant."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Test touch controls on a real phone or tablet — only emulated in Chrome; thumb reach, heat, and real-device frame rate are explicitly unknown, and the FIRE check already failed once on the 844x390 screen."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Put the game in front of real players and tune the admitted-untuned economy: 'The sums are first guesses, not tuned by play', the only human verdict was 'not fun enough' with no specifics, and smashing pays '$30 a minute after fines' against job 1's $250."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Give street-level daytime views the recognisability the landmarks have: the dusk Sol Wheel and neon night shots carry the mood, but ordinary day streets could be from any low-poly city; push district-specific grading, street furniture and silhouettes."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Lead the first minute with one message at a time: show the walking keys the moment play starts instead of after 3.5 s standing still, and defer the multi-line near-miss/slide explainer until after the first job."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}

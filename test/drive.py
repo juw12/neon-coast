@@ -81,6 +81,11 @@ STATE_JS = """(fast) => {
     car: c ? { x: c.x, z: c.z, h: c.h, vx: c.vx, vz: c.vz, hp: c.hp, max: c.t.hp } : null,
     starter: starter ? [starter.x, starter.z] : null,
     marked: marked ? [marked.x, marked.z] : null,
+    // after a jump out of a burning car a person takes the nearest car that stands or crawls, whoever sits in it:
+    // one that is not a police car if there is one within 30 m (taking a cruiser adds wanted points), else any
+    handy: (() => { const slow = n.vehicles.filter(v => !v.dead && v.hp > 0 && Math.hypot(v.vx, v.vz) < 4 && away(v) < 45)
+      .sort((a, b) => away(a) - away(b));
+      const v = slow.find(v => v.type !== 'police' && away(v) < 30) || slow[0]; return v ? [v.x, v.z] : null; })(),
     route: n.route.points, blip: n.mission.blip, active: n.mission.active,
     // what a driver sees: people and other cars close by
     people: c ? n.peds.filter(q => q.state !== 'down' && Math.hypot(q.x - c.x, q.z - c.z) < 32).map(q => [q.x, q.z]) : [],
@@ -254,6 +259,8 @@ def run(job=1):
         chase_note = 0.0
         no_car_since = None
         fire_since = None
+        bail_open = False            # out of a burning car, not yet in another one
+        bail_at = 0.0
         while time.time() - started < plan["limit"]:
             s = page.evaluate(STATE_JS, bool(plan.get("race")))
             now = time.time()
@@ -289,6 +296,7 @@ def run(job=1):
                     # what the try looked like just before it ended (the last state read while still playing)
                     result.setdefault("down_log", []).append(dict(last_alive, card=s["card"], at=round(now - started, 1)))
                 down = True
+                bail_open = False
                 keys.hold([])
                 page.wait_for_timeout(200)
                 continue
@@ -313,7 +321,8 @@ def run(job=1):
             if not car:
                 # on foot: walk to the driver's side of the red car, then F
                 result["phase"] = "walking to the car"
-                if not (s["marked"] or s["starter"]):
+                goal = s["marked"] or (s["handy"] if bail_open else None) or s["starter"]
+                if not goal:
                     # no car in reach yet (the street is still filling after a release): a person waits a moment
                     no_car_since = no_car_since or now
                     if now - no_car_since > 6:
@@ -322,7 +331,7 @@ def run(job=1):
                     page.wait_for_timeout(200)
                     continue
                 no_car_since = None
-                tx, tz = s["marked"] or s["starter"]
+                tx, tz = goal
                 if math.hypot(tx - s["x"], tz - s["z"]) < 3.2:
                     keys.hold([])
                     page.keyboard.press("f")
@@ -368,6 +377,8 @@ def run(job=1):
                     want.append("d")
                 if right < -0.38:
                     want.append("a")
+                if want and s["stars"]:
+                    want.append("Shift")              # with the police on them a person runs
                 keys.hold(want)
                 page.wait_for_timeout(50)
                 continue
@@ -382,12 +393,19 @@ def run(job=1):
                     keys.hold([])
                     page.keyboard.press("f")
                     result["bailed"] = result.get("bailed", 0) + 1
+                    bail_open = True
+                    bail_at = now
                     fire_since = None
                     page.wait_for_timeout(150)
                     continue
             else:
                 fire_since = None
 
+            if bail_open and car["hp"] > 0:
+                # in another car after a bail-out: the jump saved the try so far
+                result["rescued"] = result.get("rescued", 0) + 1
+                result.setdefault("rescue_log", []).append({"seconds_on_foot": round(now - bail_at, 1), "car": s["type"], "stars": s["stars"]})
+                bail_open = False
             result["phase"] = "driving to " + (s["job"] or "the job beam") + (" step " + str(s["step"]) if s["active"] else "")
             speed = math.hypot(car["vx"], car["vz"])
             racing = bool(plan.get("race")) and s["through"]

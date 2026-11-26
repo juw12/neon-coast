@@ -250,7 +250,8 @@ function refreshPad() {
   padSet('tb-fire', true, armed ? 'FIRE' : 'PUNCH');
   padSet('tb-carfire', !!player.car && armed);
   padSet('tb-cab', !!player.car && player.car.type === 'taxi');
-  padSet('tb-nitro', !!player.car && nitro.tank > NITRO.min);      // bright while there is nitro to burn
+  padSet('tb-nitro', !!player.car && nitro.tank > NITRO.min);      // there only while there is nitro to burn (2.2)
+  padSet('tb-radio', !!player.car && wanted.stars === 0);          // nobody changes the station with the police behind (2.2)
   padSet('tb-car', mode === 'foot' && carInReach());        // bright when a car is close enough to take
   padSet('tb-use', mode === 'foot' && (wheelGate.inside || PROPERTIES.some((p) => p.marker.inside)));
 }

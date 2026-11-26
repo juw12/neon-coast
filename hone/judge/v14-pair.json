@@ -1,0 +1,51 @@
+{
+  "mode": "pair",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "judges": {
+    "Pega-Vision": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both versions pass all hard gates, but Version 2 demonstrates superior quality in soft criteria C3 (Things to do) and C1 (First minute) by fixing a critical gameplay frustration where escaping a burning car led to instant death, resulting in significantly higher job completion rates in testing. Version 2 also refines UI logic on the title screen and mobile controls, preventing new players from accidentally starting timed missions and reducing on-screen clutter.",
+        "Version 1 (v14) demonstrates superior stability in hard gate testing and includes critical quality-of-life improvements over Version 2, such as fixed police collision logic, context-sensitive mobile controls, and better onboarding restrictions that prevent new players from starting advanced modes prematurely."
+      ]
+    },
+    "Pega-Thinking": {
+      "picks_AB_BA": [
+        "B",
+        "tie"
+      ],
+      "vote": "tie",
+      "reasons": [
+        "Both versions pass all 10 hard gates and share the same city, art, and core systems. Version 2 (v14) edges ahead with the 'Second Car' release 2.2, which gives a meaningful gameplay improvement: an 8-second window after jumping out of a burning car where police hold fire, and police cars now pull up short of a player on foot instead of driving through them. This makes the chase loop more readable and survivable (measured: 0 of 8 cars wrecked at 3-4 stars vs 6-7 of 8 in 2.0.1). Version 2 also shows more transparent reporting of test failures and minor phone UI improvements (NITRO/RADIO buttons only when relevant). The frame rate dropped from 123 to 74 fps but still passes the G7 gate. Overall, v2's gameplay improvements slightly outweigh the frame rate regression.",
+        "Both versions pass all 10 hard gates and share the same core game (city, jobs, police, HUD, atmosphere). VERSION 1 (v14) adds the 'Second Car' mechanic and phone button optimizations, but these are marginal quality-of-life improvements rather than substantive new content; screenshots and overall feel are essentially identical."
+      ]
+    },
+    "GLM-5.3-Flash": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both versions pass all ten gates and share the same city, jobs and look, but Version 2 (release 2.2) is a strict incremental improvement: the courier shift is gated behind the first job for a cleaner first minute, the burning-car escape and fairer chases demonstrably work (3 of 3 jumps saved, far fewer wrecks at 4-5 stars), the phone HUD is decluttered, and its reporting is even more candid about flaky checks. The gains are modest but real across C1, C3, C4 and C5, giving Version 2 the edge.",
+        "Both versions pass all ten gates and share the same city, jobs and presentation, but Version 1 (release 2.2) measurably improves the soft criteria: police chases are more survivable and readable (burning-car escapes now work, 9/9 first-try Heat Wave runs vs 5/9, far fewer wrecks at 3-5 stars), the phone HUD is decluttered, and the title screen is simpler for a new player, with more honest test coverage; Version 2's only edge is a higher measured frame rate, which is negligible since both clear the 60 fps gate."
+      ]
+    }
+  },
+  "votes": {
+    "A": 0,
+    "B": 2,
+    "tie": 1
+  },
+  "quorum": 3,
+  "b_wins": true,
+  "label": "council-judged (3 judges)"
+}
