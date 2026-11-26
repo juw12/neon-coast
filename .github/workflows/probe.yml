@@ -1,6 +1,6 @@
 name: probe
 
-# Not for main: a look at which GitHub computer draws the game fastest. Runs only for branches named probe/.
+# Not for main: measurements on GitHub's computers. Runs only for branches named probe/.
 on:
   push:
     branches: ["probe/**"]
@@ -10,15 +10,36 @@ permissions:
 
 jobs:
   probe:
-    name: ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    name: ${{ matrix.name }}
+    runs-on: macos-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        include:
+          - name: pace
+            run: python test/pace.py; python test/pace.py v20.html
+          - name: economy
+            run: python test/economy.py 3 300
+          - name: job 2
+            run: python test/drive.py 2 2
+          - name: Shadow Run
+            run: python test/drive.py 2 tail
+          - name: cost
+            run: python test/probe3.py NeonCoast.html v20.html v19.html
+          - name: gates
+            run: python test/gates.py
+          - name: city
+            run: python test/city.py; python test/city.py
+          - name: chase
+            run: python test/chase.py; python test/chase.py
+          - name: radio
+            run: python test/radio.py; python test/radio.py
+          - name: touch
+            run: python -m playwright install webkit; python test/touch.py
     env:
       PYTHONUTF8: "1"
+      NEON_CHROME_ARGS: "--disable-gpu-vsync --disable-frame-rate-limit"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,6 +53,10 @@ jobs:
         run: |
           git show v1.9.0:NeonCoast.html > v19.html
           git show v2.0.0:NeonCoast.html > v20.html
-          cp NeonCoast.html steps.html
-      - name: Probe
-        run: python test/probe.py steps.html v20.html v19.html
+      - name: ${{ matrix.name }}
+        shell: bash
+        run: |
+          set +e
+          ${{ matrix.run }}
+          echo "exit code of the last command: $?"
+          exit 0
