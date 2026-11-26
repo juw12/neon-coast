@@ -34,6 +34,31 @@
   at the change; a low octave joins only when the engine works, so an idling car does not drown the
   radio), tyres squeal in a slide, wind is heard from 50 km/h, the lens widens up to 20 degrees with
   speed (before 14), the screen edges darken from 80 km/h and the car trembles near its top speed.
+- The street breaks (release 2.0): 2,197 things stand on the kerbs (474 cones, 410 bins, 232 news boxes,
+  136 crates, 225 hydrants, 48 barrels and the 672 lamp posts, which a car drove straight through before)
+  and 16 road works. A car knocks them flying; what the player's car knocks over pays into the style chain
+  (cone $5; bin, box, crate $10; lamp post $20; hydrant $25, with a jet of water). Slower than 2.5 m/s a
+  thing is only tipped over; a lamp post needs 7 m/s and its light goes out. Smashes are not tricks: the
+  multiplier stays where it is. What was knocked over stands again once the player is 150 m away. Nothing
+  that can be knocked over stands within 2 m of a tree trunk or within 6 m of a job stop, shop or door.
+- Barrels (release 2.0): rammed or shot, a red barrel goes up (BLAST, $40, a flash, a moment of slow
+  motion). It reaches 7.5 m, takes up to 26 health off a car (less with distance; 40% of it for the
+  player's car that set it off), throws cars and people, and sets off the barrels beside it: one shot at
+  the row of four on the Rustport dock set off all four in 0.8 s.
+- Stunt ramps (release 2.0): twelve, on the parking strips of eleven streets and on the Rustport dock, each
+  with 40 m of clear run-up and a clear landing. At 30 m/s the car flies 37 m, 3.1 m high, for 1.1 s and
+  lands unhurt: STUNT JUMP, $40 plus $5 for every 1.25 m ($190). Under 8 m is a hop and pays nothing. Both
+  maps mark the ramps (orange, green once jumped), the longest jump is kept, all twelve pay $2,500. A ramp
+  is a wall from its tall end and its sides; on foot it is walked up from the low end.
+- Nitro (release 2.0): Shift in a car, NITRO on a phone (there it is the gas as well). From 12 m/s, 0.6 s
+  of throttle adds 6.4 m/s, with nitro 13.9 m/s; top speed of the test car 152 to 191 km/h. A full tank
+  lasts 3.2 s. It starts half full and is filled by play: 3% a smash, 20% a trick, 35% a stunt jump. An
+  orange bar under the car's condition, flames at the exhaust, a wider lens while it burns.
+- Crashes that move things (release 2.0): a parked car hit square from behind at 20 m/s is shoved 44 m and
+  the player keeps 14 m/s; a hit off the middle turns a car round (46 degrees for a parked car, 116 for a
+  driven one, 9 for the player's own) and its driver has no power for 0.5 to 1.6 s, so a cruiser can be
+  spun out. Somebody hit at 20 m/s is thrown 1.25 m into the air. At 30 m/s, 86% of new traffic is put on
+  the road ahead (standing still 47%).
 - Traffic that follows lanes, pedestrians that flee from shots, occupied cars can be taken. Since 1.9:
   20 cars driving and 11 parked around the player (before 15 and 9) and 34 people walking (before 26);
   a driver kept waiting sounds the horn after 1.2 s, each kind of car with its own note, and so does a
@@ -116,7 +141,7 @@
   pause screens. The pause screen is three buttons, settings and perks; the map legend moved onto the map
   itself (M). The title screen shows the keys you need first (Sprint among them since 1.4) and folds the rest away.
 - Every gain or loss of money shows as a green or red amount under the cash figure.
-- The title screen has a "what changed" line that opens the release history (1.0 to 1.9).
+- The title screen has a "what changed" line that opens the release history (1.0 to 2.0).
 - Harbor courier shift (release 1.1, from the title screen or G in free roam): three timed stops, $450 plus
   a time bonus, best time saved; checked by `test/harbor.py`.
 - Money sinks: property, respray and repair $150 ($75 with the perk), ammo $80, hospital and bail fees of 10% of cash, and the Tune-up
@@ -149,11 +174,18 @@
   `test/thrill.py` (34 checks on the game's own clock: the slide, near misses and the chain, the two-star
   hold-fire, getaway pay, the patrol call, horns, lens and edge darkening, the engine's gears, odd jobs
   from job one, the crowd; the 1.8 build passes 11 of them). In `test/chase.py` the two checks of gunfire
-  at a moving car now run at three stars, because two stars no longer fires at one.
+  at a moving car now run at three stars, because two stars no longer fires at one. New in 2.0:
+  `test/havoc.py` (46 checks on the game's own clock: what stands on the street and where it may not
+  stand, cones, a bin, a hydrant, a lamp post, a barrel and its blast, the chain of four on the dock,
+  the ramps from both ends and on foot, the nitro tank and its button on a phone, a shoved and a spun
+  car, a thrown person, traffic put ahead, a save from 1.9, a tip that waits for a free hint line; the 1.9
+  build passes 2 of the first 45) and
+  `.github/workflows/suites.yml`, which runs every suite on a GitHub computer for each pull request,
+  for the new build and for the last release side by side.
 - Phones and tablets (release 1.5): the page switches to touch by itself when a touch screen is the main
   pointer. A thumb stick appears under the left thumb (walk, steer, a full push sprints); buttons on the
   right press the same keys as the keyboard (GAS, BRAKE, HAND BRAKE, CAR / EXIT, FIRE / PUNCH, SWAP, JUMP,
-  HORN, RADIO; USE and CAB appear when they apply); a drag on the view turns the camera; a tap on the round
+  HORN, RADIO, since 2.0 NITRO; USE and CAB appear when they apply); a drag on the view turns the camera; a tap on the round
   map opens the whole island. The HUD moves to the top edge and the menus fit a 360 point wide screen, in
   landscape and upright (upright widens the lens from 62 to up to 88 degrees). On a web address the game
   can be added to the home screen, where it opens full screen and plays offline after one visit. Hints name
