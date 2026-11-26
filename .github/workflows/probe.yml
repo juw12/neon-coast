@@ -17,18 +17,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: where the crashes are, three stars
+          - name: three stars, 2.0.1 then 1.9
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/chase_bench.py NeonCoast.html 3 21 6;python test/chase_bench.py v19.html 3 21 6;python test/chase_bench.py v20.html 3 21 6
-          - name: the same street with no police
+            run: python test/chase_bench.py NeonCoast.html 3 21 8;python test/chase_bench.py v19.html 3 21 8
+          - name: three stars, 1.9 then 2.0.1
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/chase_bench.py NeonCoast.html 0 21 4;python test/chase_bench.py v19.html 0 21 4;python test/chase_bench.py v20.html 0 21 4
-          - name: where the crashes are, two stars
+            run: python test/chase_bench.py v19.html 3 21 8;python test/chase_bench.py NeonCoast.html 3 21 8
+          - name: three stars 2.0, two stars 2.0.1 and 1.9
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/chase_bench.py NeonCoast.html 2 21 6;python test/chase_bench.py v19.html 2 21 6;python test/chase_bench.py v20.html 2 21 6
+            run: python test/chase_bench.py v20.html 3 21 8;python test/chase_bench.py NeonCoast.html 2 21 6;python test/chase_bench.py v19.html 2 21 6
+          - name: the old way, to see the patrol cars
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            run: python test/chase_bench.py NeonCoast.html 3 21 5 old;python test/chase_bench.py v19.html 3 21 5 old
     env:
       PYTHONUTF8: "1"
       NEON_CHROME_ARGS: ${{ matrix.args }}
