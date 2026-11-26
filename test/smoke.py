@@ -116,8 +116,13 @@ with sync_playwright() as pw:
     check("A steers left", h1 - h0 > 0.1, f"heading change {h1 - h0:.2f} rad")
 
     # police response
+    # This check is about patrol cars arriving. The car stands still, and a patrol car next to a standing
+    # car arrests its driver after 2.4 s, so the arrest clock is held at zero while we wait; the arrest
+    # itself is gate G5 (test/gates.py).
     page.evaluate("() => NEON.setWanted(3)")
-    page.wait_for_timeout(7000)
+    for _ in range(14):
+        page.wait_for_timeout(500)
+        page.evaluate("() => { NEON.wanted.bust = 0; }")
     s = snapshot(page)
     check("three stars bring police", s["stars"] == 3 and s["cops"] >= 2, f"{s['cops']} patrol cars, {s['stars']} stars")
     page.evaluate(
@@ -139,7 +144,8 @@ with sync_playwright() as pw:
     # pause and resume
     page.keyboard.press("KeyP")
     page.wait_for_timeout(400)
-    check("P pauses", page.evaluate("() => NEON.state") == "paused")
+    paused = page.evaluate("() => NEON.state")
+    check("P pauses", paused == "paused", f"state {paused}")
     page.screenshot(path=str(SHOTS / "5-pause.png"))
     page.click("#btn-resume")
     page.wait_for_timeout(400)
