@@ -6,8 +6,12 @@ name: suites
 # A suite that fails is run again, up to three times: checks that wait a fixed time fail by chance on a
 # computer this slow, and the summary says on which attempt a suite passed.
 
+# A pull request that changes only text (README, hone/) does not start the suites: they take half an hour
+# and read no Markdown.
 on:
   pull_request:
+    paths-ignore:
+      - "**.md"
   workflow_dispatch:
 
 permissions:

@@ -380,7 +380,7 @@ Needs Python with Playwright and Chrome. Run from this folder after `python buil
   traffic put ahead at speed; the NITRO button on a phone; a save from 1.9. `python test/havoc.py old.html`
   reads 2 of the first 45 on 1.9 (check 46 came later and was not run on 1.9).
 - `.github/workflows/suites.yml` (since 2.0) runs every suite above on a GitHub computer for each pull
-  request: once for the build of the commit and once for the last release from its own tag, up to three
+  request that changes more than Markdown: once for the build of the commit and once for the last release from its own tag, up to three
   attempts each, with the logs kept. That computer has no graphics card (9 to 13 frames a second), so a
   check that also fails for the last release says something about the computer, not about the change.
   `test/thrill.py` had three set-ups made steady for it (a patrol car put in a lane, the crowd counted as
