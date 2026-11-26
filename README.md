@@ -59,14 +59,26 @@ What the list said, and what is known now:
   `chase.py` 13/13, `city.py` 55/55, `radio.py` 14/14, `smoke.py` 22/22, `touch.py` 10/10, `pace.py`
   11/11 and the harbor shift. On GitHub the suites moved to a Mac, which has a graphics card: all ten
   pass at the first attempt for 2.0.1, in two runs of two: the first time every required check is green
-  since the suites run on GitHub.
+  since the suites run on GitHub. The runs after those were not all first attempts, and one was red. What
+  that was is under "A red run" below.
 - **"Three suites fail there for both builds."** That was the computer. On the Mac the released 2.0 passes
-  `chase.py` 13/13 (the cruiser stops 5.7 m behind the car; the limit is 6), `radio.py` 14/14, `gates.py`
+  `chase.py` 13/13 (the cruiser parks 5.7 to 6.9 m behind the car; the 6 m the script asked for was its
+  own number and too tight, see "A red run"), `radio.py` 14/14, `gates.py`
   10/10 and `city.py` 55/55 as well. It fails only what 2.0.1 changed on purpose: 5 of 11 in `pace.py`
   and the barrel check of `havoc.py`.
 - **"Four Shadow Run checks failed; why was not found."** `city.py` read 55/55 in seven runs of seven, on
   the Mac and on the ASUS, for 2.0 and for 2.0.1. The computer of the failed run drew 8 frames a second, where
   2.0 ran at 0.39 of real time, and those checks wait a fixed time. The fault itself was not replayed.
+  Later runs showed a second cause, and it is the script's. It puts its car 100 m behind the pink car every
+  30 ms. Nobody gets past the waterline, 477 m from the middle of the map, and the outer road runs 57 m
+  inside it. When the pink car turns inland from the outer road, 100 m behind it is out at sea, and the
+  game puts the car back on the waterline: 57 m behind, which is under the 60 m that count as close. So the
+  game rightly began its eight seconds again and the script's fixed wait ended before the job did. That
+  happened three times (once in the red run, twice in the measuring runs, at 58 and 48 m). One hold was
+  recorded with its place: the car on the waterline, 36 m from where the script had put it, the gap 64 m at
+  its smallest. The two checks now wait for the game to end the job and read the game's own count: 7.95 to
+  8.05 s in 103 holds. In half of all holds the car is also carried 5 to 22 m from its spot away from the
+  shore; what does that was not looked into.
 - **"What the street costs in frames."** On Pretty graphics 1.9 draws 5,931 things in 48 groups, 128,370
   triangles; 2.0 draws 7,504 in 57 groups, about 169,500 triangles, a third more. On a GitHub Mac the
   middle frame took 7.5 to 10.0 ms for 1.9, 7.0 to 8.3 for 2.0 and 5.9 to 9.4 for 2.0.1: under the
@@ -97,9 +109,43 @@ What the list said, and what is known now:
   the first run, because the script read the cruiser's speed one frame after the ram; it now reads the
   frame before as well, and the next run read 13/13. `havoc.py`: 46/47 in five runs of six. A bin hit at
   15 m/s leaves the car 0.95 of its speed and the check asks for more than 0.96. In the sixth the car was
-  gone half way and 21 checks failed with it; why was not looked into. `thrill.py`: 33, 33, 32, 33 and 33 of
+  gone half way and 21 checks failed with it. The blast on the dock leaves a star, the suite then rests
+  for 5 s, and in that time the police arrested the player and took the car. The script now takes the
+  star off before it rests; six more runs read 46/47 and kept the car. `thrill.py`: 33, 33, 32, 33 and 33 of
   34. The getaway seen for 4 s pays $70 where the check expects $60, and once a horn was not heard; a
-  sixth run did not start. None of this was patched and no limit was changed.
+  sixth run did not start. The checks that fail here were not patched and no limit was changed.
+- **A red run.** The third run of the suites needed a second attempt for `touch.py` (the FIRE button on a
+  667 x 375 screen; why was not looked into). The fourth ran on a slower Mac and was red for the commit:
+  `city.py` and `pace.py` failed three times and `chase.py` passed at its second attempt. The released 2.0
+  failed `gates.py` in that run and 2.0.1 passed it. Each failure for the commit in that fourth run was
+  traced, on a measuring branch on GitHub, to the script and not to the game:
+  - `city.py`, "the hint says Paper Round is on foot". The check before it starts a new game, so the
+    first-timer's intro is on again and the player has not left the start spot. Getting into a car there
+    makes the intro clear the hint line, and with it the on-foot note the game wrote a moment before. If a
+    stunt ramp stands within 45 m of the beam, the ramp tip takes the line next. `test/foot_beam.py` put a
+    car on all 61 corners where that beam can stand: the note came at 61 of 61, for 2.0 and for 2.0.1. In
+    15 runs of `city.py` the 4 with a ramp within 45 m failed and the other 11 passed, and with the beam
+    held on a corner 44.8 m from a ramp 6 of 6 failed (3 for 2.0.1, 3 for 2.0). The script now lets the
+    player stand beside the car for 0.3 s first, as somebody who walked to it, and the check also asks that
+    the line is on screen: 52 of 52, 12 of them at that corner.
+  - `chase.py`, the two-star cruiser that slows down behind the car. The 6 m it had to come within was the
+    script's number. The cruiser brakes for a gap of 8 m and parks 5.7 to 6.9 m behind. The check now uses
+    the distance at which the game itself makes an arrest, 7.5 m: 13/13 in 6 of 6 runs for 2.0.1 and 6 of
+    6 for 2.0 (it came within 6.10 to 6.41 m, at 4.6 to 7.3 m/s; at three stars it arrives at 41.9 m/s).
+  - `pace.py`. The bands for 30, 12 and 5 frames a second were bands on the script's own brake on the
+    browser, and a slower Mac fell outside them (30.9 to 31.5, 12.67 to 12.72, 4.99 to 5.12 on GitHub).
+    They are wider now (26 to 33, 10.5 to 13.5, 4.5 to 5.2). What is asked of the game, the steps a frame
+    and the speed of its clock, is as it was: 11/11 in 3 of 3 runs.
+  - Shadow Run "loses them": the waterline, above.
+
+  Fixing these turned up four more faults, each in one run of `city.py` among 36: the player out of reach
+  of the car after the 0.3 s (fixed: they get in from the car's own spot); a cab shift that had not
+  started (the player now boards from the cab's own spot and not a cab standing in the job beam, and the
+  script says why if it happens again); "They never showed", the game's own answer when it finds no place
+  for the pink car, twice from one spot; and the two property checks failing without a word. The last two
+  did not come back in 18 runs and now print what they saw. With the scripts as they are now: `city.py`
+  55/55 in 18 of 18 runs on GitHub, and in the suites all ten Mac jobs for the commit passed at the first
+  attempt (run 45764079399; the slow computer's `havoc.py` read 46/47 three times, as before).
 
 Still not shown:
 
@@ -117,6 +163,13 @@ Still not shown:
 - **The slow computer's failures** listed above.
 - **The chase bench and `economy.py` on the ASUS.** It went over its load limit before they ran; their
   numbers are from the GitHub Mac.
+- **The hint line at the start spot.** In a new game, getting into a car within 3 m of the start spot
+  clears the hint line, whatever is on it. In play that needs a car within reach of that spot, and the red
+  car stands 11 m away. Found by the red run and not changed: the game could not be rebuilt and tested on
+  the ASUS in this run.
+- **Four things in the scripts.** Why `touch.py` once needed a second attempt for FIRE; why the game once
+  found no place for the pink car; why the two property checks once failed; what carries a held car 5 to
+  22 m from its spot inland. The last three print their own answer the next time they happen.
 
 ## Version 2.0 · Havoc
 

@@ -191,7 +191,13 @@
   suites run on GitHub's Macs, which have a graphics card, and three of them also on a computer without
   one, to compare. `test/chase_bench.py` now keeps traffic out of the way instead of removing it (removed
   traffic made the game put patrol cars on the road, and the script counted them as the chase) and
-  prints the most police cars on the map and where each crash was.
+  prints the most police cars on the map and where each crash was. `test/foot_beam.py` (not pass/fail:
+  the on-foot note at every corner where the Paper Round beam can stand). Three scripts changed after a
+  red run on a slower Mac, the game did not: `city.py` lets the player stand beside the car for 0.3 s
+  before getting in, asks that the hint line is on screen, boards a cab from the cab's own spot and
+  reads the game's own count for the eight seconds of Shadow Run; `chase.py` asks the two-star cruiser
+  to come within the game's own arrest reach (7.5 m, was the script's 6 m); `pace.py` has wider bands
+  for the frame rate the script itself holds the browser to.
 - Phones and tablets (release 1.5): the page switches to touch by itself when a touch screen is the main
   pointer. A thumb stick appears under the left thumb (walk, steer, a full push sprints); buttons on the
   right press the same keys as the keyboard (GAS, BRAKE, HAND BRAKE, CAR / EXIT, FIRE / PUNCH, SWAP, JUMP,

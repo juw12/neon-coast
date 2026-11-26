@@ -870,7 +870,9 @@ measures it, and changes the game only where a measurement found a fault.
 - [x] R9-3 What a group of barrels pays: `test/barrel_rows.py`. Found the dock row ($1,505 a shot, again
       on every visit). A barrel that went up now stays gone for ten minutes of play; `havoc.py` check 47
 - [x] R9-4 The suites on GitHub's Macs, which have a graphics card; three of them on the Windows computer
-      as well, to compare. Two runs with every Mac job for the commit green at the first attempt
+      as well, to compare. Two runs with every Mac job for the commit green at the first attempt. Run 3:
+      `touch.py` at its second attempt. Run 4, on a slower Mac: red (R9-11). Runs 5 and 6: cancelled by the
+      next push. Run 7 (45764079399), the final scripts: all ten at the first attempt
 - [x] R9-5 Every suite on the ASUS, one at a time, on the 2.0.1 build
 - [x] R9-6 What the street costs in frames: scene counts, the middle frame under a slowed processor,
       `test/fps_ab.py` on the Mac and on the ASUS
@@ -878,9 +880,16 @@ measures it, and changes the game only where a measurement found a fault.
       was the cause (see below); the script is changed, the game is not
 - [ ] R9-8 Juwen plays 2.0.1 (R8-9 carried over). Still the only measurement that counts
 - [ ] R9-9 The slow computer: `havoc.py` 46/47 (a bin leaves the car 0.95 of its speed, the check asks for
-      more than 0.96), `thrill.py` 33/34 (a getaway pays $70, the check expects $60), one `havoc.py` run
-      that lost its car. Listed, not patched
+      more than 0.96), `thrill.py` 33/34 (a getaway pays $70, the check expects $60). Listed, not patched.
+      The one `havoc.py` run that lost its car is answered: the dock blast left a star, the suite rested
+      5 s, the police took the car. The script takes the star off first; six more runs read 46/47 and kept the car
 - [ ] R9-10 The chase bench and `economy.py` on the ASUS: it went over its load limit at 10:28
+- [x] R9-11 The red run (45756452739) traced to the scripts on the measuring branch: the hint line and
+      the intro (`city.py`), 6 m against the game's 7.5 m (`chase.py`), the bands on the script's own
+      brake (`pace.py`), the waterline (Shadow Run). Scripts changed, the game not
+- [ ] R9-12 Found by R9-11 and open: the game clears the hint line when a new player gets into a car
+      within 3 m of the start spot; `touch.py` FIRE once at its second attempt; "They never showed" once;
+      the two property checks once; a held car carried 5 to 22 m inland
 - [ ] R6-7 Council score and blind pair: not done this run either
 - [ ] R5-11 A real iPhone and Android phone run it: needs Juwen
 
@@ -906,11 +915,19 @@ measures it, and changes the game only where a measurement found a fault.
   limits.
 - Assumed: the ASUS load limit holds. It went over at 10:28 with one suite running at a time; nothing
   was started on it after that and the limit was not changed.
+- Assumed: a red check is read before it is fixed, and a check that asks more of the game than the game
+  promises is the script's fault. So: `chase.py` uses the game's arrest reach (7.5 m) and not its own
+  6 m; the bands of `pace.py` on the script's own brake are wider (26 to 33, 10.5 to 13.5, 4.5 to 5.2)
+  while what is asked of the game is unchanged; the Shadow Run holds read the game's count and not a
+  fixed wait; the on-foot check also asks that the line is shown; a cab is boarded from its own spot.
+- Assumed: the game is not changed for what the red run found in it (the hint line cleared at the start
+  spot). The ASUS was over its load limit, so a changed game could not be built and tested there, and a
+  game change tested only on GitHub is not shipped in a run about proof. It is first in the handoff.
 - Assumed: the catalog and the profile README need no change for 2.0.1; the landing page gets one line.
 
 | round | change | gates | judge score | pairwise win | kept? | note |
 |---|---|---|---|---|---|---|
-| 15 (release 2.0.1) | steps of 1/60 s however slowly the screen is drawn, the radio on its beat, a barrel gone for ten minutes; the suites on GitHub Macs; four scripts that measure | 10/10 on the ASUS (129 frames a second) and on a GitHub Mac, both at the first attempt (2.0 on the Mac: 10/10) | not judged | - | shipped | every Mac job for the commit green at the first attempt in two runs of two (45747416138, 45749410867). `pace.py` 11/11 (2.0: 5/11), `havoc.py` 47/47 (2.0: 46/47, the new barrel check) |
+| 15 (release 2.0.1) | steps of 1/60 s however slowly the screen is drawn, the radio on its beat, a barrel gone for ten minutes; the suites on GitHub Macs; four scripts that measure | 10/10 on the ASUS (129 frames a second) and on a GitHub Mac, both at the first attempt (2.0 on the Mac: 10/10) | not judged | - | shipped | every Mac job for the commit green at the first attempt in two runs of two (45747416138, 45749410867). `pace.py` 11/11 (2.0: 5/11), `havoc.py` 47/47 (2.0: 46/47, the new barrel check). Run 4 (45756452739) red on a slower Mac, traced to four scripts; run 7 (45764079399) with them fixed: all ten at the first attempt. The build is the same file throughout |
 
 What was measured (`NeonCoast.html` 950,691 bytes, sha256 `b9baf54d`).
 
@@ -947,6 +964,32 @@ What was measured (`NeonCoast.html` 950,691 bytes, sha256 `b9baf54d`).
   every build; still driving 11 of 16 for 2.0.1, 12 of 16 for 1.9, 5 of 8 for 2.0; crash loss 32, 31 and
   33 a run; health left 28%, 28%, 35%. Two stars: 6 of 6 for 2.0.1 and for 1.9. The old way run beside it
   in the same probe: 0 of 5 for 2.0.1 with 10 to 17 police cars, 4 of 5 for 1.9 with 4 to 7.
+- The later suites runs. Run 3 (45754460878): `touch.py` 9/10 then 10/10 (FIRE on a 667 x 375 screen).
+  Run 4 (45756452739), a slower Mac: `city.py` 53, 54, 54 of 55; `pace.py` 9, 10, 10 of 11; `chase.py`
+  at its second attempt; v2.0.0 `gates.py` 9, 8, 8 of 10 while 2.0.1 passed. Runs 5 and 6 (45760735823,
+  45762131101) cancelled by the next push. Run 7 (45764079399), head `52a8948`: smoke 22, touch 10/10,
+  chase 13/13, radio 14/14, havoc 47/47, city 55/55, pace 11/11, harbor, thrill 34/34, gates 10/10, all
+  at the first attempt; slow computer chase 13/13, havoc 46/47 three times; v2.0.0 pace 5/11 three
+  times and gates 9/10 then 10/10.
+- The on-foot note, `test/foot_beam.py`: at 61 of 61 corners for 2.0 and 2.0.1. `city.py` before the
+  fix: 4 of 15 failed, each with a ramp within 45 m of the beam; 6 of 6 failed with the beam held 44.8 m
+  from a ramp. After: 52 of 52 with the line shown, 12 of them at that corner. Cause in the game:
+  `updateIntro` (`src/04-main.js:568-575`) clears the hint line when a new player gets into a car
+  without having walked 3 m.
+- The two-star cruiser: brakes for 8 m, parks 5.7 to 6.9 m behind. With 7.5 m: 13/13 in 6 of 6 for 2.0.1
+  and for 2.0 (nearest 6.10 to 6.41 m at 4.6 to 7.3 m/s; three stars arrive at 41.9 m/s).
+- `pace.py` on GitHub Macs read 30.9 to 31.5, 12.67 to 12.72 and 4.99 to 5.12 frames a second; 11/11 in
+  3 of 3 with the wider bands.
+- Shadow Run. Nobody passes 477 m from the middle; the outer road is at 420. A car put 100 m behind the
+  pink car on that road lands at sea and is set back on the waterline, 57 to 58 m behind, under the 60 m
+  that count as close. Dips seen: 57.89 and 48.06 m. One hold recorded with its place: car at
+  [-172, -477], carried 36.35 m, gap 73.9 m then, 64.35 m at its smallest. Reading the game's count:
+  103 of 104 holds pass, 7.95 to 8.05 s. The held car was more than 5 m from its spot in 53 of 103 holds
+  and more than 15 m in 5.
+- `city.py` on the measuring branch, probes 10 to 12: 50 of 54 runs read 55/55. The four others, all in
+  the first 36: no car in reach after the 0.3 s (fixed), a cab shift not started (guarded, cause not
+  shown), "They never showed" twice in one run (53/55), the two property checks (53/55). The last 18
+  runs, with the final script: 18 of 18.
 - Not run: `test/drive.py`; the chase bench and `economy.py` on the ASUS; anything on a real phone.
 
 What this means. Of the seven lines under Version 2.0, five are answered with numbers. The first, whether
@@ -954,11 +997,21 @@ the game is good enough now, is not: nobody has played 2.0 or 2.0.1. The phone l
 faults were found in the game and fixed (slow motion on a slow screen, the barrel row that paid on every
 visit), and one in a measuring script that would have sent the next run to fix a chase that was not broken.
 
+The red run added a second lesson of the same kind. Four checks failed on a slower Mac and none of the
+four was the game failing what it promises: each asked for a number the script had made up, or waited a
+fixed time for something the game counts itself. One real weakness came out of it (the hint line at the
+start spot) and is not fixed.
+
 ## Handoff (run 9)
 
-- Done: R9-0 to R9-7. Release 2.0.1 (see Sync below).
+- Done: R9-0 to R9-7, R9-11. Release 2.0.1 (see Sync below).
 - In progress: nothing.
 - Left: R9-8, Juwen plays 2.0.1.
+- Left, first for the next run that can build: in `updateIntro` (`src/04-main.js:568-575`) clear the
+  hint line only if it still shows the walking keys. Then `city.py` can drop its 0.3 s stand.
+- Left: R9-12. `touch.py` FIRE at 667 x 375; "They never showed" (the hold now prints `at` and
+  `places`); the two property checks (they now print `player_now()`); what carries a held car 5 to 22 m
+  inland (the hold reports `moved`; a push out of a building is a guess).
 - Left: R9-9. To try for `thrill.py` on the slow computer: let the getaway check read the game's own
   clock (`NEON.clock`) for the seconds seen; the guess is that the script's clock and the game's differ on
   uneven frames. For `havoc.py`: the car coasts up to five steps inside the frame before the script reads
