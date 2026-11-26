@@ -10,6 +10,7 @@ const TOUCH_WORDS = [
   [/\[F\]/g, () => (player.car ? '[EXIT]' : '[CAR]')],
   [/\[Shift\] sprints/g, 'full stick sprints'],
   [/\[Space\]/g, '[HAND BRAKE]'],
+  [/\[Shift\] fires the nitro/g, 'the NITRO button fires it'],
   [/\[J\] another kind/g, 'the pause menu has other kinds'],
   [/\[J\] an odd job instead/g, 'the pause menu has odd jobs'],
   [/\[J\] back to the story job/g, 'the pause menu goes back to the story job'],
@@ -249,6 +250,7 @@ function refreshPad() {
   padSet('tb-fire', true, armed ? 'FIRE' : 'PUNCH');
   padSet('tb-carfire', !!player.car && armed);
   padSet('tb-cab', !!player.car && player.car.type === 'taxi');
+  padSet('tb-nitro', !!player.car && nitro.tank > NITRO.min);      // bright while there is nitro to burn
   padSet('tb-car', mode === 'foot' && carInReach());        // bright when a car is close enough to take
   padSet('tb-use', mode === 'foot' && (wheelGate.inside || PROPERTIES.some((p) => p.marker.inside)));
 }

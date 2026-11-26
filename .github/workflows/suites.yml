@@ -1,0 +1,109 @@
+name: suites
+
+# Every suite of test/ on a GitHub computer, for the build of this commit and for the last release, one job
+# for each suite and build. The last release runs its own suites from its own tag: a check that fails there
+# too says something about this computer (no graphics card, about 12 frames a second), not about the change.
+# A suite that fails is run again, up to three times: checks that wait a fixed time fail by chance on a
+# computer this slow, and the summary says on which attempt a suite passed.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: suites-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: NeonCoast.html is the build of src/
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - shell: pwsh
+        run: |
+          python build.py
+          git diff --stat --exit-code -- NeonCoast.html
+          if ($LASTEXITCODE -ne 0) { Write-Error "NeonCoast.html is not the build of src/"; exit 1 }
+
+  suite:
+    name: ${{ matrix.suite }} (${{ matrix.ref || 'this commit' }})
+    runs-on: windows-latest
+    timeout-minutes: 40
+    # the last release is there to compare with: its failures do not fail the pull request
+    continue-on-error: ${{ matrix.ref != '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [havoc, thrill, gates, chase, city, harbor, smoke, radio, touch]
+        ref: ["", v1.9.0]
+        exclude:
+          - suite: havoc        # new in 2.0
+            ref: v1.9.0
+    env:
+      PYTHONUTF8: "1"
+      SUITE: ${{ matrix.suite }}
+      BUILD: ${{ matrix.ref || 'this commit' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Playwright (Chrome is on the runner)
+        run: python -m pip install --quiet playwright
+
+      - name: WebKit, for the Safari check
+        if: matrix.suite == 'touch'
+        run: python -m playwright install webkit
+
+      - name: Run the suite, up to three times
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Continue"
+          $PSNativeCommandUseErrorActionPreference = $false
+          New-Item -ItemType Directory -Force logs | Out-Null
+          $summary = @("### $env:SUITE, $env:BUILD", "")
+          $passedAt = 0
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            $log = "logs/$env:SUITE-$attempt.txt"
+            "::group::attempt $attempt"
+            $started = Get-Date
+            python "test/$env:SUITE.py" *>&1 | Tee-Object -FilePath $log
+            $code = $LASTEXITCODE
+            "::endgroup::"
+            $seconds = [int]((Get-Date) - $started).TotalSeconds
+            $count = (Select-String -Path $log -Pattern "\d+ ?/ ?\d+ checks|GATES \d+/\d+|TOUCH \d+/\d+|^PASS .*offline" | Select-Object -Last 1).Line
+            $summary += "- attempt ${attempt}: exit $code, $seconds s. $count"
+            foreach ($line in (Select-String -Path $log -CaseSensitive -Pattern "^FAIL|Error:|^STATE" | Select-Object -First 12)) {
+              $text = $line.Line
+              if ($text.Length -gt 400) { $text = $text.Substring(0, 400) }
+              $summary += "    - $text"
+            }
+            if ($code -eq 0) { $passedAt = $attempt; break }
+          }
+          $summary += ""
+          $summary += $(if ($passedAt) { "Passed on attempt $passedAt." } else { "Failed three times." })
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          $summary
+          if (-not $passedAt) { exit 1 }
+
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.suite }}-${{ matrix.ref || 'head' }}
+          path: |
+            logs/
+            test/*-result*.json
+          if-no-files-found: ignore

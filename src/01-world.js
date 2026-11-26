@@ -54,7 +54,7 @@ const headingOf = (d) => Math.atan2(DX[d], DZ[d]);
 
 // ---------- save data ----------
 const SAVE_KEY = 'neon-coast-save-v1';
-const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], difficulty: 1, quality: 1, sound: 1, steer: 0, tricks: 0, styleBest: 0, driftBest: 0, getaways: 0, styleTold: 0 };
+const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], difficulty: 1, quality: 1, sound: 1, steer: 0, tricks: 0, styleBest: 0, driftBest: 0, getaways: 0, styleTold: 0, jumps: [], jumpBest: 0, smashed: 0, havocTold: 0 };
 const save = Object.assign({}, SAVE_DEFAULTS);
 try {
   Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'));
@@ -64,6 +64,7 @@ try {
 save.packages = (save.packages || []).slice();       // never share the default objects
 save.props = Object.assign({}, save.props);
 save.spotted = (save.spotted || []).slice();
+save.jumps = (save.jumps || []).slice();
 function persist() {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -306,6 +307,7 @@ const neonBars = [];
 const trees = [];
 const palms = [];
 const lamps = [];
+const lampMesh = { pole: null, head: null, glow: null };      // kept: a car can knock a lamp post over (part 3c)
 const PARKS = new Set(['5,4', '1,2', '7,7']);
 const PALETTE = {
   downtown: ['#8fc3d4', '#6f8fb4', '#ece4d2', '#5f86a8', '#f0b79c', '#b3a4dc'],
@@ -1357,14 +1359,14 @@ function buildProps() {
       }
     }
   }
-  instanced(new T.CylinderGeometry(0.1, 0.16, 7, 6), mat('#3a3d46'), lamps, (d, l) => d.position.set(l.x, 3.5, l.z));
-  instanced(boxGeo, glowMat('#ffd9a0'), lamps, (d, l) => {
+  lampMesh.pole = instanced(new T.CylinderGeometry(0.1, 0.16, 7, 6), mat('#3a3d46'), lamps, (d, l) => d.position.set(l.x, 3.5, l.z));
+  lampMesh.head = instanced(boxGeo, glowMat('#ffd9a0'), lamps, (d, l) => {
     d.position.set(l.x, 7.05, l.z);
     d.scale.set(0.9, 0.22, 0.9);
   });
   const glowGeo = new T.PlaneGeometry(17, 17);
   glowGeo.rotateX(-Math.PI / 2);
-  instanced(glowGeo, lampGlowMat, lamps, (d, l) => d.position.set(l.x, 0.09, l.z));
+  lampMesh.glow = instanced(glowGeo, lampGlowMat, lamps, (d, l) => d.position.set(l.x, 0.09, l.z));
 
   // palms: along the beach road, and scattered on the sand all around the island
   for (let z = -HALF + 12; z < HALF - 8; z += 14) {

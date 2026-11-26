@@ -29,7 +29,18 @@ with sync_playwright() as pw:
     page.keyboard.down('s')
     page.wait_for_function('Math.abs(NEON.player.car.vf) < 1')
     page.keyboard.up('s')
-    page.wait_for_function('NEON.mission.step === 2', timeout=8000)
+    try:
+        page.wait_for_function('NEON.mission.step === 2', timeout=8000)
+    except Exception:
+        # say where the van is before failing: the stop wants it within 6.5 m and slower than 1.5 m/s
+        print('STATE ' + page.evaluate("""() => { const n = NEON, c = n.player.car, m = n.mission, b = m.blip || [0, 0];
+            return JSON.stringify({ state: n.state, active: m.active, step: m.step, handoff: m.handoff, stars: n.wanted.stars,
+              car: c ? { x: +c.x.toFixed(1), z: +c.z.toFixed(1), h: +c.h.toFixed(2), vf: +c.vf.toFixed(2), hp: Math.round(c.hp),
+                         y: c.y, gap: +Math.hypot(c.x - b[0], c.z - b[1]).toFixed(1) } : null,
+              blip: b, objective: document.getElementById('objective').textContent,
+              near: n.vehicles.filter(v => v !== c && c && Math.hypot(v.x - c.x, v.z - c.z) < 25)
+                .map(v => [v.type, v.driver || 'parked', Math.round(v.x - c.x), Math.round(v.z - c.z)]) }); }"""), flush=True)
+        raise
     print('PASS legacy save, title dispatch, van entry, driving, first real curb stop, paused clock', flush=True)
     for step in (2, 3):
         page.evaluate("""() => {

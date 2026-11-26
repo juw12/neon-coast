@@ -113,6 +113,10 @@ SOFTWARE.
   #drive .bar { margin: 4px 0 0 0; width: 168px; height: 12px; }
   #drive .bar i { background: linear-gradient(90deg, var(--cyan), #a6f3ff); }
   #drive small { display: block; font-size: 12px; font-weight: 700; letter-spacing: 1.5px; opacity: .7; margin-top: 6px; }
+  #drive .bar.nitro { height: 8px; margin-top: 9px; transition: box-shadow .15s; }
+  #drive .bar.nitro i { width: 50%; background: linear-gradient(90deg, #ff8a1f, #ffe14f); transition: width .12s linear; }
+  #drive.boost .bar.nitro { box-shadow: 0 0 14px 2px rgba(255,176,63,.9); }
+  #drive.boost #speed { color: #ffe14f; }
 
   #objective { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); max-width: 60vw;
     padding: 9px 20px; border-radius: 999px; background: rgba(8,10,24,.72); border: 1px solid rgba(255,63,164,.6);
@@ -159,6 +163,8 @@ SOFTWARE.
   #flash { position: absolute; inset: 0; opacity: 0; transition: opacity .15s;
     background: radial-gradient(ellipse at center, rgba(255,0,40,0) 45%, rgba(255,0,40,.55) 100%); }
   #flash.show { opacity: 1; }
+  #boom { position: absolute; inset: 0; opacity: 0; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(255,214,150,.22) 0%, rgba(255,150,50,.6) 100%); }
   #lockhint { position: absolute; left: 50%; top: 58%; transform: translateX(-50%); padding: 8px 16px; border-radius: 8px;
     background: rgba(8,10,24,.8); font-size: 15px; opacity: 0; text-shadow: none; }
   #lockhint.show { opacity: 1; }
@@ -231,6 +237,9 @@ SOFTWARE.
   body.touch #speed { font-size: 17px; }
   body.touch #drive .bar { width: 96px; height: 6px; margin-top: 2px; }
   body.touch #drive small { font-size: 9px; margin-top: 3px; letter-spacing: 1px; }
+  body.touch #drive .bar.nitro { height: 5px; margin-top: 4px; }
+  body.touch #drive small.nitro { display: none; }
+  body.touch #drive .key { display: none; }
   body.touch #tr { top: calc(8px + var(--st)); right: calc(60px + var(--sr)); }
   body.touch #stars { font-size: 19px; letter-spacing: 2px; }
   body.touch #money { font-size: 22px; margin-top: 2px; }
@@ -350,7 +359,8 @@ SOFTWARE.
   <div class="tb in-car" data-hold="Space" style="--s:15;--r:27;--b:25">HAND<br>BRAKE</div>
   <div class="tb act in-car" data-tap="KeyF" style="--s:13;--r:5;--b:31">EXIT</div>
   <div class="tb in-car" data-tap="KeyH" style="--s:11;--r:5;--b:47">HORN</div>
-  <div class="tb in-car" data-tap="KeyR" style="--s:11;--r:45;--b:25">RADIO</div>
+  <div class="tb go in-car near" id="tb-nitro" data-hold="ShiftLeft" style="--s:12;--r:44;--b:25">NITRO</div>
+  <div class="tb in-car" data-tap="KeyR" style="--s:11;--r:53;--b:43">RADIO</div>
   <div class="tb stop in-car ctx" id="tb-carfire" data-fire style="--s:13;--r:21;--b:43">FIRE</div>
   <div class="tb act in-car ctx" id="tb-cab" data-tap="KeyT" style="--s:13;--r:37;--b:43">CAB</div>
   <div class="tb stop on-foot" id="tb-fire" data-fire style="--s:22;--r:4;--b:6">FIRE</div>
@@ -378,6 +388,8 @@ SOFTWARE.
       <div id="speed">0 km/h</div>
       <div class="bar"><i id="carhp"></i></div>
       <small>CAR CONDITION</small>
+      <div class="bar nitro"><i id="nitro"></i></div>
+      <small class="nitro">NITRO<span class="key"> · SHIFT</span></small>
     </div>
   </div>
   <div id="topc">
@@ -406,12 +418,14 @@ SOFTWARE.
         <kbd class="blip" style="--c:#d6dbe6">$</kbd><span>Property: E buys, rent and a place to lie low</span>
         <kbd class="blip" style="--c:#ff8fd0">W</kbd><span>Sol Wheel: a ride spots hidden packages</span>
         <kbd class="blip" style="--c:#c58bff">?</kbd><span>A package spotted from the wheel</span>
+        <kbd class="blip" style="--c:#ff8a1f">^</kbd><span>Stunt ramp: the further the jump, the more it pays</span>
       </div>
     </div>
     <p id="bigmap-note"></p>
   </div>
   <div id="banner"><b></b><span></span></div>
   <div id="flash"></div>
+  <div id="boom"></div>
   <div id="lockhint">Click the game to capture the mouse</div>
 </div>
 
@@ -436,7 +450,7 @@ SOFTWARE.
           <kbd>Left thumb</kbd><span>Walk, or steer the car. Push it right out to sprint. Settings can give the car two arrows instead</span>
           <kbd>Drag the view</kbd><span>Look and aim</span>
           <kbd>CAR / EXIT</kbd><span>In or out of any car</span>
-          <kbd>GAS · BRAKE</kbd><span>Drive. BRAKE at a standstill reverses</span>
+          <kbd>GAS · BRAKE</kbd><span>Drive. BRAKE at a standstill reverses. NITRO is the gas and the nitro in one</span>
           <kbd>FIRE</kbd><span>Shoot or punch. Shots find a target near the crosshair; slide the thumb on FIRE to aim yourself. SWAP changes pistol and fists</span>
           <kbd>Round map</kbd><span>Tap it for the whole island</span>
           <kbd>II</kbd><span>Pause: settings, courier shift, odd jobs</span>
@@ -447,7 +461,7 @@ SOFTWARE.
           <kbd>Mouse</kbd><span>Look and aim</span>
           <kbd>F</kbd><span>In or out of any car</span>
           <kbd>Space</kbd><span>Jump / handbrake: a slide with the wheel turned</span>
-          <kbd>Shift</kbd><span>Sprint</span>
+          <kbd>Shift</kbd><span>Sprint / nitro, in a car</span>
           <kbd>M</kbd><span>The whole map</span>
           <kbd>P</kbd><span>Pause (or Esc)</span>
         </div>
@@ -467,8 +481,9 @@ SOFTWARE.
       </div>
     </div>
     <details class="news">
-      <summary><strong>Version 1.9 · Sideways</strong> — the handbrake slides the car round a corner, near misses and slides pay cash, losing the police pays, a two-star pursuit does not shoot at a moving car, and odd jobs open after your first job. What changed, release by release</summary>
+      <summary><strong>Version 2.0 · Havoc</strong> — the street breaks: cones, bins, hydrants, barrels and lamp posts fly and pay, twelve stunt ramps, a nitro tank that tricks fill, and a hard hit spins a car round. What changed, release by release</summary>
       <ul>
+        <li><strong>2.0 · Havoc</strong> — The street breaks. Cones, bins, news boxes, crates, hydrants, barrels and lamp posts no longer stand like walls or like air: a car knocks them flying. What your car knocks over pays into the chain ($5 to $25), a hydrant throws water, a lamp post comes down and its light goes out, and a red barrel goes up, throws the cars round it and sets off the barrels next to it; a shot sets one off too. Twelve stunt ramps stand on the parking strips and on the Rustport dock: the further the jump, the more it pays, the big map marks them, and all twelve pay $2,500. Tricks, smashes and jumps fill a nitro tank: Shift, or the NITRO button, burns it for a harder pull and a higher top speed. A hard hit off the middle turns a car round and its driver loses it for a moment, so a cruiser can be spun out; a parked car is shoved down the street. Somebody hit at speed is thrown into the air. At speed most new traffic appears on the road ahead, and nothing parks on a ramp.</li>
         <li><strong>1.9 · Sideways</strong> — Hold the handbrake with the wheel turned and the car slides round the corner and keeps most of its speed; with the wheel straight it is the brake it was. Passing another car closely at speed is a near miss worth $25 ($50 past a police car), and a slide pays $30 a second. Tricks in a row multiply, up to four times; the sum is paid when the bar on the card runs out, and a crash loses it. With wanted stars on, every trick pays double. Losing the police on the road pays $150 at two stars, $400, $800 and $1,400 above, in full when they had you in sight for ten seconds; a bar under the stars shows how close you are to losing them. At two stars officers no longer shoot at a moving car. Odd jobs open after the first story job: J goes from the story job to an odd job and back. More cars and people on the streets, drivers sound their horns, and now and then a patrol car runs past on a call. The engine has gears, tyres squeal, wind is heard at speed, the car body leans, and the view widens and darkens at the edges when you drive fast. On a phone a slide keeps the power on by itself and the stick is finer near its middle.</li>
         <li><strong>1.8 · Fair Cop</strong> — At two stars the police chase you without ramming: a cruiser slows down as it reaches your car and stays on your bumper. From three stars they ram, as before. A crash with a police car adds to your stars only when you drove into it: when the cruiser rams you, it does not. One crash with a cruiser, however hard, takes at most 40% of your car's health on Normal, also when it shoves you into a wall. Officers hit a moving car less often: the faster you drive, the worse they shoot, and from 30 m/s (108 km/h) they hit less than half as often as they hit a standing car. Driving into the police yourself counts as before, and so does every other crash.</li>
         <li><strong>1.7 · Tail Lights</strong> — Shadow Run, a sixth odd job with no clock and no marker: stay 12 to 60 m behind a pink car for 40 seconds. The first job beam stands in the red car's own lane, 40 m ahead. Paper Round says ON FOOT on its beam and waits until you leave the car. Ten seconds of head start when you take the marked car in Borrowed Time. While you lose the police in a job, the road arrows lead to Mo's Respray. The shore in front of the Rustport quay is a dock apron with a lane, a crane rail and bollards. On a phone the buttons are more see-through, so the road shows behind them.</li>
@@ -578,7 +593,7 @@ const headingOf = (d) => Math.atan2(DX[d], DZ[d]);
 
 // ---------- save data ----------
 const SAVE_KEY = 'neon-coast-save-v1';
-const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], difficulty: 1, quality: 1, sound: 1, steer: 0, tricks: 0, styleBest: 0, driftBest: 0, getaways: 0, styleTold: 0 };
+const SAVE_DEFAULTS = { money: 200, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], difficulty: 1, quality: 1, sound: 1, steer: 0, tricks: 0, styleBest: 0, driftBest: 0, getaways: 0, styleTold: 0, jumps: [], jumpBest: 0, smashed: 0, havocTold: 0 };
 const save = Object.assign({}, SAVE_DEFAULTS);
 try {
   Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}'));
@@ -588,6 +603,7 @@ try {
 save.packages = (save.packages || []).slice();       // never share the default objects
 save.props = Object.assign({}, save.props);
 save.spotted = (save.spotted || []).slice();
+save.jumps = (save.jumps || []).slice();
 function persist() {
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -830,6 +846,7 @@ const neonBars = [];
 const trees = [];
 const palms = [];
 const lamps = [];
+const lampMesh = { pole: null, head: null, glow: null };      // kept: a car can knock a lamp post over (part 3c)
 const PARKS = new Set(['5,4', '1,2', '7,7']);
 const PALETTE = {
   downtown: ['#8fc3d4', '#6f8fb4', '#ece4d2', '#5f86a8', '#f0b79c', '#b3a4dc'],
@@ -1881,14 +1898,14 @@ function buildProps() {
       }
     }
   }
-  instanced(new T.CylinderGeometry(0.1, 0.16, 7, 6), mat('#3a3d46'), lamps, (d, l) => d.position.set(l.x, 3.5, l.z));
-  instanced(boxGeo, glowMat('#ffd9a0'), lamps, (d, l) => {
+  lampMesh.pole = instanced(new T.CylinderGeometry(0.1, 0.16, 7, 6), mat('#3a3d46'), lamps, (d, l) => d.position.set(l.x, 3.5, l.z));
+  lampMesh.head = instanced(boxGeo, glowMat('#ffd9a0'), lamps, (d, l) => {
     d.position.set(l.x, 7.05, l.z);
     d.scale.set(0.9, 0.22, 0.9);
   });
   const glowGeo = new T.PlaneGeometry(17, 17);
   glowGeo.rotateX(-Math.PI / 2);
-  instanced(glowGeo, lampGlowMat, lamps, (d, l) => d.position.set(l.x, 0.09, l.z));
+  lampMesh.glow = instanced(glowGeo, lampGlowMat, lamps, (d, l) => d.position.set(l.x, 0.09, l.z));
 
   // palms: along the beach road, and scattered on the sand all around the island
   for (let z = -HALF + 12; z < HALF - 8; z += 14) {
@@ -2639,6 +2656,7 @@ function addPed(x, z) {
   ped.mesh.position.set(x, 0, z);
   scene.add(ped.mesh);
   peds.push(ped);
+  rehome(ped);                    // never without a block to walk round
   return ped;
 }
 
@@ -2692,7 +2710,8 @@ function scare(x, z, radius, secs) {
   }
 }
 
-function downPed(ped, vx, vz, byPlayer) {
+// up: m/s upwards, when a fast car or a blast throws them into the air
+function downPed(ped, vx, vz, byPlayer, up) {
   if (ped.state === 'down') return;
   ped.state = 'down';
   ped.timer = 14;
@@ -2700,6 +2719,12 @@ function downPed(ped, vx, vz, byPlayer) {
   ped.vz = vz * 0.6;
   ped.mesh.rotation.x = -Math.PI / 2;
   ped.mesh.position.y = 0.2;
+  ped.fly = up > 0;
+  if (ped.fly) {
+    ped.y = 0.2;
+    ped.vy = up;
+    ped.spin = rand(-9, -4);
+  }
   scare(ped.x, ped.z, 22, 9);
   if (byPlayer) {
     crime(1.6);
@@ -2710,10 +2735,25 @@ function downPed(ped, vx, vz, byPlayer) {
 function updatePed(ped, dt) {
   if (ped.state === 'down') {
     ped.timer -= dt;
-    ped.x += ped.vx * dt;
-    ped.z += ped.vz * dt;
-    ped.vx *= 0.9;
-    ped.vz *= 0.9;
+    if (ped.fly) {
+      // thrown: up, over and down again, and no wall is flown through
+      if (insideBox(ped.x + ped.vx * dt, ped.z + ped.vz * dt)) ped.vx = ped.vz = 0;
+      ped.vy -= 19 * dt;
+      ped.y += ped.vy * dt;
+      ped.mesh.rotation.x += ped.spin * dt;
+      if (ped.y <= 0.2) {
+        ped.y = 0.2;
+        ped.fly = false;
+        ped.mesh.rotation.x = -Math.PI / 2;
+      }
+      ped.mesh.position.y = ped.y;
+    }
+    ped.x = clamp(ped.x + ped.vx * dt, -LIMIT, LIMIT);
+    ped.z = clamp(ped.z + ped.vz * dt, -LIMIT, LIMIT);
+    if (!ped.fly) {
+      ped.vx *= 0.9;
+      ped.vz *= 0.9;
+    }
     ped.mesh.position.x = ped.x;
     ped.mesh.position.z = ped.z;
     return ped.timer > 0;
@@ -2885,11 +2925,14 @@ function addVehicle(type, x, z, h, driver, colorHex) {
     grip: t.grip, thr: 0, roll: 0, pitch: 0, sliding: false, call: 0,
     hp: t.hp, driver: driver || null,
     burn: 0, dead: false, deadT: 0, keep: false, siren: false, smokeT: 0,
+    // part 3c: height and flight (ramps, blasts), a turn knocked into the car, seconds out of hand, seconds shoved
+    y: 0, vy: 0, air: false, airT: 0, climb: 0, onRamp: -1, jump: null, tilt: 0, spin: 0, stun: 0, shoved: 0,
     input: { thr: 0, st: 0 },
     ai: { d: 0, ti: 0, tj: 0, nd: -1, stuck: 0, rev: 0, block: 0, cruise: rand(10, 15), los: 0, direct: false, wasDirect: false, fire: 1, cx: 0, cz: 0, want: 0 },
     mesh: buildCar(type, colorHex || pick(t.colors)),
   };
   v.mesh.position.set(x, 0, z);
+  v.mesh.rotation.order = 'YXZ';         // nose up and down (ramps, flight) in the car's own frame
   v.mesh.rotation.y = h;
   scene.add(v.mesh);
   vehicles.push(v);
@@ -2910,14 +2953,24 @@ function vehicleNear(x, z, r) {
 }
 
 // Put a car in the right-hand lane halfway along a random road segment.
+const AHEAD = { speed: 12, share: 0.65, from: 90, to: 190 };      // m/s, share of new traffic, metres ahead
 function spawnTraffic(minD, maxD, parked) {
   const [px, pz] = focus();
-  const i = clamp(nodeOf(px) + irand(-3, 3), 0, N);
-  const j = clamp(nodeOf(pz) + irand(-3, 3), 0, N);
+  let i = clamp(nodeOf(px) + irand(-3, 3), 0, N);
+  let j = clamp(nodeOf(pz) + irand(-3, 3), 0, N);
+  // at speed the road ahead is what the player sees and reaches: most new traffic is put there
+  const car = player.car;
+  const speed = car ? Math.hypot(car.vx, car.vz) : 0;
+  if (!parked && speed > AHEAD.speed && Math.random() < AHEAD.share) {
+    const secs = rand(AHEAD.from, AHEAD.to) / speed;
+    i = clamp(nodeOf(px + car.vx * secs) + irand(-1, 1), 0, N);
+    j = clamp(nodeOf(pz + car.vz * secs) + irand(-1, 1), 0, N);
+  }
   const d = irand(0, 3);
   const ni = i + DX[d];
   const nj = j + DZ[d];
   if (ni < 0 || nj < 0 || ni > N || nj > N) return null;
+  if (parked && kerbTaken.has(i + ',' + j + ',' + d)) return null;      // a ramp or road works has that kerb
   const rd = (d + 1) & 3;
   const along = parked ? rand(0.25, 0.75) * CELL : CELL / 2;
   const off = parked ? PARK : LANE;
@@ -3176,7 +3229,8 @@ function impact(v, speed, police) {
     styleCrash(speed);
     if (touch.on && navigator.vibrate) navigator.vibrate(Math.round(clamp(speed * 5, 20, 140)));   // the crash in the hand (Android)
   }
-  for (let k = 0; k < 5; k++) puff(v.x, 0.7, v.z, rand(-4, 4), rand(1, 4), rand(-4, 4), 0.4, 1, 0.8, 0.4, 9);
+  const sparks = Math.min(16, 4 + Math.round(speed / 2.5));       // a harder hit throws more of them
+  for (let k = 0; k < sparks; k++) puff(v.x, 0.7 + v.y, v.z, rand(-4, 4) - v.vx * 0.15, rand(1, 4 + speed * 0.1), rand(-4, 4) - v.vz * 0.15, 0.4, 1, 0.8, 0.4, 9);
 }
 
 function updateVehicle(v, dt) {
@@ -3193,6 +3247,8 @@ function updateVehicle(v, dt) {
       handbrake = !!keys.Space;
       // one thumb cannot hold GAS and HAND BRAKE together: on a touch screen a slide keeps the power on by itself
       if (touch.on && handbrake && throttle === 0 && Math.abs(v.steer) > DRIFT.steer && v.vf > DRIFT.speed) throttle = 1;
+      // nor GAS and NITRO: on a touch screen the NITRO button is the gas pedal and the nitro in one
+      if (touch.on && keys.ShiftLeft && throttle === 0) throttle = 1;
     }
   } else {
     aiDrive(v, dt);
@@ -3201,17 +3257,29 @@ function updateVehicle(v, dt) {
   }
   if (v.hp <= 0) throttle = 0;
   if (v.crashT > 0) v.crashT -= dt;
+  if (v.shoved > 0) v.shoved -= dt;
+  if (v.stun > 0) {
+    // turned round by a hard hit: for a moment its driver has lost it
+    v.stun -= dt;
+    if (v.driver !== 'player') {
+      throttle = 0;
+      steer = v.steer;
+    }
+  }
+  const boost = v === player.car && nitroBurn(v, throttle, dt);
 
   v.steer += clamp(steer - v.steer, -dt * 6, dt * 6);
   v.thr = throttle;
   let fx = Math.sin(v.h);
   let fz = Math.cos(v.h);
   let vf = v.vx * fx + v.vz * fz;
-  const sliding = handbrake && !v.dead && Math.abs(v.steer) > DRIFT.steer && vf > DRIFT.speed;
+  const sliding = handbrake && !v.dead && !v.air && Math.abs(v.steer) > DRIFT.steer && vf > DRIFT.speed;
   v.sliding = sliding;
   const vfBefore = vf;
-  const yaw = ((v.steer * t.turn * (sliding ? DRIFT.turn : 1)) / (1 + Math.abs(vf) / 40)) * clamp(vf / 6, -1, 1);
-  v.h += yaw * dt;
+  // in the air the wheels steer next to nothing
+  const yaw = ((v.steer * t.turn * (sliding ? DRIFT.turn : 1)) / (1 + Math.abs(vf) / 40)) * clamp(vf / 6, -1, 1) * (v.air ? 0.3 : 1);
+  v.h += (yaw + v.spin) * dt;                         // spin: what a hard hit or a blast knocked into the car
+  v.spin *= Math.exp(-(v.air ? 0.6 : 3.2) * dt);
   fx = Math.sin(v.h);
   fz = Math.cos(v.h);
   const rx = -fz;                 // right-hand side of the car
@@ -3221,30 +3289,42 @@ function updateVehicle(v, dt) {
 
   const power = v.hp < 30 ? 0.6 : 1;
   const tuned = v === player.car && save.tune > 0;
-  const accel = t.acc * (tuned ? 1 + 0.14 * save.tune : 1);
-  const topSpeed = t.max * (tuned ? 1 + 0.07 * save.tune : 1);
-  if (throttle > 0) {
-    vf += (vf < -0.5 ? t.brake : accel * power * Math.max(0, 1 - vf / topSpeed)) * throttle * dt;
-  } else if (throttle < 0) {
-    vf += (vf > 0.5 ? t.brake : t.acc * 0.6 * Math.max(0, 1 + vf / (t.max * 0.3))) * throttle * dt;
+  const accel = t.acc * (tuned ? 1 + 0.14 * save.tune : 1) * (boost ? NITRO.acc : 1);
+  const topSpeed = t.max * (tuned ? 1 + 0.07 * save.tune : 1) * (boost ? NITRO.top : 1);
+  if (v.air) {
+    v.slip = 0;                   // off the ground nothing drives, brakes or grips: the car flies as it left
   } else {
-    vf -= vf * 0.35 * dt;
+    if (throttle > 0) {
+      vf += (vf < -0.5 ? t.brake : accel * power * Math.max(0, 1 - vf / topSpeed)) * throttle * dt;
+    } else if (throttle < 0) {
+      vf += (vf > 0.5 ? t.brake : t.acc * 0.6 * Math.max(0, 1 + vf / (t.max * 0.3))) * throttle * dt;
+    } else {
+      vf -= vf * 0.35 * dt;
+    }
+    if (boost) {
+      nitro.over = true;
+    } else if (nitro.over && v === player.car) {
+      // the nitro is off: the speed it gave above the car's own top speed goes in about a second
+      if (vf > topSpeed * 1.02) vf -= (vf - topSpeed) * 1.2 * dt;
+      else nitro.over = false;
+    }
+    if (handbrake) {
+      // a car with nobody in it that was just hit rolls on: it is shoved down the street, not stopped dead
+      const cut = (sliding ? DRIFT.cut : v.shoved > 0 ? 5 : 16) * dt;
+      vf = Math.abs(vf) < cut ? 0 : vf - Math.sign(vf) * cut;
+    }
+    vf -= Math.sign(vf) * Math.min(Math.abs(vf), 0.6 * dt);
+    if (handbrake) v.grip = sliding ? DRIFT.grip : 1.5;
+    else v.grip = Math.min(v.stun > 0 && v.driver !== 'player' ? 1.2 : t.grip, v.grip + DRIFT.recover * dt);
+    const vlBefore = vl;
+    vl *= Math.exp(-v.grip * dt);
+    if (v.driver && v.grip < t.grip && vf > 0) {
+      // a slide keeps its momentum: part of the speed the tyres scrub off sideways goes on forwards
+      const kept = Math.sqrt(Math.max(0, vf * vf + vlBefore * vlBefore - vl * vl));
+      vf += (kept - vf) * DRIFT.carry;
+    }
+    v.slip = Math.abs(vl);
   }
-  if (handbrake) {
-    const cut = (sliding ? DRIFT.cut : 16) * dt;
-    vf = Math.abs(vf) < cut ? 0 : vf - Math.sign(vf) * cut;
-  }
-  vf -= Math.sign(vf) * Math.min(Math.abs(vf), 0.6 * dt);
-  if (handbrake) v.grip = sliding ? DRIFT.grip : 1.5;
-  else v.grip = Math.min(t.grip, v.grip + DRIFT.recover * dt);
-  const vlBefore = vl;
-  vl *= Math.exp(-v.grip * dt);
-  if (v.driver && v.grip < t.grip && vf > 0) {
-    // a slide keeps its momentum: part of the speed the tyres scrub off sideways goes on forwards
-    const kept = Math.sqrt(Math.max(0, vf * vf + vlBefore * vlBefore - vl * vl));
-    vf += (kept - vf) * DRIFT.carry;
-  }
-  v.slip = Math.abs(vl);
   v.vf = vf;
   v.vx = fx * vf + rx * vl;
   v.vz = fz * vf + rz * vl;
@@ -3279,6 +3359,7 @@ function updateVehicle(v, dt) {
     v.z = clamp(v.z, -LIMIT, LIMIT);
     v.vz = 0;
   }
+  rideHeight(v, dt);              // part 3c: up a ramp, through the air, back on the road
 
   // damage states: smoke, fire, explosion
   if (!v.dead) {
@@ -3301,8 +3382,9 @@ function updateVehicle(v, dt) {
     puff(v.x - fx * t.len * 0.3, 0.2, v.z - fz * t.len * 0.3, 0, 0.6, 0, 0.6, 0.22, 0.22, 0.24, -0.5);
   }
 
-  v.mesh.position.set(v.x, 0, v.z);
+  v.mesh.position.set(v.x, v.y, v.z);
   v.mesh.rotation.y = v.h;
+  v.mesh.rotation.x = v.tilt;
   const u = v.mesh.userData;
   // weight: the body leans out of a turn, squats under power and dips under the brakes
   const ease = Math.min(1, dt * 7);
@@ -3333,9 +3415,11 @@ function explode(v) {
   const d = Math.hypot(v.x - px, v.z - pz);
   sfx.boom(clamp(1 - d / 150, 0, 1));
   if (d < 40) cam.shake = 0.8;
+  if (d < 45) boomFlash(1 - d / 45);
   for (const other of vehicles) {
     if (other !== v && dist2(other.x, other.z, v.x, v.z) < 81) damageVehicle(other, 55);
   }
+  shockwave(v.x, v.z, 10, 9, v, false);            // part 3c: cars are thrown and turned, what stands near is knocked flying
   for (const ped of peds) {
     if (dist2(ped.x, ped.z, v.x, v.z) < 64) downPed(ped, (ped.x - v.x) * 2, (ped.z - v.z) * 2, false);
   }
@@ -3354,6 +3438,10 @@ function collideVehicles() {
     for (let b = a + 1; b < vehicles.length; b++) {
       const B = vehicles[b];
       if (dist2(A.x, A.z, B.x, B.z) > 42) continue;
+      if (Math.abs(A.y - B.y) > 1.3) continue;         // one of them is flying over the other
+      // a car with nobody in it is lighter than one being driven: it is the one that gets shoved
+      const mA = A.driver || A.dead ? 1 : LOOSE_MASS;
+      const mB = B.driver || B.dead ? 1 : LOOSE_MASS;
       for (const sa of [1, -1]) {
         for (const sb of [1, -1]) {
           const oa = A.t.len * 0.3 * sa;
@@ -3380,14 +3468,20 @@ function collideVehicles() {
           // how fast each car was driving at the other one (the two add up to -rel)
           const closeA = -(A.vx * nx + A.vz * nz);
           const closeB = B.vx * nx + B.vz * nz;
-          const push = -rel * 0.6;
-          A.vx += nx * push;
-          A.vz += nz * push;
-          B.vx -= nx * push;
-          B.vz -= nz * push;
+          const pushA = (-rel * 1.2 * mB) / (mA + mB);       // two driven cars: 0.6 each, as before 2.0
+          const pushB = (-rel * 1.2 * mA) / (mA + mB);
+          A.vx += nx * pushA;
+          A.vz += nz * pushA;
+          B.vx -= nx * pushB;
+          B.vz -= nz * pushB;
+          if (-rel > SPIN.from) {
+            knockSpin(A, oa, nx, nz, pushA);            // a hard hit off the middle turns a car round
+            knockSpin(B, ob, -nx, -nz, pushB);
+          }
           const police = A.type === 'police' || B.type === 'police';
-          impact(A, -rel * 0.8, police);
-          impact(B, -rel * 0.8, police);
+          // the lighter car takes more of the knock (two driven cars: 0.8 each, as before 2.0)
+          impact(A, (-rel * 1.6 * mB) / (mA + mB), police);
+          impact(B, (-rel * 1.6 * mA) / (mA + mB), police);
           const mine = A.driver === 'player' ? B : B.driver === 'player' ? A : null;
           if (mine && -rel > 5) {
             if (mine.type === 'police') {
@@ -3407,6 +3501,7 @@ function collideVehicles() {
 
 function vehiclesVsPeople(dt) {
   for (const v of vehicles) {
+    if (v.y > 1) continue;                               // flying over their heads
     const speed = Math.hypot(v.vx, v.vz);
     const reach = v.t.wid * 0.56 + 0.4;
     for (const end of [1, -1]) {
@@ -3416,7 +3511,7 @@ function vehiclesVsPeople(dt) {
         for (const ped of peds) {
           if (ped.state === 'down' || dist2(ped.x, ped.z, cx, cz) > reach * reach) continue;
           if (speed > 5) {
-            downPed(ped, v.vx, v.vz, v.driver === 'player');
+            downPed(ped, v.vx, v.vz, v.driver === 'player', speed > 9 ? Math.min(9, 2 + speed * 0.22) : 0);
             sfx.crash(0.25);
           } else if (ped.state !== 'flee') {
             scare(cx, cz, 4, 3);
@@ -3526,19 +3621,25 @@ function updatePlayerOnFoot(dt) {
     player.phase += player.speed * dt * 2.3;
   }
   if (player.fireT > 0) player.h = cam.yaw;
-  if (keys.Space && player.y === 0) player.vy = 6.2;
+  pushOut(player.x + mx * player.speed * dt, player.z + mz * player.speed * dt, 0.42, tmpHit);
+  const tx = clamp(tmpHit.x, -LIMIT, LIMIT);
+  const tz = clamp(tmpHit.z, -LIMIT, LIMIT);
+  // a stunt ramp (part 3c) is walked up from its low end: its sides and its tall end are a wall
+  if (rampHeight(tx, tz) - player.y <= 0.6) {
+    player.x = tx;
+    player.z = tz;
+  }
+  const ground = rampHeight(player.x, player.z);
+  if (keys.Space && player.vy === 0 && Math.abs(player.y - ground) < 0.1) player.vy = 6.2;
   player.y += player.vy * dt;
   player.vy -= 19 * dt;
-  if (player.y <= 0) {
-    player.y = 0;
+  if (player.y <= ground + (player.vy <= 0 ? 0.08 : 0)) {
+    player.y = ground;
     player.vy = 0;
   }
-  pushOut(player.x + mx * player.speed * dt, player.z + mz * player.speed * dt, 0.42, tmpHit);
-  player.x = clamp(tmpHit.x, -LIMIT, LIMIT);
-  player.z = clamp(tmpHit.z, -LIMIT, LIMIT);
 
   animPerson(player.mesh, player.phase, player.speed > 5 ? 0.95 : player.speed > 0 ? 0.55 : 0);
-  if (player.speed === 0 && player.y === 0 && player.fireT <= 0 && player.punchT <= 0) {
+  if (player.speed === 0 && player.y === ground && player.fireT <= 0 && player.punchT <= 0) {
     player.idleT = (player.idleT || 0) + dt;
     idlePerson(player.mesh, player.idleT);
   } else {
@@ -3556,7 +3657,7 @@ function updatePlayerOnFoot(dt) {
 const $ = (id) => document.getElementById(id);
 
 // ---------- particles and tracers ----------
-const P_MAX = 600;
+const P_MAX = 900;                // 600 before 2.0: debris, blasts, water jets and nitro flames need the room
 const pPos = new Float32Array(P_MAX * 3).fill(-999);
 const pCol = new Float32Array(P_MAX * 3);
 const pVel = new Float32Array(P_MAX * 3);
@@ -3776,6 +3877,18 @@ const sfx = {
     tone(hz * 1.26, 0.34, vol * 0.7, 'square');
   },
   trick: (n) => tone(520 * Math.pow(1.122, Math.min(n, 9)), 0.09, 0.13, 'triangle'),   // each trick in a chain a tone higher
+  smash: (hz, vol) => {                        // something on the street knocked over: a clatter at its own pitch
+    noiseBurst(0.12, vol, 900 + hz * 3, 0, 0, 'bandpass');
+    tone(hz, 0.1, vol * 0.5, 'triangle', hz * 0.6);
+  },
+  thud: (vol) => {                             // a car back on its wheels, a lamp post on the road
+    noiseBurst(0.22, vol, 160);
+    tone(70, 0.18, vol * 0.7, 'sine', 40);
+  },
+  nitro: () => {
+    noiseBurst(0.6, 0.3, 2600, 0, 0, 'highpass');
+    tone(160, 0.5, 0.12, 'sawtooth', 640);
+  },
   hurt: () => tone(160, 0.2, 0.3, 'sawtooth', 80),
   click: () => tone(1200, 0.03, 0.1, 'square'),
   pass: () => [523, 659, 784, 1047].forEach((f, k) => setTimeout(() => tone(f, 0.25, 0.2, 'triangle'), k * 130)),
@@ -3984,8 +4097,9 @@ const STYLE = {
   heat: 2,             // with wanted stars on
   crash: 6,            // m/s: a crash at least this hard loses the chain
 };
-const style = { bank: 0, count: 0, t: 0, drift: 0, crashT: 0, noteT: 0, shown: false };
-const styleMult = () => Math.min(STYLE.maxMult, 1 + STYLE.step * Math.max(0, style.count - 1));
+// free: 1 when the chain was opened by a smash (part 3c), which is not a trick and does not count towards the multiplier
+const style = { bank: 0, count: 0, t: 0, drift: 0, crashT: 0, noteT: 0, shown: false, smashes: 0, free: 0 };
+const styleMult = () => Math.min(STYLE.maxMult, 1 + STYLE.step * Math.max(0, style.count - 1 - style.free));
 const styleValue = () => Math.round(style.bank * styleMult());
 
 // the card under the clock: what the last trick was, what the chain is worth, how long it stays open
@@ -4005,22 +4119,37 @@ function styleTrick(title, cash) {
   const mult = styleMult();
   styleNote(title, '$' + styleValue() + (mult > 1 ? '  \u00b7  x' + mult : '') + (wanted.stars > 0 ? '  \u00b7  HEAT' : ''), 'open');
   sfx.trick(style.count);
+  nitroGain(NITRO.trick);         // part 3c: every trick puts nitro in the tank
+}
+// what the car knocks over on the street (part 3c): its cash goes into the chain, opens one if none is open and
+// keeps it open, but it is not a trick: the multiplier stays where it is
+function styleSmash(cash) {
+  if (style.crashT > 0) return;
+  if (!style.count) style.count = style.free = 1;
+  style.smashes++;
+  style.bank += cash * (wanted.stars > 0 ? STYLE.heat : 1);
+  style.t = STYLE.hold;
+  const mult = styleMult();
+  styleNote('SMASH  x' + style.smashes, '$' + styleValue() + (mult > 1 ? '  \u00b7  x' + mult : '') + (wanted.stars > 0 ? '  \u00b7  HEAT' : ''), 'open');
 }
 function styleClear() {
   style.bank = 0;
   style.count = 0;
   style.t = 0;
   style.drift = 0;
+  style.smashes = 0;
+  style.free = 0;
 }
 function styleBank() {
   if (!style.count) return 0;
   const pay = styleValue();
-  const chain = style.count;
+  const chain = style.count - style.free;
+  const smashes = style.smashes;
   styleClear();
   save.styleBest = Math.max(save.styleBest || 0, pay);
   addMoney(pay);
   sfx.cash();
-  styleNote('BANKED', '+$' + pay + (chain > 1 ? '  \u00b7  ' + chain + ' in a row' : ''), 'paid', 2.2);
+  styleNote('BANKED', '+$' + pay + (chain > 1 ? '  \u00b7  ' + chain + ' in a row' : smashes > 1 ? '  \u00b7  ' + smashes + ' smashed' : ''), 'paid', 2.2);
   return pay;
 }
 // called for every crash of the player's car (part 2)
@@ -4109,7 +4238,7 @@ function updateStyle(dt) {
   if (!save.styleTold && speed > 17 && state === 'play') {
     save.styleTold = 1;
     persist();
-    hint('Near misses pay cash, and so does a slide: [Space] with the wheel turned. Chain them before the bar runs out.', 7);
+    hint('Near misses pay cash, and so does a slide: [Space] with the wheel turned. Chain them before the bar runs out.', 6);
   }
 }
 
@@ -4497,6 +4626,7 @@ function playerAttack() {
   const dz = Math.cos(cam.yaw) * cp;
   const o = camera.position;
   const hit = castRay(o.x, o.y, o.z, dx, dy, dz, cam.dist * 0.9, 150, player.car);
+  shootProps(o.x, o.y, o.z, dx, dy, dz, hit.t);      // part 3c: a barrel in the way of the shot goes up
   const my = player.car ? 1.3 : 1.4 + player.y;
   tracer(px + dx * 0.6, my, pz + dz * 0.6, o.x + dx * hit.t, o.y + dy * hit.t, o.z + dz * hit.t);
   puff(px + dx * 0.8, my, pz + dz * 0.8, 0, 0, 0, 0.06, 1, 0.9, 0.5, 0);
@@ -5039,7 +5169,7 @@ function roadStop(minD, maxD, from) {
     const x = (roadC(i) + roadC(i + 1)) / 2 + rand(-16, 16);
     stop = { at: [x, roadC(j) + side * PARK], kerb: [x, roadC(j) + side * (ROAD / 2 + 2)] };
     const d = manhattan(stop.at, from);
-    if (d >= minD && d <= maxD) break;
+    if (d >= minD && d <= maxD && !kerbBusy(stop.at[0], stop.at[1])) break;      // not on a ramp or in road works (part 3c)
   }
   return stop;
 }
@@ -5185,8 +5315,10 @@ function startMission() {
   mission.startMarker = null;
   if (def.spawn) {
     const d = 1;
+    let sj = def.spawn.j;
+    while (kerbTaken.has(def.spawn.i + ',' + sj + ',' + d)) sj = (sj + 1) % N;      // a ramp or road works has that kerb (part 3c)
     const x = roadC(def.spawn.i) + DX[(d + 1) & 3] * PARK;
-    const z = roadC(def.spawn.j) + CELL * 0.4;
+    const z = roadC(sj) + CELL * 0.4;
     for (const v of vehicles.slice()) {
       if (v !== player.car && dist2(v.x, v.z, x, z) < 64) removeVehicle(v);
     }
@@ -5570,6 +5702,10 @@ function drawMap() {
   blip(PLACES.police[0], PLACES.police[1], '#6fa2ff', 'P');
   for (const p of PROPERTIES) blip(p.at[0], p.at[1], owned(p) ? '#7dffa5' : '#d6dbe6', '$');
   for (const id of save.spotted) if (!save.packages.includes(id)) blip(packageSpots[id][0], packageSpots[id][1], '#c58bff', '?');
+  for (const r of ramps) {
+    // stunt ramps near enough to reach: orange, green once jumped
+    if (dist2(r.x, r.z, px, pz) < 170 * 170) blip(r.x, r.z, save.jumps.includes(r.id) ? '#7dffa5' : '#ff8a1f', '^');
+  }
   if (heli.on) blip(heli.x, heli.z, Math.floor(performance.now() / 200) % 2 ? '#ffffff' : '#3f7bff', '', true);
   for (const v of vehicles) {
     if (v.siren && !v.dead) blip(v.x, v.z, Math.floor(performance.now() / 200) % 2 ? '#ff3344' : '#3f7bff');
@@ -5704,6 +5840,7 @@ function drawBigMap() {
   for (const p of PROPERTIES) dot(p.at[0], p.at[1], owned(p) ? '#7dffa5' : '#d6dbe6', '$');
   dot(PLACES.wheel[0], PLACES.wheel[1], '#ff8fd0', 'W');
   for (const id of save.spotted) if (!save.packages.includes(id)) dot(packageSpots[id][0], packageSpots[id][1], '#c58bff', '?', 8);
+  for (const r of ramps) dot(r.x, r.z, save.jumps.includes(r.id) ? '#7dffa5' : '#ff8a1f', '^', 7);
   for (const v of vehicles) {
     if (v.siren && !v.dead) dot(v.x, v.z, '#ff3344', '', 4);
   }
@@ -5787,8 +5924,14 @@ function updateHud() {
     const kmh = Math.round(Math.hypot(car.vx, car.vz) * 3.6);
     setText('speed', kmh + ' km/h');
     $('carhp').style.width = clamp((car.hp / car.t.hp) * 100, 0, 100) + '%';
+    const tank = Math.round(nitro.tank * 50) * 2;
+    if (hudCache.nitro !== tank) {
+      hudCache.nitro = tank;
+      $('nitro').style.width = tank + '%';
+    }
   }
   $('drive').classList.toggle('show', !!car);
+  $('drive').classList.toggle('boost', !!car && nitro.on);
   $('cross').classList.toggle('show', player.gun && player.ammo > 0);
 
   if (mission.active && mission.timer >= 0) {
@@ -5837,6 +5980,7 @@ const TOUCH_WORDS = [
   [/\[F\]/g, () => (player.car ? '[EXIT]' : '[CAR]')],
   [/\[Shift\] sprints/g, 'full stick sprints'],
   [/\[Space\]/g, '[HAND BRAKE]'],
+  [/\[Shift\] fires the nitro/g, 'the NITRO button fires it'],
   [/\[J\] another kind/g, 'the pause menu has other kinds'],
   [/\[J\] an odd job instead/g, 'the pause menu has odd jobs'],
   [/\[J\] back to the story job/g, 'the pause menu goes back to the story job'],
@@ -6076,6 +6220,7 @@ function refreshPad() {
   padSet('tb-fire', true, armed ? 'FIRE' : 'PUNCH');
   padSet('tb-carfire', !!player.car && armed);
   padSet('tb-cab', !!player.car && player.car.type === 'taxi');
+  padSet('tb-nitro', !!player.car && nitro.tank > NITRO.min);      // bright while there is nitro to burn
   padSet('tb-car', mode === 'foot' && carInReach());        // bright when a car is close enough to take
   padSet('tb-use', mode === 'foot' && (wheelGate.inside || PROPERTIES.some((p) => p.marker.inside)));
 }
@@ -6156,6 +6301,737 @@ if (onWeb) {
 }
 
 // =====================================================================
+// NEON COAST - part 3c: havoc. A street that breaks, ramps to jump, nitro
+// =====================================================================
+// 2.0. Nothing on the street stops a car: cones, bins, news boxes, crates, hydrants, barrels and lamp posts are
+// knocked flying, and what the player's car knocks over pays into the style chain. Ramps on the parking strips
+// throw a car over the next crossing. Tricks, smashes and jumps fill a nitro tank. A hard hit turns a car round.
+
+const GRAVITY = 15;                // m/s2 on cars and debris in the air
+const PROP_HIT = 2.5;              // m/s: slower than this a car only tips a prop over, for no pay
+const PROP_BACK = 150;             // m: what was knocked over stands again once the player is this far away
+// r: radius a car touches, h: height standing, lie: centre height lying, pay: $ into the chain,
+// slow: share of its speed the car loses, hz: the sound, trick: counts as a trick (raises the multiplier),
+// need: m/s the car must do to knock it over (a lamp post under that speed is not touched, as before 2.0)
+const PROP_KINDS = {
+  cone: { r: 0.3, h: 0.7, lie: 0.22, pay: 5, slow: 0, hz: 620 },
+  bin: { r: 0.36, h: 0.95, lie: 0.32, pay: 10, slow: 0.01, hz: 240 },
+  box: { r: 0.36, h: 1.0, lie: 0.23, pay: 10, slow: 0.01, hz: 330 },
+  crate: { r: 0.55, h: 0.9, lie: 0.45, pay: 10, slow: 0.02, hz: 180 },
+  hydrant: { r: 0.26, h: 0.7, lie: 0.19, pay: 25, slow: 0.03, hz: 150, trick: 'HYDRANT' },
+  barrel: { r: 0.4, h: 1.0, lie: 0.38, pay: 40, slow: 0.02, hz: 120, trick: 'BLAST' },
+  lamp: { r: 0.22, h: 7, lie: 0.1, pay: 20, slow: 0.07, hz: 90, trick: 'LAMP POST', need: 7 },
+};
+// a barrel going up: metres, m/s, health, metres; own: the share of that damage the player's car takes from a barrel it set off itself
+const BLAST = { reach: 7.5, push: 9, damage: 26, flash: 45, own: 0.4 };
+const SPIN = { from: 6, gain: 0.26, max: 4.2, own: 0.3, stun: [0.5, 1.6] };   // a hit harder than `from` m/s turns a car
+const LOOSE_MASS = 0.55;           // a car with nobody in it, against 1 for one that is being driven
+const RAMP = { len: 9, wid: 4.4, high: 1.7, at: 57, air: 0.4, far: 8, all: 2500 };
+const NITRO = { burn: 3.2, acc: 2.1, top: 1.28, min: 0.05, start: 0.5, trick: 0.2, smash: 0.03, jump: 0.15, lens: 5 };
+const nitro = { tank: NITRO.start, on: false, hissT: 0, over: false };     // over: still above the car's own top speed
+const warp = { t: 0, k: 1 };       // a moment of slow motion: seconds left (real time) and the speed of the game in it
+const boom = { t: 0, shown: -1 };
+
+const RH = seeded(8086);           // its own stream: the city of 1.9 stays where it was
+const props = [];
+const propGrid = new Map();        // standing props by 16 m square
+const fallen = [];                 // props in the air, lying down or gone
+const jets = [];                   // broken hydrants: { x, z, t }
+const ramps = [];
+const kerbTaken = new Set();       // 'i,j,d' sides of a street kept clear of parked cars: a ramp or road works is there
+const worksAt = [];                // road works: { x, z }
+const propDummy = new T.Object3D();
+const lampAxis = new T.Vector3();
+const propMesh = {};
+
+// ---------- where things stand ----------
+// job stops, shops and front doors: nothing is put in their way
+const keepClear = [[PLACES.home[0] - 2, PLACES.home[1] + 50], ...Object.values(PLACES), ...PROPERTIES.map((p) => p.at)];      // first: where a new game starts (part 4)
+for (const def of MISSIONS.concat([FERRY])) {
+  for (const step of def.steps || []) if (step.at) keepClear.push(step.at);
+  if (def.at) keepClear.push(def.at);
+}
+const nearPlace = (x, z, r) => keepClear.some((p) => dist2(p[0], p[1], x, z) < r * r);
+const gridKey = (x, z) => (Math.floor((x + 640) / 16) << 8) | Math.floor((z + 640) / 16);
+
+function addProp(kind, x, z, extra) {
+  const p = Object.assign({ kind, k: PROP_KINDS[kind], n: 0, x, z, hx: x, hz: z, y: 0, vx: 0, vy: 0, vz: 0,
+    rx: 0, ry: RH() * 6.28, rz: 0, wx: 0, wz: 0, st: 0, t: 0, fuse: 0, by: false, lamp: -1, dx: 0, dz: 1, a: 0, w: 0 }, extra);
+  props.push(p);
+  return p;
+}
+
+function addRamp(x, z, h) {
+  ramps.push({ id: ramps.length, x, z, h, fx: Math.sin(h), fz: Math.cos(h), len: RAMP.len, wid: RAMP.wid, high: RAMP.high });
+}
+// [road i, road j, direction]: on the right-hand parking strip, RAMP.at metres after that crossing, so a quick car
+// lands in the next one. Both street sides are kept clear of parked cars: the run-up and the landing.
+const RAMP_SPOTS = [[9, 4, 3], [10, 6, 1], [5, 5, 0], [4, 3, 1], [2, 6, 2], [7, 8, 0], [1, 1, 1], [6, 1, 2], [3, 9, 0], [8, 2, 3], [0, 7, 3]];
+for (const [i, j, d] of RAMP_SPOTS) {
+  const rd = (d + 1) & 3;
+  addRamp(roadC(i) + DX[d] * RAMP.at + DX[rd] * PARK, roadC(j) + DZ[d] * RAMP.at + DZ[rd] * PARK, headingOf(d));
+  kerbTaken.add(i + ',' + j + ',' + d);
+  kerbTaken.add(i + DX[d] + ',' + (j + DZ[d]) + ',' + d);
+}
+addRamp(-300, 455, Math.PI / 2);   // one on the Rustport dock apron, heading east over a row of barrels
+
+const rampSpot = { u: 0, w: 0 };   // where on the ramp the last rampAt() was: metres along it and across it
+function rampAt(x, z) {
+  for (const r of ramps) {
+    const dx = x - r.x;
+    const dz = z - r.z;
+    if (Math.abs(dx) > 6 || Math.abs(dz) > 6) continue;
+    const u = dx * r.fx + dz * r.fz;
+    const w = dx * r.fz - dz * r.fx;
+    if (Math.abs(u) > r.len / 2 || Math.abs(w) > r.wid / 2) continue;
+    rampSpot.u = u;
+    rampSpot.w = w;
+    return r;
+  }
+  return null;
+}
+function rampHeight(x, z) {
+  const r = rampAt(x, z);
+  return r ? r.high * (rampSpot.u / r.len + 0.5) : 0;
+}
+// is this spot at the kerb taken by a ramp or by road works? (parked cars and cab fares keep off it)
+function kerbBusy(x, z) {
+  return ramps.some((r) => Math.abs(x - r.x) < 13 && Math.abs(z - r.z) < 13) || worksAt.some((w) => dist2(w.x, w.z, x, z) < 100);
+}
+
+(function placeProps() {
+  // 1. along the kerb of every block, by district
+  const MIX = {
+    downtown: ['bin', 'box', 'box', 'hydrant', 'bin', 'cone'],
+    beach: ['bin', 'box', 'hydrant', 'bin'],
+    suburb: ['bin', 'hydrant', 'box', 'bin'],
+    industrial: ['crate', 'barrel', 'bin', 'crate', 'hydrant'],
+    park: ['bin', 'bin', 'hydrant'],
+  };
+  const COUNT = { downtown: 5, beach: 4, suburb: 3, industrial: 4, park: 3 };
+  const BOX_COLORS = ['#2f6fd0', '#d0392f', '#e8b53a', '#2f9d6a'].map((hex) => new T.Color(hex));
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      const b = blocks[i][j];
+      const count = COUNT[b.type];
+      for (let side = 0; side < 4; side++) {
+        if (side === 0 && i === N - 1) continue;         // the palm side of the beach road
+        for (let k = 0; k < count; k++) {
+          const along = 7 + ((k + 0.2 + 0.6 * RH()) * 50) / count;
+          const inset = 0.9 + RH() * 0.9;
+          const kind = MIX[b.type][Math.floor(RH() * MIX[b.type].length)];
+          if (Math.abs(along - BLOCK / 2) < 3) continue;   // the lamp post half way along
+          const x = side === 0 ? b.x0 + inset : side === 1 ? b.x1 - inset : b.x0 + along;
+          const z = side === 2 ? b.z0 + inset : side === 3 ? b.z1 - inset : b.z0 + along;
+          if (nearPlace(x, z, 6)) continue;
+          if (b.circles.some((c) => dist2(c.x, c.z, x, z) < 2.2 * 2.2)) continue;     // not against a street tree: a car that comes for it would hit the trunk
+          addProp(kind, x, z, kind === 'box' ? { color: BOX_COLORS[Math.floor(RH() * BOX_COLORS.length)] } : null);
+        }
+      }
+    }
+  }
+  // 2. a line of cones down the middle of about one street in five, and road works on some parking strips.
+  // (The avenue through the middle of the map and the kerb outside the first home stay clear: the checks in
+  // test/ measure crashes and near misses there, and a new player's first metres are there.)
+  const quiet = (i, j, d) => (d === 1 && i === 5 && j >= 3 && j <= 6) || (d === 1 && i === 9 && j >= 3 && j <= 5);
+  for (let i = 0; i <= N; i++) {
+    for (let j = 0; j <= N; j++) {
+      for (const d of [0, 1]) {
+        if (i + DX[d] > N || j + DZ[d] > N) continue;
+        const roll = RH();
+        const works = RH();
+        const from = 24 + RH() * 8;
+        if (quiet(i, j, d)) continue;
+        if (roll < 0.22) {
+          for (let s = from; s < from + 30; s += 4.3) {
+            if (!nearPlace(roadC(i) + DX[d] * s, roadC(j) + DZ[d] * s, 9)) addProp('cone', roadC(i) + DX[d] * s, roadC(j) + DZ[d] * s);
+          }
+        }
+        if (works > 0.085) continue;
+        const way = works < 0.0425 ? d : d + 2;            // which side of the street
+        const key = way === d ? i + ',' + j + ',' + d : i + DX[d] + ',' + (j + DZ[d]) + ',' + way;
+        if (kerbTaken.has(key)) continue;
+        const rd = (way + 1) & 3;
+        const mid = way === d ? from + 14 : CELL - from - 14;
+        const ox = roadC(i) + DX[d] * mid;
+        const oz = roadC(j) + DZ[d] * mid;
+        const cx = ox + DX[rd] * PARK;
+        const cz = oz + DZ[rd] * PARK;
+        if (nearPlace(cx, cz, 16)) continue;
+        kerbTaken.add(key);
+        worksAt.push({ x: cx, z: cz });
+        for (let s = -6; s <= 6; s += 3) addProp('cone', cx + DX[d] * s - DX[rd] * 1.7, cz + DZ[d] * s - DZ[rd] * 1.7);
+        for (const s of [-6, 6]) addProp('cone', cx + DX[d] * s, cz + DZ[d] * s);
+        for (let s = -3.6; s <= 3.6; s += 2.4) addProp('crate', cx + DX[d] * (s + RH() - 0.5) + DX[rd] * (RH() - 0.5) * 0.8, cz + DZ[d] * (s + RH() - 0.5) + DZ[rd] * (RH() - 0.5) * 0.8);
+      }
+    }
+  }
+  // 3. the dock apron: stacks of crates and barrels, and a row of barrels under the ramp's flight
+  for (let k = 0; k < 11; k++) {
+    const cx = DOCK.x0 + 22 + k * 28 + RH() * 8;
+    const cz = DOCK.z0 + 9 + RH() * 30;
+    if (Math.abs(cx + 290) < 45 && Math.abs(cz - 455) < 9) continue;      // the ramp, its run-up and its landing
+    const barrels = 2 + Math.floor(RH() * 2);
+    for (let n = 0; n < barrels + 3; n++) {
+      addProp(n < barrels ? 'barrel' : 'crate', cx + (RH() - 0.5) * 4.4, cz + (RH() - 0.5) * 4.4);
+    }
+  }
+  for (let n = 0; n < 4; n++) addProp('barrel', -287, 452 + n * 2);
+  // 4. every street lamp can be knocked over
+  lamps.forEach((l, n) => addProp('lamp', l.x, l.z, { lamp: n }));
+
+  // one instanced mesh for each kind; a lamp post is three instances of the meshes part 1 made
+  const GEO = {
+    cone: new T.ConeGeometry(0.3, 0.7, 8),
+    bin: new T.CylinderGeometry(0.34, 0.28, 0.95, 8),
+    box: new T.BoxGeometry(0.55, 1.0, 0.45),
+    crate: new T.BoxGeometry(0.95, 0.9, 0.95),
+    hydrant: new T.CylinderGeometry(0.15, 0.2, 0.7, 8),
+    barrel: new T.CylinderGeometry(0.38, 0.38, 1.0, 10),
+  };
+  const MAT = { cone: mat('#ff7a1a'), bin: mat('#2f6b55'), box: mat('#ffffff'), crate: mat('#a07a4a'), hydrant: mat('#d43a2f'), barrel: mat('#e2452a') };
+  for (const kind in GEO) {
+    const list = props.filter((p) => p.kind === kind);
+    list.forEach((p, n) => (p.n = n));
+    propMesh[kind] = instanced(GEO[kind], MAT[kind], list, (d, p) => {
+      d.position.set(p.x, p.k.h / 2, p.z);
+      d.rotation.y = p.ry;
+    });
+  }
+  for (const p of props) propGrid.set(gridKey(p.x, p.z), (propGrid.get(gridKey(p.x, p.z)) || []).concat(p));
+})();
+
+(function buildRamps() {
+  // a wedge: low end at -z, tall end at +z (the way a car's heading is measured)
+  const w = RAMP.wid / 2;
+  const l = RAMP.len / 2;
+  const H = RAMP.high;
+  const quad = (a, b, c, d) => [...a, ...b, ...c, ...a, ...c, ...d];
+  const A = [-w, 0, -l];
+  const B = [w, 0, -l];
+  const C = [w, 0, l];
+  const D = [-w, 0, l];
+  const E = [-w, H, l];
+  const F = [w, H, l];
+  const body = new T.BufferGeometry();
+  body.setAttribute('position', new T.Float32BufferAttribute([...quad(D, C, F, E), ...A, ...D, ...E, ...B, ...F, ...C], 3));
+  body.computeVertexNormals();
+  const top = new T.BufferGeometry();
+  top.setAttribute('position', new T.Float32BufferAttribute(quad(A, B, F, E), 3));
+  top.setAttribute('uv', new T.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1], 2));
+  top.computeVertexNormals();
+  // the deck: dark, with arrows pointing up it
+  const canvasEl = mkCanvas(128, 256);
+  const g = canvasEl.getContext('2d');
+  g.fillStyle = '#2a2d36';
+  g.fillRect(0, 0, 128, 256);
+  g.strokeStyle = '#ffd23f';
+  g.lineWidth = 14;
+  for (let k = 0; k < 4; k++) {
+    g.beginPath();
+    g.moveTo(18, 236 - k * 62);
+    g.lineTo(64, 196 - k * 62);
+    g.lineTo(110, 236 - k * 62);
+    g.stroke();
+  }
+  const side = new T.MeshLambertMaterial({ color: '#ff8a1f', side: T.DoubleSide });
+  const deck = new T.MeshLambertMaterial({ map: new T.CanvasTexture(canvasEl), side: T.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  const place = (d, r) => {
+    d.position.set(r.x, 0.02, r.z);
+    d.rotation.y = r.h;
+  };
+  instanced(body, side, ramps, place);
+  instanced(top, deck, ramps, place);
+  // two bright rails up the edges, so a ramp is seen at night and from a distance
+  const rails = [];
+  for (const r of ramps) for (const s of [-1, 1]) rails.push({ r, s });
+  const slope = Math.atan2(H, RAMP.len);
+  instanced(boxGeo, glowMat('#ffe14f'), rails, (d, q) => {
+    d.rotation.order = 'YXZ';
+    d.position.set(q.r.x + q.r.fz * w * q.s, H / 2 + 0.1, q.r.z - q.r.fx * w * q.s);
+    d.rotation.set(-slope, q.r.h, 0);
+    d.scale.set(0.14, 0.14, Math.hypot(RAMP.len, H));
+  });
+})();
+
+// ---------- props: drawing ----------
+function placeProp(p) {
+  if (p.kind === 'lamp') return placeLamp(p);
+  const d = propDummy;
+  d.position.set(p.x, p.st === 3 ? -50 : p.st === 2 ? p.k.lie : p.y + p.k.h / 2, p.z);
+  d.rotation.set(p.st ? p.rx : 0, p.st ? 0 : p.ry, p.st ? p.rz : 0);
+  d.scale.set(1, 1, 1);
+  d.updateMatrix();
+  propMesh[p.kind].setMatrixAt(p.n, d.matrix);
+  propMesh[p.kind].instanceMatrix.needsUpdate = true;
+}
+// a lamp post falls the way it was hit, about its foot; its pool of light goes out
+function placeLamp(p) {
+  const d = propDummy;
+  const s = Math.sin(p.a);
+  const c = Math.cos(p.a);
+  lampAxis.set(p.dz, 0, -p.dx);
+  d.quaternion.setFromAxisAngle(lampAxis, p.a);
+  d.scale.set(1, 1, 1);
+  d.position.set(p.x + p.dx * s * 3.5, c * 3.5 + s * 0.12, p.z + p.dz * s * 3.5);
+  d.updateMatrix();
+  lampMesh.pole.setMatrixAt(p.lamp, d.matrix);
+  d.scale.set(0.9, 0.22, 0.9);
+  d.position.set(p.x + p.dx * s * 7.05, c * 7.05 + s * 0.12, p.z + p.dz * s * 7.05);
+  d.updateMatrix();
+  lampMesh.head.setMatrixAt(p.lamp, d.matrix);
+  d.rotation.set(0, 0, 0);
+  d.scale.setScalar(p.st ? 0.001 : 1);
+  d.position.set(p.x, 0.09, p.z);
+  d.updateMatrix();
+  lampMesh.glow.setMatrixAt(p.lamp, d.matrix);
+  lampMesh.pole.instanceMatrix.needsUpdate = lampMesh.head.instanceMatrix.needsUpdate = lampMesh.glow.instanceMatrix.needsUpdate = true;
+}
+
+// how loud something at (x, z) is for the player: 1 beside it, 0 from `reach` metres
+function heard(x, z, reach) {
+  const [px, pz] = focus();
+  return clamp(1 - Math.hypot(x - px, z - pz) / reach, 0, 1);
+}
+
+// ---------- props: knocked over ----------
+// a tip said once (what breaks, what a ramp is) waits until the hint line is free: it never takes the line
+// from a job, a fare or the police
+const lineFree = () => !$('hint').classList.contains('show');
+
+function paySmash(p) {
+  if (style.crashT > 0 || state !== 'play') return;      // ploughing on after a crash is not style
+  save.smashed = (save.smashed || 0) + 1;
+  if (p.k.trick) styleTrick(p.k.trick, p.k.pay);
+  else styleSmash(p.k.pay);
+  nitroGain(NITRO.smash);
+  if (!(save.havocTold & 1) && !intro.on && lineFree()) {
+    save.havocTold |= 1;
+    persist();
+    hint('Whatever stands on the street can be knocked over, and pays. Tricks, smashes and jumps fill the nitro: [Shift] fires the nitro.', 8);
+  }
+}
+
+function knockProp(p, vx, vz, byPlayer) {
+  if (p.st !== 0) return false;
+  const speed = Math.hypot(vx, vz);
+  if (speed < (p.k.need || 0.5)) return false;
+  const cell = propGrid.get(gridKey(p.hx, p.hz));
+  cell.splice(cell.indexOf(p), 1);
+  fallen.push(p);
+  p.st = 1;
+  p.t = 0;
+  p.by = !!byPlayer;
+  const loud = heard(p.x, p.z, 70);
+  if (p.kind === 'lamp') {
+    p.dx = vx / speed;
+    p.dz = vz / speed;
+    p.a = 0;
+    p.w = 0.8 + speed * 0.1;
+    if (loud > 0) for (let k = 0; k < 8; k++) puff(p.x, 6.9, p.z, rand(-3, 3), rand(0, 4), rand(-3, 3), 0.5, 1, 0.85, 0.5, 9);
+  } else {
+    p.vx = vx * rand(0.85, 1.25) + rand(-1.5, 1.5);
+    p.vz = vz * rand(0.85, 1.25) + rand(-1.5, 1.5);
+    p.vy = rand(2.5, 4.5) + Math.min(6, speed * 0.14);
+    p.wx = rand(-9, 9);
+    p.wz = rand(-9, 9);
+    p.rx = p.rz = 0;
+    if (p.kind === 'barrel') p.fuse = rand(0.12, 0.3);
+    if (p.kind === 'hydrant') jets.push({ x: p.hx, z: p.hz, t: 9 });
+    if (loud > 0) for (let k = 0; k < 3; k++) puff(p.x, 0.5, p.z, rand(-2, 2) + vx * 0.3, rand(1, 4), rand(-2, 2) + vz * 0.3, 0.35, 0.9, 0.8, 0.6, 9);
+  }
+  if (loud > 0) sfx.smash(p.k.hz, loud * clamp(speed / 25, 0.15, 0.55));
+  if (byPlayer && speed >= PROP_HIT && p.kind !== 'barrel') paySmash(p);      // a barrel pays when it goes up
+  return true;
+}
+
+function standProp(p) {
+  Object.assign(p, { st: 0, x: p.hx, z: p.hz, y: 0, vx: 0, vy: 0, vz: 0, rx: 0, rz: 0, a: 0, fuse: 0, by: false });
+  const key = gridKey(p.hx, p.hz);
+  if (!propGrid.has(key)) propGrid.set(key, []);
+  propGrid.get(key).push(p);
+  placeProp(p);
+}
+
+// calls back for every standing prop whose centre is within `r` metres (plus its own radius) of a point
+function propsNear(x, z, r, each) {
+  const bx0 = Math.floor((x - r - 1 + 640) / 16);
+  const bx1 = Math.floor((x + r + 1 + 640) / 16);
+  const bz0 = Math.floor((z - r - 1 + 640) / 16);
+  const bz1 = Math.floor((z + r + 1 + 640) / 16);
+  for (let bx = bx0; bx <= bx1; bx++) {
+    for (let bz = bz0; bz <= bz1; bz++) {
+      const cell = propGrid.get((bx << 8) | bz);
+      if (!cell) continue;
+      for (let n = cell.length - 1; n >= 0; n--) {
+        const p = cell[n];
+        const reach = r + p.k.r;
+        if (dist2(p.x, p.z, x, z) < reach * reach) each(p);
+      }
+    }
+  }
+}
+
+function vehiclesVsProps() {
+  for (const v of vehicles) {
+    if (v.y > 1) continue;
+    const speed = Math.hypot(v.vx, v.vz);
+    if (speed < 0.5) continue;
+    const mine = v === player.car;
+    for (const end of [1, -1]) {
+      const cx = v.x + Math.sin(v.h) * v.t.len * 0.3 * end;
+      const cz = v.z + Math.cos(v.h) * v.t.len * 0.3 * end;
+      propsNear(cx, cz, v.t.wid * 0.56, (p) => {
+        if (!knockProp(p, v.vx, v.vz, mine)) return;
+        v.vx *= 1 - p.k.slow;
+        v.vz *= 1 - p.k.slow;
+        if (mine) {
+          cam.shake = Math.max(cam.shake, p.kind === 'lamp' ? 0.4 : 0.16);
+          if (touch.on && navigator.vibrate) navigator.vibrate(p.kind === 'lamp' ? 50 : 18);
+        }
+      });
+    }
+  }
+}
+
+function updateProps(dt) {
+  const [px, pz] = focus();
+  const far = PROP_BACK * PROP_BACK;
+  for (let n = fallen.length - 1; n >= 0; n--) {
+    const p = fallen[n];
+    if (p.st !== 1) {
+      // lying or gone: it is put back once nobody can see it
+      if (dist2(p.x, p.z, px, pz) > far && dist2(p.hx, p.hz, px, pz) > far) {
+        standProp(p);
+        fallen.splice(n, 1);
+      }
+      continue;
+    }
+    p.t += dt;
+    if (p.kind === 'lamp') {
+      p.w += (1 + 5 * Math.sin(p.a)) * dt;
+      p.a = Math.min(1.52, p.a + p.w * dt);
+      if (p.a >= 1.52) {
+        p.st = 2;
+        const loud = heard(p.x + p.dx * 5, p.z + p.dz * 5, 70);
+        if (loud > 0) {
+          sfx.thud(loud * 0.5);
+          for (let k = 0; k < 8; k++) puff(p.x + p.dx * rand(1, 7), 0.2, p.z + p.dz * rand(1, 7), rand(-2, 2), rand(0.5, 2), rand(-2, 2), 0.6, 0.5, 0.48, 0.44, -0.5);
+        }
+      }
+      placeLamp(p);
+      continue;
+    }
+    if (p.fuse > 0 && (p.fuse -= dt) <= 0) {
+      p.st = 3;
+      placeProp(p);
+      blast(p.x, p.y + 0.5, p.z, p.by);
+      continue;
+    }
+    p.vy -= GRAVITY * dt;
+    const nx = p.x + p.vx * dt;
+    const nz = p.z + p.vz * dt;
+    if (insideBox(nx, nz)) {
+      p.vx *= -0.4;                 // off a wall
+      p.vz *= -0.4;
+    } else {
+      p.x = clamp(nx, -LIMIT - 12, LIMIT + 12);
+      p.z = clamp(nz, -LIMIT - 12, LIMIT + 12);
+    }
+    p.y += p.vy * dt;
+    p.rx += p.wx * dt;
+    p.rz += p.wz * dt;
+    if (p.y <= 0) {
+      p.y = 0;
+      if (p.vy < -3.5) {
+        p.vy *= -0.35;              // one bounce
+        p.vx *= 0.6;
+        p.vz *= 0.6;
+        p.wx *= 0.6;
+        p.wz *= 0.6;
+      } else if (p.fuse > 0) {
+        p.vy = 0;                   // a lit barrel on the ground waits for its fuse
+        p.vx *= 0.6;
+        p.vz *= 0.6;
+      } else {
+        p.st = 2;
+        p.rx = Math.PI / 2;
+      }
+    }
+    placeProp(p);
+  }
+  // a broken hydrant throws water for a while
+  for (let n = jets.length - 1; n >= 0; n--) {
+    const jet = jets[n];
+    jet.t -= dt;
+    if (jet.t <= 0) jets.splice(n, 1);
+    else if (dist2(jet.x, jet.z, px, pz) < 110 * 110) {
+      for (let k = 0; k < 2; k++) puff(jet.x, 0.3, jet.z, rand(-1.1, 1.1), rand(9, 13) * Math.min(1, jet.t / 2), rand(-1.1, 1.1), 1.3, 0.5, 0.72, 1, 15);
+    }
+  }
+}
+
+// ---------- blasts ----------
+// cars in reach are thrown off their wheels and turned, props are knocked flying, and other barrels light up
+function shockwave(x, z, reach, push, skip, byPlayer) {
+  for (const o of vehicles) {
+    if (o === skip) continue;
+    const d = Math.hypot(o.x - x, o.z - z);
+    if (d > reach) continue;
+    const f = 1 - d / reach;
+    const mine = o === player.car;
+    const k = push * f * (mine ? 0.5 : o.driver || o.dead ? 0.8 : 1);
+    o.vx += d > 0.1 ? ((o.x - x) / d) * k : k;
+    o.vz += d > 0.1 ? ((o.z - z) / d) * k : 0;
+    if (!o.air) {
+      o.air = true;
+      o.airT = 0;
+      o.vy = (2 + 5 * f) * (mine ? 0.6 : 1);
+      o.jump = null;
+    }
+    o.spin += rand(-1, 1) * 3 * f * (mine ? SPIN.own : 1);
+    if (!mine) o.stun = Math.max(o.stun, 1.2);
+    if (!o.driver) o.shoved = 2;
+  }
+  propsNear(x, z, reach, (p) => {
+    const d = Math.hypot(p.x - x, p.z - z) || 1;
+    const k = 5 + push * (1 - Math.min(1, d / reach));
+    knockProp(p, ((p.x - x) / d) * k, ((p.z - z) / d) * k, byPlayer);
+  });
+}
+
+function boomFlash(amount) {
+  boom.t = Math.max(boom.t, 0.45 * clamp(amount, 0, 1));
+}
+
+function blast(x, y, z, byPlayer) {
+  const loud = heard(x, z, 140);
+  if (loud > 0) {
+    for (let k = 0; k < 34; k++) puff(x, y, z, rand(-8, 8), rand(2, 13), rand(-8, 8), rand(0.4, 1.1), 1, rand(0.35, 0.75), 0.1, 10);
+    for (let k = 0; k < 8; k++) puff(x, y + 1, z, rand(-2, 2), rand(2, 5), rand(-2, 2), rand(1, 1.8), 0.32, 0.3, 0.3, -1.5);
+    sfx.boom(loud * 0.8);
+  }
+  const d = Math.hypot(x - focus()[0], z - focus()[1]);
+  if (d < BLAST.flash) {
+    cam.shake = Math.max(cam.shake, 0.75 * (1 - d / 60));
+    boomFlash(1 - d / BLAST.flash);
+  }
+  for (const o of vehicles) {
+    const od = Math.hypot(o.x - x, o.z - z);
+    if (od < BLAST.reach) damageVehicle(o, BLAST.damage * (1 - od / BLAST.reach) * (byPlayer && o === player.car ? BLAST.own : 1));
+  }
+  shockwave(x, z, BLAST.reach, BLAST.push, null, byPlayer);
+  for (const ped of peds) {
+    const pd = Math.hypot(ped.x - x, ped.z - z);
+    if (pd < 6.5) downPed(ped, ((ped.x - x) / (pd || 1)) * 9, ((ped.z - z) / (pd || 1)) * 9, byPlayer, 7);
+  }
+  scare(x, z, 50, 9);
+  if (!player.car && state === 'play' && d < 6) hurt(42 - d * 6, 'wasted');
+  if (byPlayer && state === 'play') {
+    save.smashed = (save.smashed || 0) + 1;
+    crime(0.5);
+    if (style.crashT <= 0) styleTrick('BLAST', PROP_KINDS.barrel.pay);
+    if (d < BLAST.flash && warp.t <= 0) Object.assign(warp, { t: 0.35, k: 0.4 });
+  }
+}
+
+// a shot that hits a barrel sets it off (called by playerAttack with the ray and how far it flew)
+function shootProps(ox, oy, oz, dx, dy, dz, tMax) {
+  let best = null;
+  let bestT = tMax;
+  for (const p of props) {
+    if (p.kind !== 'barrel' || p.st !== 0) continue;
+    const lx = p.x - ox;
+    const ly = 0.5 - oy;
+    const lz = p.z - oz;
+    const along = lx * dx + ly * dy + lz * dz;
+    if (along < 0.5 || along > bestT) continue;
+    if (lx * lx + ly * ly + lz * lz - along * along > 0.36) continue;
+    best = p;
+    bestT = along;
+  }
+  if (!best) return false;
+  const cell = propGrid.get(gridKey(best.hx, best.hz));
+  cell.splice(cell.indexOf(best), 1);
+  fallen.push(best);
+  Object.assign(best, { st: 1, t: 0, by: true, vx: 0, vz: 0, vy: 0, fuse: 0.02 });
+  return true;
+}
+
+// ---------- cars: off the ground, turned by a hit ----------
+// called by updateVehicle once the car has moved: its height on a ramp, its flight, its landing
+function rideHeight(v, dt) {
+  const speed = Math.hypot(v.vx, v.vz);
+  const ramp = rampAt(v.x, v.z);
+  const ground = ramp ? ramp.high * (rampSpot.u / ramp.len + 0.5) : 0;
+  let nose = 0;
+  if (v.air) {
+    v.airT += dt;
+    v.vy -= GRAVITY * dt;
+    v.y += v.vy * dt;
+    nose = clamp(-Math.atan2(v.vy, Math.max(8, speed)) * 0.8, -0.45, 0.45);
+    if (v.y <= ground) {
+      v.y = ground;
+      landCar(v, speed);
+    }
+  } else {
+    // the nose of the car meets the tall end or a side of a ramp: a wall
+    const lead = v.t.len * 0.3 * (v.vf < 0 ? -1 : 1);
+    const lx = v.x + Math.sin(v.h) * lead;
+    const lz = v.z + Math.cos(v.h) * lead;
+    const face = rampAt(lx, lz);
+    if (face && face.high * (rampSpot.u / face.len + 0.5) - v.y > 0.55 + speed * dt * 0.3) {
+      const bx = lx - v.vx * dt - face.x;
+      const bz = lz - v.vz * dt - face.z;
+      const across = bx * face.fz - bz * face.fx;
+      const s = Math.abs(across) > face.wid / 2 ? Math.sign(across) : 1;
+      const nx = Math.abs(across) > face.wid / 2 ? face.fz * s : face.fx;
+      const nz = Math.abs(across) > face.wid / 2 ? -face.fx * s : face.fz;
+      v.x -= v.vx * dt;
+      v.z -= v.vz * dt;
+      const vn = v.vx * nx + v.vz * nz;
+      if (vn < 0) {
+        v.vx -= nx * vn * 1.2;
+        v.vz -= nz * vn * 1.2;
+        impact(v, -vn);
+      }
+    } else if (v.y - ground > 0.12 + speed * dt * 0.3) {
+      // the ground has gone from under the wheels: the car flies on with the climb it had
+      v.air = true;
+      v.airT = 0;
+      v.vy = clamp(v.climb, 0, 14);
+      v.jump = { x: v.x, z: v.z, ramp: v.onRamp };
+      if (v === player.car && state === 'play' && v.vy > 2.5 && speed > 14) {
+        Object.assign(warp, { t: 0.45, k: 0.45 });       // the take-off, slowed down for a moment
+        sfx.thud(0.25);
+      }
+    } else {
+      v.climb = dt > 0 ? (ground - v.y) / dt : 0;
+      v.y = ground;
+      v.onRamp = ramp ? ramp.id : -1;
+      if (ramp) nose = -Math.atan2(ramp.high, ramp.len) * (Math.sin(v.h) * ramp.fx + Math.cos(v.h) * ramp.fz);
+    }
+  }
+  v.tilt += (nose - v.tilt) * Math.min(1, dt * 12);
+}
+
+function landCar(v, speed) {
+  const hard = -v.vy;
+  const flight = v.jump;
+  const secs = v.airT;
+  v.air = false;
+  v.vy = 0;
+  v.climb = 0;
+  v.jump = null;
+  const loud = heard(v.x, v.z, 60);
+  if (loud > 0 && hard > 2) {
+    sfx.thud(loud * clamp(hard / 12, 0.15, 0.6));
+    for (let k = 0; k < 8; k++) puff(v.x + rand(-1, 1), 0.25, v.z + rand(-1, 1), rand(-3, 3), rand(0.5, 2), rand(-3, 3), 0.6, 0.5, 0.48, 0.44, -0.5);
+  }
+  if (v !== player.car) return;
+  cam.shake = Math.max(cam.shake, clamp(hard / 16, 0.12, 0.5));
+  if (touch.on && navigator.vibrate && hard > 3) navigator.vibrate(40);
+  if (state !== 'play' || !flight || flight.ramp < 0) return;
+  const far = Math.hypot(v.x - flight.x, v.z - flight.z);
+  if (far > secs * 70) return;                 // moved by the game in mid-air (a new job, a respawn): not a jump
+  if (secs >= RAMP.air && far >= RAMP.far && style.crashT <= 0) stuntJump(flight.ramp, far);
+}
+
+function stuntJump(id, metres) {
+  const far = Math.round(metres);
+  save.jumpBest = Math.max(save.jumpBest || 0, far);
+  styleTrick('STUNT JUMP  ' + far + ' m', 40 + Math.round((metres * 4) / 5) * 5);
+  nitroGain(NITRO.jump);
+  if (!save.jumps.includes(id)) {
+    save.jumps.push(id);
+    if (save.jumps.length >= ramps.length) {
+      addMoney(RAMP.all);
+      banner('pass', 'ALL STUNT JUMPS', ramps.length + ' of ' + ramps.length + '   +' + dollars(RAMP.all), 5);
+      sfx.pass();
+    } else if (lineFree()) {
+      hint('Stunt jump ' + save.jumps.length + ' of ' + ramps.length + '. M shows the whole map. The orange marks are the others.', 6);
+    }
+  }
+  persist();
+}
+
+// an off-centre hit turns the car that takes it (called by collideVehicles for both cars of a hard crash)
+function knockSpin(v, off, nx, nz, push) {
+  const mine = v.driver === 'player';
+  const lever = Math.sign(off) * (Math.cos(v.h) * nx - Math.sin(v.h) * nz);
+  const cap = SPIN.max * (mine ? SPIN.own : 1);
+  v.spin = clamp(v.spin + lever * push * SPIN.gain * (mine ? SPIN.own : 1), -cap, cap);
+  if (!mine) v.stun = Math.max(v.stun, clamp(push / 10, SPIN.stun[0], SPIN.stun[1]));
+  if (!v.driver) v.shoved = 1.5;
+}
+
+// ---------- nitro ----------
+function nitroGain(amount) {
+  nitro.tank = Math.min(1, nitro.tank + amount);
+}
+// called by updateVehicle for the player's car: is the nitro burning this step?
+function nitroBurn(v, throttle, dt) {
+  const held = state === 'play' && (keys.ShiftLeft || keys.ShiftRight);
+  const can = !!held && throttle > 0 && !v.air && v.hp > 0 && nitro.tank > (nitro.on ? 0 : NITRO.min);
+  if (can && !nitro.on) sfx.nitro();
+  nitro.on = can;
+  if (can) nitro.tank = Math.max(0, nitro.tank - dt / NITRO.burn);
+  return can;
+}
+
+// the game runs slower for a moment (frame() in part 4 asks every frame)
+function timeScale(realDt) {
+  if (warp.t <= 0) return 1;
+  warp.t -= realDt;
+  return warp.k;
+}
+
+function updateHavoc(dt, realDt) {
+  const car = player.car;
+  if (!car) nitro.on = false;
+  if (car && nitro.on) {
+    const fx = Math.sin(car.h);
+    const fz = Math.cos(car.h);
+    for (const s of [-0.45, 0.45]) {
+      puff(car.x - fx * car.t.len * 0.5 + fz * s, car.y + 0.42, car.z - fz * car.t.len * 0.5 - fx * s,
+        car.vx * 0.6 - fx * 5 + rand(-0.6, 0.6), rand(0, 0.8), car.vz * 0.6 - fz * 5 + rand(-0.6, 0.6), 0.24, 0.35, 0.7, 1, 0);
+    }
+    cam.shake = Math.max(cam.shake, 0.07);
+    nitro.hissT -= dt;
+    if (nitro.hissT <= 0) {
+      nitro.hissT = 0.3;
+      noiseBurst(0.34, 0.1, 3200, 0, 0, 'highpass');
+    }
+  }
+  if (boom.t > 0 || boom.shown !== 0) {
+    boom.t = Math.max(0, boom.t - realDt);
+    const shown = Math.round(clamp(boom.t / 0.45, 0, 1) * 10) / 10;
+    if (shown !== boom.shown) {
+      boom.shown = shown;
+      $('boom').style.opacity = shown * 0.6;
+    }
+  }
+  // said once, the first time a ramp is close and the hint line is free
+  if (car && state === 'play' && !(save.havocTold & 2) && !intro.on && lineFree()) {
+    for (const r of ramps) {
+      if (dist2(r.x, r.z, car.x, car.z) > 45 * 45) continue;
+      save.havocTold |= 2;
+      persist();
+      hint('A stunt ramp. Hit it fast and straight: the further the jump, the more it pays.', 7);
+      break;
+    }
+  }
+}
+
+function resetHavoc() {
+  for (const p of fallen.splice(0)) standProp(p);
+  jets.length = 0;
+  Object.assign(nitro, { tank: NITRO.start, on: false, hissT: 0, over: false });
+  warp.t = 0;
+  boom.t = 0;
+}
+
+// =====================================================================
 // NEON COAST - part 4: population, camera, input, menus, main loop
 // =====================================================================
 let firing = false;
@@ -6186,7 +7062,12 @@ function updatePopulation(dt) {
     if (v.driver === 'ai' || v.driver === 'cop') traffic++;
     else if (!v.driver && !v.dead) parked++;
   }
-  if (traffic < (gfx.crowd ? CROWD.traffic[0] : CROWD.traffic[1])) spawnTraffic(95, 250, false);
+  // at speed the player outruns one try every fifth of a second: up to three, so the road ahead is not empty
+  const car = player.car;
+  const tries = car && Math.hypot(car.vx, car.vz) > AHEAD.speed ? 3 : 1;
+  for (let k = 0; k < tries && traffic < (gfx.crowd ? CROWD.traffic[0] : CROWD.traffic[1]); k++) {
+    if (spawnTraffic(95, 250, false)) traffic++;
+  }
   if (parked < (gfx.crowd ? CROWD.parked[0] : CROWD.parked[1])) spawnTraffic(95, 250, true);
   for (let k = peds.length - 1; k >= 0; k--) {
     if (dist2(peds[k].x, peds[k].z, px, pz) < 190 * 190) continue;
@@ -6214,6 +7095,7 @@ function resetSession() {
   setWanted(0);
   wanted.pts = 0;
   styleReset();
+  resetHavoc();                   // part 3c: everything stands again, the nitro tank is back at its start
   hideHeli();
   cab.on = false;
   ride.t = 0;
@@ -6304,7 +7186,7 @@ function updateCamera(dt) {
   const car = player.car;
   const tx = car ? car.x : player.x;
   const tz = car ? car.z : player.z;
-  const ty = car ? 1.6 : 1.55 + player.y;
+  const ty = car ? 1.6 + car.y * 0.8 : 1.55 + player.y;      // up a ramp and through the air with the car
   const speed = car ? Math.hypot(car.vx, car.vz) : 0;
   if (car && performance.now() - cam.lastMouse > 1400 && car.vf > 2.5) {
     // in a slide the camera stays nearer the way the car is travelling than the way it points,
@@ -6347,7 +7229,7 @@ function updateCamera(dt) {
   const jy = (Math.random() - 0.5) * cam.shake;
   camera.position.set(ox - dx * cam.dist + jx, Math.max(0.5, ty - dy * cam.dist + jy), oz - dz * cam.dist);
   camera.lookAt(ox + dx * 10, ty + dy * 10, oz + dz * 10);
-  const fov = view.fov + Math.min(SPEED_FEEL.lensMax, speed * SPEED_FEEL.lens);
+  const fov = view.fov + Math.min(SPEED_FEEL.lensMax, speed * SPEED_FEEL.lens) + (nitro.on ? NITRO.lens : 0);
   if (Math.abs(fov - camera.fov) > 0.05) {
     camera.fov = lerp(camera.fov, fov, Math.min(1, dt * 3));
     camera.updateProjectionMatrix();
@@ -6375,6 +7257,7 @@ function update(dt, realDt) {
   if (state === 'play') gameClock += dt;
   for (let k = 0; k < vehicles.length; k++) updateVehicle(vehicles[k], dt);
   collideVehicles();
+  vehiclesVsProps();              // part 3c: what stands on the street is knocked over
   if (state === 'play') updateStyle(dt);
   vehiclesVsPeople(dt);
   for (let k = peds.length - 1; k >= 0; k--) {
@@ -6383,6 +7266,8 @@ function update(dt, realDt) {
     peds.splice(k, 1);
   }
   updatePopulation(dt);
+  updateProps(dt);
+  updateHavoc(dt, realDt);
   if (state === 'play') {
     updateWanted(dt);
     updateMarkers(dt);
@@ -6668,7 +7553,8 @@ function renderSettings() {
   $('progress').textContent = 'Time ' + clockText() + '     Jobs ' + jobs + '     Packages ' + save.packages.length + ' / ' + packageSpots.length + '     Cash $' + save.money + (save.ferryRuns ? `     Ferry shifts ${save.ferryRuns} · best ${save.ferryBest}s` : '')
     + (save.fares ? `     Cab fares ${save.fares} · best run ${save.fareBest}` : '') + (have ? `     Property ${have} / ${PROPERTIES.length}` : '')
     + (save.tricks ? `     Tricks ${save.tricks} · best chain $${save.styleBest}` + (save.driftBest ? ` · longest slide ${save.driftBest}s` : '') : '')
-    + (save.getaways ? `     Getaways ${save.getaways}` : '');
+    + (save.getaways ? `     Getaways ${save.getaways}` : '')
+    + (save.smashed || save.jumps.length ? `     Smashed ${save.smashed || 0} · stunt jumps ${save.jumps.length} / ${ramps.length}` + (save.jumpBest ? ` · longest ${save.jumpBest} m` : '') : '');
   const perkBox = $('perks');
   perkBox.innerHTML = '';
   for (const p of PERKS) {
@@ -6726,7 +7612,7 @@ function updateIntro(dt) {
 
 function startGame(fresh) {
   if (fresh) {
-    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [] });
+    Object.assign(save, { money: SAVE_DEFAULTS.money, mission: 0, packages: [], tune: 0, ferryRuns: 0, ferryBest: 0, fares: 0, fareBest: 0, props: {}, spotted: [], jumps: [], jumpBest: 0, smashed: 0, havocTold: 0 });
     persist();
   }
   initAudio();
@@ -6887,7 +7773,8 @@ function frame(now) {
   frameNo++;
   if ((frameNo & 15) === 0) refreshLockHint();
   refreshPad();
-  if (state !== 'paused') update(state === 'dead' ? realDt * 0.4 : realDt, realDt);
+  // timeScale (part 3c): a ramp take-off and a blast run slower for a moment
+  if (state !== 'paused') update(state === 'dead' ? realDt * 0.4 : realDt * timeScale(realDt), realDt);
   renderFrame();
 }
 requestAnimationFrame(frame);
@@ -6902,7 +7789,10 @@ window.NEON = {
   route, cab, heli, bigMap, PROPERTIES, PERKS, perk, cabDuty, interact, toggleBigMap, addMoney, persist,
   ride, checkPerks, packageSpots, damageVehicle, audio, radio, STATIONS, setStation, anotherJob, offerMission, blocks, TAIL,
   touch, say, keyAction, setTouchMode, view, gfx, auto, governor, LADDER, applySettings, renderSettings, aimAssist,
-  addVehicle, removeVehicle,
+  addVehicle, removeVehicle, snapLane,
+  props, ramps, fallen, jets, PROP_KINDS, PROP_HIT, PROP_BACK, BLAST, SPIN, RAMP, NITRO, AHEAD, LOOSE_MASS, nitro, warp, kerbTaken, worksAt,
+  knockProp, blast, shootProps, rampAt, rampHeight, kerbBusy, nearPlace, stuntJump, resetHavoc, spawnTraffic, roadStop, downPed,
+  addPed, insideBox, lampMesh, lamps, FERRY, START, styleSmash, hint,
   style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, carSound, updateStyle, honk,
   get honks() {
     return honkCount;

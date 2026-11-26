@@ -725,3 +725,110 @@ more fun: that was Juwen's verdict on 1.8 and only his next ten minutes can chan
   https://juw12.github.io/p/neon-coast/ shows SIDEWAYS / 01.9 and the six items of 1.9 above the 1.8 ones.
 - Obsidian: a line in `journal/2026-11-25.md`, saved through Cairn.
 - Not done: the four-versions gate (`platforms.py`), Featured (`featured.py`), a fact sheet, a council score.
+
+## Run 8 (2026-11-25, "i played n not good enough, dont ask me which, just improve it", from the shipped 1.9 build)
+
+Ask: Juwen played 1.9 and said it was still not good enough, and said not to ask which part. This is the
+second run that starts from his verdict and the first with no list to work from.
+
+Goal beyond the goal, unchanged: a stranger opens one link, knows what to do within a minute and has
+something worth doing for ten. 1.8 changed the police and 1.9 the car; in both the street was scenery:
+nothing on it moved, a lamp post let a car straight through, a crash stopped the car dead. Run 8 changes
+what the street is, because that is the part no release had touched.
+
+### Run queue (run 8)
+
+- [x] R8-0 Read the collision, crowd and style-card code of 1.9; write `test/havoc.py` first (the 1.9 build
+      passes 2 of its first 45 checks)
+- [x] R8-1 Things on the kerbs that a car knocks flying and that pay into the style card
+- [x] R8-2 Barrels: a blast that hurts, throws and sets off the next barrel
+- [x] R8-3 Twelve stunt ramps, marked on both maps, with a reward for all twelve
+- [x] R8-4 Nitro: a tank that only play fills (Shift, NITRO on a phone)
+- [x] R8-5 Crashes that move things: a car shoved, a car spun and its driver stunned, a person thrown
+- [x] R8-6 Traffic put on the road ahead at speed
+- [x] R8-7 The older suites on the final build, 1.9 beside 2.0. The ASUS was over its load limit, so this
+      became a GitHub workflow (`.github/workflows/suites.yml`)
+- [x] R8-8 Two faults the older suites found on GitHub (a hint that named a key on a phone; a tip that
+      covered a job hint), fixed, the second held by check 46
+- [ ] R8-9 Juwen plays 2.0. The only measurement that counts for this run, as R7-9 was for the last
+- [ ] R8-10 The checks that fail on the GitHub computer for 1.9 and 2.0 alike (see below)
+- [ ] R6-7 Council score and blind pair: not done this run either. No new sheet, no judges
+- [ ] R5-11 A real iPhone and Android phone run it: needs Juwen
+
+### Assumptions (run 8)
+
+- Assumed: with no part named, the answer is not a seventh tuning of the six points of run 7 but the one
+  thing neither release had: a street that reacts. That is a guess about what "not good enough" meant.
+- Assumed: release name 2.0 "Havoc". A whole number because the street, the ramps and the nitro change what
+  a drive between two jobs is; nothing in the save format breaks (a 1.9 save loads with half a tank and no
+  ramps jumped).
+- Assumed: the sums. $5 a cone; $10 a bin, news box or crate; $20 a lamp post; $25 a hydrant; $40 a blast;
+  $40 plus $5 for every 1.25 m of a stunt jump; $2,500 for all twelve ramps. First guesses next to story
+  jobs of $250 to $3,500, not tuned by play.
+- Assumed: the other numbers. A thing is knocked flying from 2.5 m/s (a lamp post from 7 m/s) and stands
+  again at 150 m; a blast reaches 7.5 m and takes up to 26 health (40% of it for the player who set it
+  off); a jump counts from 8 m; a full tank lasts 3.2 s, starts half full and takes 3% a smash, 20% a
+  trick, 35% a stunt jump.
+- Assumed: the ASUS load limit holds for test runs too. No browser suite was started on it after the first
+  `test/havoc.py` runs; everything else ran on GitHub.
+- Assumed: a red PR may be merged when the red checks are red for the released 1.9 build as well, for the
+  same reason, and the README says so. No limit in any test was loosened to get a green mark.
+- Assumed: 2.0 ships without a council score, as 1.8 and 1.9 did.
+
+| round | change | gates | judge score | pairwise win | kept? | note |
+|---|---|---|---|---|---|---|
+| 14 (release 2.0 Havoc) | the street breaks, barrels, ramps, nitro, crashes that move things, traffic ahead | not run on the ASUS (load limit); on GitHub 9/10 on run 1, did not finish on runs 2 and 3 (1.9: 8/10, then the same) | not judged | - | shipped | `test/havoc.py` 46/46 on GitHub (45/45 on the ASUS before check 46 was written; 1.9: 2 of the first 45). Seven faults found by suites on the way, all fixed: five by the first runs of `havoc.py`, one by `touch.py` and one by `city.py` on GitHub |
+
+What was measured (`NeonCoast.html` 947,900 bytes, sha256 `10f4f0bf`).
+
+- On the ASUS: `test/havoc.py` 45/45 on the 2.0 build and 2/45 on 1.9, before the load limit was reached.
+  Check 46 (a tip said once waits for a free hint line) was written after that and ran on GitHub only, and
+  only on 2.0.
+- The seven faults. From `havoc.py`: a shot barrel never blew at 60 frames a second; 44 things stood inside
+  or against a street tree; a walker added without a home block stopped the page; a hit on a corner turned
+  a parked car only 23 degrees; a car put back on the road by the game was paid as a 303 m jump. From
+  `touch.py` on GitHub: a new hint named a key on a phone. From `city.py` on GitHub: the tip said once near
+  the first ramp took the hint line from the Paper Round.
+- On GitHub, three runs of `.github/workflows/suites.yml` (45588769166, 45596727724, 45602103204; the last
+  on `5e15cd7`), each suite for this commit and for v1.9.0, up to three attempts. The computer there has
+  no graphics card.
+- Last run, 2.0: `havoc.py` 46/46, `thrill.py` 34/34, `smoke.py` 22/22, `touch.py` 10/10, `harbor.py`
+  pass, all at the first attempt. 1.9: `thrill.py` 34/34, `smoke.py` 22/22, `harbor.py` pass at the second
+  attempt, `touch.py` 9/10 at best (two attempts crashed).
+- `city.py`, of 55: 2.0 read 53, 49 and 53 on the last run; 1.9 read 50, 50 and 51. On the run before
+  (head `d2d6210`) 2.0 read 49, 50 and 51, one of the fails being the real fault above.
+- `chase.py`: the cruiser that must stop less than 6 m behind the car stops further back and the two
+  checks after it are not reached. 2.0 failed 7 runs of 7 (6.45 to 6.97 m); 1.9 failed 6 of 7 (5.96 to
+  6.45 m).
+- `radio.py`: 11, 12 and 11 of 14 for 2.0; 11, 12 and 12 for 1.9.
+- `gates.py`: on the first run, on a faster computer, 9/10 for 2.0 and 8/10 for 1.9. On the next two it
+  finished for neither build (a screenshot times out after 30 s).
+- Frame rate gate on GitHub, drawn without a graphics card: 11 frames a second for 2.0 and 13 for 1.9 on
+  the first run, 9 for both after that.
+- Not run: `test/drive.py`, `test/chase_bench.py`, `test/fps_ab.py`, and no suite but `havoc.py` on the
+  ASUS.
+
+What this means. Every rule of 2.0 is in a test, and the five suites that can pass on the GitHub computer
+pass for 2.0. That 2.0 is slower to draw is likely (2,197 more things) and not measured on real hardware.
+None of this says the game is good enough now: that was Juwen's verdict on 1.9 and only he can change it.
+
+## Handoff (run 8)
+
+- Done: R8-0 to R8-8. Release 2.0 "Havoc" (see Sync below).
+- In progress: nothing.
+- Left: R8-9, Juwen plays 2.0.
+- Left: R8-10. Every PR is red on GitHub, because `chase.py`, `radio.py`, `gates.py` and the fixed-wait
+  checks of `city.py` cannot pass on a computer with no graphics card. To try: make those waits use the
+  game's clock, as `thrill.py` and `havoc.py` do, or mark them as not for that computer. Never loosen a
+  limit.
+- Left: on one of seven `city.py` runs for 2.0, four Shadow Run checks failed that 1.9 failed in no run
+  (the second tail was passed and not spotted), and on one more "Shadow Run pays $700" failed. Why was not
+  found; a stall of the runner between two fixed waits is the guess. `city.py` now prints the money before
+  the pay and the counts.
+- Left: the harbor shift's first stop timed out once on the first GitHub run and not again; `harbor.py`
+  now prints where the van is when a stop does not load.
+- Left: the sums and the tank were not tuned. Watch whether a street of cones out-earns the jobs.
+- Left: `test/fps_ab.py NeonCoast.html <1.9 build>` on a quiet PC with a graphics card, and on a phone.
+- Left: a push that changes only text starts the whole 30 minute workflow; `paths-ignore` would stop that.
+- Left from run 7: "installs and plays offline" on the ASUS (it passed on GitHub for 2.0); R6-7; R5-11.
+- Next command: `/hone neon-coast` (run 9 starts from what Juwen says about 2.0).

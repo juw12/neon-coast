@@ -5,7 +5,7 @@
 const $ = (id) => document.getElementById(id);
 
 // ---------- particles and tracers ----------
-const P_MAX = 600;
+const P_MAX = 900;                // 600 before 2.0: debris, blasts, water jets and nitro flames need the room
 const pPos = new Float32Array(P_MAX * 3).fill(-999);
 const pCol = new Float32Array(P_MAX * 3);
 const pVel = new Float32Array(P_MAX * 3);
@@ -225,6 +225,18 @@ const sfx = {
     tone(hz * 1.26, 0.34, vol * 0.7, 'square');
   },
   trick: (n) => tone(520 * Math.pow(1.122, Math.min(n, 9)), 0.09, 0.13, 'triangle'),   // each trick in a chain a tone higher
+  smash: (hz, vol) => {                        // something on the street knocked over: a clatter at its own pitch
+    noiseBurst(0.12, vol, 900 + hz * 3, 0, 0, 'bandpass');
+    tone(hz, 0.1, vol * 0.5, 'triangle', hz * 0.6);
+  },
+  thud: (vol) => {                             // a car back on its wheels, a lamp post on the road
+    noiseBurst(0.22, vol, 160);
+    tone(70, 0.18, vol * 0.7, 'sine', 40);
+  },
+  nitro: () => {
+    noiseBurst(0.6, 0.3, 2600, 0, 0, 'highpass');
+    tone(160, 0.5, 0.12, 'sawtooth', 640);
+  },
   hurt: () => tone(160, 0.2, 0.3, 'sawtooth', 80),
   click: () => tone(1200, 0.03, 0.1, 'square'),
   pass: () => [523, 659, 784, 1047].forEach((f, k) => setTimeout(() => tone(f, 0.25, 0.2, 'triangle'), k * 130)),
@@ -433,8 +445,9 @@ const STYLE = {
   heat: 2,             // with wanted stars on
   crash: 6,            // m/s: a crash at least this hard loses the chain
 };
-const style = { bank: 0, count: 0, t: 0, drift: 0, crashT: 0, noteT: 0, shown: false };
-const styleMult = () => Math.min(STYLE.maxMult, 1 + STYLE.step * Math.max(0, style.count - 1));
+// free: 1 when the chain was opened by a smash (part 3c), which is not a trick and does not count towards the multiplier
+const style = { bank: 0, count: 0, t: 0, drift: 0, crashT: 0, noteT: 0, shown: false, smashes: 0, free: 0 };
+const styleMult = () => Math.min(STYLE.maxMult, 1 + STYLE.step * Math.max(0, style.count - 1 - style.free));
 const styleValue = () => Math.round(style.bank * styleMult());
 
 // the card under the clock: what the last trick was, what the chain is worth, how long it stays open
@@ -454,22 +467,37 @@ function styleTrick(title, cash) {
   const mult = styleMult();
   styleNote(title, '$' + styleValue() + (mult > 1 ? '  \u00b7  x' + mult : '') + (wanted.stars > 0 ? '  \u00b7  HEAT' : ''), 'open');
   sfx.trick(style.count);
+  nitroGain(NITRO.trick);         // part 3c: every trick puts nitro in the tank
+}
+// what the car knocks over on the street (part 3c): its cash goes into the chain, opens one if none is open and
+// keeps it open, but it is not a trick: the multiplier stays where it is
+function styleSmash(cash) {
+  if (style.crashT > 0) return;
+  if (!style.count) style.count = style.free = 1;
+  style.smashes++;
+  style.bank += cash * (wanted.stars > 0 ? STYLE.heat : 1);
+  style.t = STYLE.hold;
+  const mult = styleMult();
+  styleNote('SMASH  x' + style.smashes, '$' + styleValue() + (mult > 1 ? '  \u00b7  x' + mult : '') + (wanted.stars > 0 ? '  \u00b7  HEAT' : ''), 'open');
 }
 function styleClear() {
   style.bank = 0;
   style.count = 0;
   style.t = 0;
   style.drift = 0;
+  style.smashes = 0;
+  style.free = 0;
 }
 function styleBank() {
   if (!style.count) return 0;
   const pay = styleValue();
-  const chain = style.count;
+  const chain = style.count - style.free;
+  const smashes = style.smashes;
   styleClear();
   save.styleBest = Math.max(save.styleBest || 0, pay);
   addMoney(pay);
   sfx.cash();
-  styleNote('BANKED', '+$' + pay + (chain > 1 ? '  \u00b7  ' + chain + ' in a row' : ''), 'paid', 2.2);
+  styleNote('BANKED', '+$' + pay + (chain > 1 ? '  \u00b7  ' + chain + ' in a row' : smashes > 1 ? '  \u00b7  ' + smashes + ' smashed' : ''), 'paid', 2.2);
   return pay;
 }
 // called for every crash of the player's car (part 2)
@@ -558,7 +586,7 @@ function updateStyle(dt) {
   if (!save.styleTold && speed > 17 && state === 'play') {
     save.styleTold = 1;
     persist();
-    hint('Near misses pay cash, and so does a slide: [Space] with the wheel turned. Chain them before the bar runs out.', 7);
+    hint('Near misses pay cash, and so does a slide: [Space] with the wheel turned. Chain them before the bar runs out.', 6);
   }
 }
 
@@ -946,6 +974,7 @@ function playerAttack() {
   const dz = Math.cos(cam.yaw) * cp;
   const o = camera.position;
   const hit = castRay(o.x, o.y, o.z, dx, dy, dz, cam.dist * 0.9, 150, player.car);
+  shootProps(o.x, o.y, o.z, dx, dy, dz, hit.t);      // part 3c: a barrel in the way of the shot goes up
   const my = player.car ? 1.3 : 1.4 + player.y;
   tracer(px + dx * 0.6, my, pz + dz * 0.6, o.x + dx * hit.t, o.y + dy * hit.t, o.z + dz * hit.t);
   puff(px + dx * 0.8, my, pz + dz * 0.8, 0, 0, 0, 0.06, 1, 0.9, 0.5, 0);
@@ -1488,7 +1517,7 @@ function roadStop(minD, maxD, from) {
     const x = (roadC(i) + roadC(i + 1)) / 2 + rand(-16, 16);
     stop = { at: [x, roadC(j) + side * PARK], kerb: [x, roadC(j) + side * (ROAD / 2 + 2)] };
     const d = manhattan(stop.at, from);
-    if (d >= minD && d <= maxD) break;
+    if (d >= minD && d <= maxD && !kerbBusy(stop.at[0], stop.at[1])) break;      // not on a ramp or in road works (part 3c)
   }
   return stop;
 }
@@ -1634,8 +1663,10 @@ function startMission() {
   mission.startMarker = null;
   if (def.spawn) {
     const d = 1;
+    let sj = def.spawn.j;
+    while (kerbTaken.has(def.spawn.i + ',' + sj + ',' + d)) sj = (sj + 1) % N;      // a ramp or road works has that kerb (part 3c)
     const x = roadC(def.spawn.i) + DX[(d + 1) & 3] * PARK;
-    const z = roadC(def.spawn.j) + CELL * 0.4;
+    const z = roadC(sj) + CELL * 0.4;
     for (const v of vehicles.slice()) {
       if (v !== player.car && dist2(v.x, v.z, x, z) < 64) removeVehicle(v);
     }
@@ -2019,6 +2050,10 @@ function drawMap() {
   blip(PLACES.police[0], PLACES.police[1], '#6fa2ff', 'P');
   for (const p of PROPERTIES) blip(p.at[0], p.at[1], owned(p) ? '#7dffa5' : '#d6dbe6', '$');
   for (const id of save.spotted) if (!save.packages.includes(id)) blip(packageSpots[id][0], packageSpots[id][1], '#c58bff', '?');
+  for (const r of ramps) {
+    // stunt ramps near enough to reach: orange, green once jumped
+    if (dist2(r.x, r.z, px, pz) < 170 * 170) blip(r.x, r.z, save.jumps.includes(r.id) ? '#7dffa5' : '#ff8a1f', '^');
+  }
   if (heli.on) blip(heli.x, heli.z, Math.floor(performance.now() / 200) % 2 ? '#ffffff' : '#3f7bff', '', true);
   for (const v of vehicles) {
     if (v.siren && !v.dead) blip(v.x, v.z, Math.floor(performance.now() / 200) % 2 ? '#ff3344' : '#3f7bff');
@@ -2153,6 +2188,7 @@ function drawBigMap() {
   for (const p of PROPERTIES) dot(p.at[0], p.at[1], owned(p) ? '#7dffa5' : '#d6dbe6', '$');
   dot(PLACES.wheel[0], PLACES.wheel[1], '#ff8fd0', 'W');
   for (const id of save.spotted) if (!save.packages.includes(id)) dot(packageSpots[id][0], packageSpots[id][1], '#c58bff', '?', 8);
+  for (const r of ramps) dot(r.x, r.z, save.jumps.includes(r.id) ? '#7dffa5' : '#ff8a1f', '^', 7);
   for (const v of vehicles) {
     if (v.siren && !v.dead) dot(v.x, v.z, '#ff3344', '', 4);
   }
@@ -2236,8 +2272,14 @@ function updateHud() {
     const kmh = Math.round(Math.hypot(car.vx, car.vz) * 3.6);
     setText('speed', kmh + ' km/h');
     $('carhp').style.width = clamp((car.hp / car.t.hp) * 100, 0, 100) + '%';
+    const tank = Math.round(nitro.tank * 50) * 2;
+    if (hudCache.nitro !== tank) {
+      hudCache.nitro = tank;
+      $('nitro').style.width = tank + '%';
+    }
   }
   $('drive').classList.toggle('show', !!car);
+  $('drive').classList.toggle('boost', !!car && nitro.on);
   $('cross').classList.toggle('show', player.gun && player.ammo > 0);
 
   if (mission.active && mission.timer >= 0) {

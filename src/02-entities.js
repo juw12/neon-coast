@@ -106,6 +106,7 @@ function addPed(x, z) {
   ped.mesh.position.set(x, 0, z);
   scene.add(ped.mesh);
   peds.push(ped);
+  rehome(ped);                    // never without a block to walk round
   return ped;
 }
 
@@ -159,7 +160,8 @@ function scare(x, z, radius, secs) {
   }
 }
 
-function downPed(ped, vx, vz, byPlayer) {
+// up: m/s upwards, when a fast car or a blast throws them into the air
+function downPed(ped, vx, vz, byPlayer, up) {
   if (ped.state === 'down') return;
   ped.state = 'down';
   ped.timer = 14;
@@ -167,6 +169,12 @@ function downPed(ped, vx, vz, byPlayer) {
   ped.vz = vz * 0.6;
   ped.mesh.rotation.x = -Math.PI / 2;
   ped.mesh.position.y = 0.2;
+  ped.fly = up > 0;
+  if (ped.fly) {
+    ped.y = 0.2;
+    ped.vy = up;
+    ped.spin = rand(-9, -4);
+  }
   scare(ped.x, ped.z, 22, 9);
   if (byPlayer) {
     crime(1.6);
@@ -177,10 +185,25 @@ function downPed(ped, vx, vz, byPlayer) {
 function updatePed(ped, dt) {
   if (ped.state === 'down') {
     ped.timer -= dt;
-    ped.x += ped.vx * dt;
-    ped.z += ped.vz * dt;
-    ped.vx *= 0.9;
-    ped.vz *= 0.9;
+    if (ped.fly) {
+      // thrown: up, over and down again, and no wall is flown through
+      if (insideBox(ped.x + ped.vx * dt, ped.z + ped.vz * dt)) ped.vx = ped.vz = 0;
+      ped.vy -= 19 * dt;
+      ped.y += ped.vy * dt;
+      ped.mesh.rotation.x += ped.spin * dt;
+      if (ped.y <= 0.2) {
+        ped.y = 0.2;
+        ped.fly = false;
+        ped.mesh.rotation.x = -Math.PI / 2;
+      }
+      ped.mesh.position.y = ped.y;
+    }
+    ped.x = clamp(ped.x + ped.vx * dt, -LIMIT, LIMIT);
+    ped.z = clamp(ped.z + ped.vz * dt, -LIMIT, LIMIT);
+    if (!ped.fly) {
+      ped.vx *= 0.9;
+      ped.vz *= 0.9;
+    }
     ped.mesh.position.x = ped.x;
     ped.mesh.position.z = ped.z;
     return ped.timer > 0;
@@ -352,11 +375,14 @@ function addVehicle(type, x, z, h, driver, colorHex) {
     grip: t.grip, thr: 0, roll: 0, pitch: 0, sliding: false, call: 0,
     hp: t.hp, driver: driver || null,
     burn: 0, dead: false, deadT: 0, keep: false, siren: false, smokeT: 0,
+    // part 3c: height and flight (ramps, blasts), a turn knocked into the car, seconds out of hand, seconds shoved
+    y: 0, vy: 0, air: false, airT: 0, climb: 0, onRamp: -1, jump: null, tilt: 0, spin: 0, stun: 0, shoved: 0,
     input: { thr: 0, st: 0 },
     ai: { d: 0, ti: 0, tj: 0, nd: -1, stuck: 0, rev: 0, block: 0, cruise: rand(10, 15), los: 0, direct: false, wasDirect: false, fire: 1, cx: 0, cz: 0, want: 0 },
     mesh: buildCar(type, colorHex || pick(t.colors)),
   };
   v.mesh.position.set(x, 0, z);
+  v.mesh.rotation.order = 'YXZ';         // nose up and down (ramps, flight) in the car's own frame
   v.mesh.rotation.y = h;
   scene.add(v.mesh);
   vehicles.push(v);
@@ -377,14 +403,24 @@ function vehicleNear(x, z, r) {
 }
 
 // Put a car in the right-hand lane halfway along a random road segment.
+const AHEAD = { speed: 12, share: 0.65, from: 90, to: 190 };      // m/s, share of new traffic, metres ahead
 function spawnTraffic(minD, maxD, parked) {
   const [px, pz] = focus();
-  const i = clamp(nodeOf(px) + irand(-3, 3), 0, N);
-  const j = clamp(nodeOf(pz) + irand(-3, 3), 0, N);
+  let i = clamp(nodeOf(px) + irand(-3, 3), 0, N);
+  let j = clamp(nodeOf(pz) + irand(-3, 3), 0, N);
+  // at speed the road ahead is what the player sees and reaches: most new traffic is put there
+  const car = player.car;
+  const speed = car ? Math.hypot(car.vx, car.vz) : 0;
+  if (!parked && speed > AHEAD.speed && Math.random() < AHEAD.share) {
+    const secs = rand(AHEAD.from, AHEAD.to) / speed;
+    i = clamp(nodeOf(px + car.vx * secs) + irand(-1, 1), 0, N);
+    j = clamp(nodeOf(pz + car.vz * secs) + irand(-1, 1), 0, N);
+  }
   const d = irand(0, 3);
   const ni = i + DX[d];
   const nj = j + DZ[d];
   if (ni < 0 || nj < 0 || ni > N || nj > N) return null;
+  if (parked && kerbTaken.has(i + ',' + j + ',' + d)) return null;      // a ramp or road works has that kerb
   const rd = (d + 1) & 3;
   const along = parked ? rand(0.25, 0.75) * CELL : CELL / 2;
   const off = parked ? PARK : LANE;
@@ -643,7 +679,8 @@ function impact(v, speed, police) {
     styleCrash(speed);
     if (touch.on && navigator.vibrate) navigator.vibrate(Math.round(clamp(speed * 5, 20, 140)));   // the crash in the hand (Android)
   }
-  for (let k = 0; k < 5; k++) puff(v.x, 0.7, v.z, rand(-4, 4), rand(1, 4), rand(-4, 4), 0.4, 1, 0.8, 0.4, 9);
+  const sparks = Math.min(16, 4 + Math.round(speed / 2.5));       // a harder hit throws more of them
+  for (let k = 0; k < sparks; k++) puff(v.x, 0.7 + v.y, v.z, rand(-4, 4) - v.vx * 0.15, rand(1, 4 + speed * 0.1), rand(-4, 4) - v.vz * 0.15, 0.4, 1, 0.8, 0.4, 9);
 }
 
 function updateVehicle(v, dt) {
@@ -660,6 +697,8 @@ function updateVehicle(v, dt) {
       handbrake = !!keys.Space;
       // one thumb cannot hold GAS and HAND BRAKE together: on a touch screen a slide keeps the power on by itself
       if (touch.on && handbrake && throttle === 0 && Math.abs(v.steer) > DRIFT.steer && v.vf > DRIFT.speed) throttle = 1;
+      // nor GAS and NITRO: on a touch screen the NITRO button is the gas pedal and the nitro in one
+      if (touch.on && keys.ShiftLeft && throttle === 0) throttle = 1;
     }
   } else {
     aiDrive(v, dt);
@@ -668,17 +707,29 @@ function updateVehicle(v, dt) {
   }
   if (v.hp <= 0) throttle = 0;
   if (v.crashT > 0) v.crashT -= dt;
+  if (v.shoved > 0) v.shoved -= dt;
+  if (v.stun > 0) {
+    // turned round by a hard hit: for a moment its driver has lost it
+    v.stun -= dt;
+    if (v.driver !== 'player') {
+      throttle = 0;
+      steer = v.steer;
+    }
+  }
+  const boost = v === player.car && nitroBurn(v, throttle, dt);
 
   v.steer += clamp(steer - v.steer, -dt * 6, dt * 6);
   v.thr = throttle;
   let fx = Math.sin(v.h);
   let fz = Math.cos(v.h);
   let vf = v.vx * fx + v.vz * fz;
-  const sliding = handbrake && !v.dead && Math.abs(v.steer) > DRIFT.steer && vf > DRIFT.speed;
+  const sliding = handbrake && !v.dead && !v.air && Math.abs(v.steer) > DRIFT.steer && vf > DRIFT.speed;
   v.sliding = sliding;
   const vfBefore = vf;
-  const yaw = ((v.steer * t.turn * (sliding ? DRIFT.turn : 1)) / (1 + Math.abs(vf) / 40)) * clamp(vf / 6, -1, 1);
-  v.h += yaw * dt;
+  // in the air the wheels steer next to nothing
+  const yaw = ((v.steer * t.turn * (sliding ? DRIFT.turn : 1)) / (1 + Math.abs(vf) / 40)) * clamp(vf / 6, -1, 1) * (v.air ? 0.3 : 1);
+  v.h += (yaw + v.spin) * dt;                         // spin: what a hard hit or a blast knocked into the car
+  v.spin *= Math.exp(-(v.air ? 0.6 : 3.2) * dt);
   fx = Math.sin(v.h);
   fz = Math.cos(v.h);
   const rx = -fz;                 // right-hand side of the car
@@ -688,30 +739,42 @@ function updateVehicle(v, dt) {
 
   const power = v.hp < 30 ? 0.6 : 1;
   const tuned = v === player.car && save.tune > 0;
-  const accel = t.acc * (tuned ? 1 + 0.14 * save.tune : 1);
-  const topSpeed = t.max * (tuned ? 1 + 0.07 * save.tune : 1);
-  if (throttle > 0) {
-    vf += (vf < -0.5 ? t.brake : accel * power * Math.max(0, 1 - vf / topSpeed)) * throttle * dt;
-  } else if (throttle < 0) {
-    vf += (vf > 0.5 ? t.brake : t.acc * 0.6 * Math.max(0, 1 + vf / (t.max * 0.3))) * throttle * dt;
+  const accel = t.acc * (tuned ? 1 + 0.14 * save.tune : 1) * (boost ? NITRO.acc : 1);
+  const topSpeed = t.max * (tuned ? 1 + 0.07 * save.tune : 1) * (boost ? NITRO.top : 1);
+  if (v.air) {
+    v.slip = 0;                   // off the ground nothing drives, brakes or grips: the car flies as it left
   } else {
-    vf -= vf * 0.35 * dt;
+    if (throttle > 0) {
+      vf += (vf < -0.5 ? t.brake : accel * power * Math.max(0, 1 - vf / topSpeed)) * throttle * dt;
+    } else if (throttle < 0) {
+      vf += (vf > 0.5 ? t.brake : t.acc * 0.6 * Math.max(0, 1 + vf / (t.max * 0.3))) * throttle * dt;
+    } else {
+      vf -= vf * 0.35 * dt;
+    }
+    if (boost) {
+      nitro.over = true;
+    } else if (nitro.over && v === player.car) {
+      // the nitro is off: the speed it gave above the car's own top speed goes in about a second
+      if (vf > topSpeed * 1.02) vf -= (vf - topSpeed) * 1.2 * dt;
+      else nitro.over = false;
+    }
+    if (handbrake) {
+      // a car with nobody in it that was just hit rolls on: it is shoved down the street, not stopped dead
+      const cut = (sliding ? DRIFT.cut : v.shoved > 0 ? 5 : 16) * dt;
+      vf = Math.abs(vf) < cut ? 0 : vf - Math.sign(vf) * cut;
+    }
+    vf -= Math.sign(vf) * Math.min(Math.abs(vf), 0.6 * dt);
+    if (handbrake) v.grip = sliding ? DRIFT.grip : 1.5;
+    else v.grip = Math.min(v.stun > 0 && v.driver !== 'player' ? 1.2 : t.grip, v.grip + DRIFT.recover * dt);
+    const vlBefore = vl;
+    vl *= Math.exp(-v.grip * dt);
+    if (v.driver && v.grip < t.grip && vf > 0) {
+      // a slide keeps its momentum: part of the speed the tyres scrub off sideways goes on forwards
+      const kept = Math.sqrt(Math.max(0, vf * vf + vlBefore * vlBefore - vl * vl));
+      vf += (kept - vf) * DRIFT.carry;
+    }
+    v.slip = Math.abs(vl);
   }
-  if (handbrake) {
-    const cut = (sliding ? DRIFT.cut : 16) * dt;
-    vf = Math.abs(vf) < cut ? 0 : vf - Math.sign(vf) * cut;
-  }
-  vf -= Math.sign(vf) * Math.min(Math.abs(vf), 0.6 * dt);
-  if (handbrake) v.grip = sliding ? DRIFT.grip : 1.5;
-  else v.grip = Math.min(t.grip, v.grip + DRIFT.recover * dt);
-  const vlBefore = vl;
-  vl *= Math.exp(-v.grip * dt);
-  if (v.driver && v.grip < t.grip && vf > 0) {
-    // a slide keeps its momentum: part of the speed the tyres scrub off sideways goes on forwards
-    const kept = Math.sqrt(Math.max(0, vf * vf + vlBefore * vlBefore - vl * vl));
-    vf += (kept - vf) * DRIFT.carry;
-  }
-  v.slip = Math.abs(vl);
   v.vf = vf;
   v.vx = fx * vf + rx * vl;
   v.vz = fz * vf + rz * vl;
@@ -746,6 +809,7 @@ function updateVehicle(v, dt) {
     v.z = clamp(v.z, -LIMIT, LIMIT);
     v.vz = 0;
   }
+  rideHeight(v, dt);              // part 3c: up a ramp, through the air, back on the road
 
   // damage states: smoke, fire, explosion
   if (!v.dead) {
@@ -768,8 +832,9 @@ function updateVehicle(v, dt) {
     puff(v.x - fx * t.len * 0.3, 0.2, v.z - fz * t.len * 0.3, 0, 0.6, 0, 0.6, 0.22, 0.22, 0.24, -0.5);
   }
 
-  v.mesh.position.set(v.x, 0, v.z);
+  v.mesh.position.set(v.x, v.y, v.z);
   v.mesh.rotation.y = v.h;
+  v.mesh.rotation.x = v.tilt;
   const u = v.mesh.userData;
   // weight: the body leans out of a turn, squats under power and dips under the brakes
   const ease = Math.min(1, dt * 7);
@@ -800,9 +865,11 @@ function explode(v) {
   const d = Math.hypot(v.x - px, v.z - pz);
   sfx.boom(clamp(1 - d / 150, 0, 1));
   if (d < 40) cam.shake = 0.8;
+  if (d < 45) boomFlash(1 - d / 45);
   for (const other of vehicles) {
     if (other !== v && dist2(other.x, other.z, v.x, v.z) < 81) damageVehicle(other, 55);
   }
+  shockwave(v.x, v.z, 10, 9, v, false);            // part 3c: cars are thrown and turned, what stands near is knocked flying
   for (const ped of peds) {
     if (dist2(ped.x, ped.z, v.x, v.z) < 64) downPed(ped, (ped.x - v.x) * 2, (ped.z - v.z) * 2, false);
   }
@@ -821,6 +888,10 @@ function collideVehicles() {
     for (let b = a + 1; b < vehicles.length; b++) {
       const B = vehicles[b];
       if (dist2(A.x, A.z, B.x, B.z) > 42) continue;
+      if (Math.abs(A.y - B.y) > 1.3) continue;         // one of them is flying over the other
+      // a car with nobody in it is lighter than one being driven: it is the one that gets shoved
+      const mA = A.driver || A.dead ? 1 : LOOSE_MASS;
+      const mB = B.driver || B.dead ? 1 : LOOSE_MASS;
       for (const sa of [1, -1]) {
         for (const sb of [1, -1]) {
           const oa = A.t.len * 0.3 * sa;
@@ -847,14 +918,20 @@ function collideVehicles() {
           // how fast each car was driving at the other one (the two add up to -rel)
           const closeA = -(A.vx * nx + A.vz * nz);
           const closeB = B.vx * nx + B.vz * nz;
-          const push = -rel * 0.6;
-          A.vx += nx * push;
-          A.vz += nz * push;
-          B.vx -= nx * push;
-          B.vz -= nz * push;
+          const pushA = (-rel * 1.2 * mB) / (mA + mB);       // two driven cars: 0.6 each, as before 2.0
+          const pushB = (-rel * 1.2 * mA) / (mA + mB);
+          A.vx += nx * pushA;
+          A.vz += nz * pushA;
+          B.vx -= nx * pushB;
+          B.vz -= nz * pushB;
+          if (-rel > SPIN.from) {
+            knockSpin(A, oa, nx, nz, pushA);            // a hard hit off the middle turns a car round
+            knockSpin(B, ob, -nx, -nz, pushB);
+          }
           const police = A.type === 'police' || B.type === 'police';
-          impact(A, -rel * 0.8, police);
-          impact(B, -rel * 0.8, police);
+          // the lighter car takes more of the knock (two driven cars: 0.8 each, as before 2.0)
+          impact(A, (-rel * 1.6 * mB) / (mA + mB), police);
+          impact(B, (-rel * 1.6 * mA) / (mA + mB), police);
           const mine = A.driver === 'player' ? B : B.driver === 'player' ? A : null;
           if (mine && -rel > 5) {
             if (mine.type === 'police') {
@@ -874,6 +951,7 @@ function collideVehicles() {
 
 function vehiclesVsPeople(dt) {
   for (const v of vehicles) {
+    if (v.y > 1) continue;                               // flying over their heads
     const speed = Math.hypot(v.vx, v.vz);
     const reach = v.t.wid * 0.56 + 0.4;
     for (const end of [1, -1]) {
@@ -883,7 +961,7 @@ function vehiclesVsPeople(dt) {
         for (const ped of peds) {
           if (ped.state === 'down' || dist2(ped.x, ped.z, cx, cz) > reach * reach) continue;
           if (speed > 5) {
-            downPed(ped, v.vx, v.vz, v.driver === 'player');
+            downPed(ped, v.vx, v.vz, v.driver === 'player', speed > 9 ? Math.min(9, 2 + speed * 0.22) : 0);
             sfx.crash(0.25);
           } else if (ped.state !== 'flee') {
             scare(cx, cz, 4, 3);
@@ -993,19 +1071,25 @@ function updatePlayerOnFoot(dt) {
     player.phase += player.speed * dt * 2.3;
   }
   if (player.fireT > 0) player.h = cam.yaw;
-  if (keys.Space && player.y === 0) player.vy = 6.2;
+  pushOut(player.x + mx * player.speed * dt, player.z + mz * player.speed * dt, 0.42, tmpHit);
+  const tx = clamp(tmpHit.x, -LIMIT, LIMIT);
+  const tz = clamp(tmpHit.z, -LIMIT, LIMIT);
+  // a stunt ramp (part 3c) is walked up from its low end: its sides and its tall end are a wall
+  if (rampHeight(tx, tz) - player.y <= 0.6) {
+    player.x = tx;
+    player.z = tz;
+  }
+  const ground = rampHeight(player.x, player.z);
+  if (keys.Space && player.vy === 0 && Math.abs(player.y - ground) < 0.1) player.vy = 6.2;
   player.y += player.vy * dt;
   player.vy -= 19 * dt;
-  if (player.y <= 0) {
-    player.y = 0;
+  if (player.y <= ground + (player.vy <= 0 ? 0.08 : 0)) {
+    player.y = ground;
     player.vy = 0;
   }
-  pushOut(player.x + mx * player.speed * dt, player.z + mz * player.speed * dt, 0.42, tmpHit);
-  player.x = clamp(tmpHit.x, -LIMIT, LIMIT);
-  player.z = clamp(tmpHit.z, -LIMIT, LIMIT);
 
   animPerson(player.mesh, player.phase, player.speed > 5 ? 0.95 : player.speed > 0 ? 0.55 : 0);
-  if (player.speed === 0 && player.y === 0 && player.fireT <= 0 && player.punchT <= 0) {
+  if (player.speed === 0 && player.y === ground && player.fireT <= 0 && player.punchT <= 0) {
     player.idleT = (player.idleT || 0) + dt;
     idlePerson(player.mesh, player.idleT);
   } else {

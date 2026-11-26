@@ -18,9 +18,80 @@ On a phone or tablet, open the [play link](https://juw12.github.io/neon-coast/) 
 game switches to touch controls by itself, landscape or upright (see [On a phone](#on-a-phone-or-tablet)).
 
 On a desktop, open NeonCoast.html in Chrome or Edge with WebGL. No server, network, installer or account
-needed. Choose New Game or Continue. Walk up to a car and press F. Drive with WASD; Space is the handbrake.
+needed. Choose New Game or Continue. Walk up to a car and press F. Drive with WASD; Space is the handbrake
+and Shift the nitro.
 Follow the arrows on the road to the yellow J marker for the first of six jobs. Press M for the whole map
 and P to pause. Progress is stored in your browser, so use the same browser and file location to resume.
+
+## Version 2.0 · Havoc
+
+Juwen played 1.9 and said it was still not good enough, with no word on which part. 1.9 had changed how
+the car drives and what the police do. In both releases the street itself was scenery: nothing on it
+moved, a lamp post let a car straight through, a crash stopped the car dead. 2.0 changes what the street is.
+
+- **The street breaks.** 2,197 things now stand on the kerbs: 474 cones, 410 bins, 232 news boxes, 136
+  crates, 225 hydrants, 48 barrels and the 672 lamp posts, which a car drove straight through before. 16
+  road works stand in the lanes. A car knocks them flying. What your car knocks over pays into the style
+  card of 1.9: a cone $5; a bin, box or crate $10; a lamp post $20 (it needs 7 m/s, and its light goes
+  out); a hydrant $25, with a jet of water. Seven cones at 20 m/s: $35, no health and no speed lost. A
+  lamp post costs the car 7% of its speed and no health.
+  Slower than 2.5 m/s a thing is only tipped over. It all stands again once you are 150 m away.
+- **Barrels blow up.** Ram or shoot a red barrel: BLAST, $40, a flash, a moment of slow motion. The blast
+  reaches 7.5 m, takes up to 26 health off a car (16 at 3 m, and the car is thrown 6 m), throws people,
+  and sets off the barrels next to it. One shot at the row of four on the Rustport dock sets off all four
+  in 0.8 s. Your own car takes 40% of the blast it set off. The police count a blast as a crime.
+- **Twelve stunt ramps.** On the parking strips of eleven streets and on the Rustport dock, each with a
+  clear run-up and a clear landing. At 30 m/s (108 km/h) the car flies 37 m, 3.1 m high, for 1.1 s and
+  lands unhurt: STUNT JUMP, $40 plus $5 for every 1.25 m, here $190. Under 8 m is a hop and pays nothing.
+  Both maps mark the ramps orange, and green once jumped. The longest jump is kept, and all twelve pay
+  $2,500. From its tall end a ramp is a wall.
+- **Nitro.** Hold Shift in a car. From 12 m/s, 0.6 s of throttle adds 6.4 m/s; with nitro 13.9 m/s. The
+  top speed of the test car goes from 152 to 191 km/h. A full tank lasts 3.2 s. It starts half full and
+  only play fills it: 3% for each thing knocked over, 20% for a trick, 35% for a stunt jump. An orange
+  bar under the car's condition shows the tank.
+- **A crash is a move.** A parked car hit square from behind at 20 m/s is shoved 44 m down the road and
+  you keep 14 m/s. A hit off the middle turns the other car round: a parked
+  car 46 degrees, a driven one 116, your own 9. The driver of a car that was spun has no power for 0.5 to
+  1.6 s, so a cruiser can be spun out of a chase.
+- **People are thrown.** Somebody hit at 20 m/s goes 1.25 m into the air (0.2 m at 7 m/s).
+- **Traffic where you are going.** At 30 m/s, 86% of new traffic is put on the road ahead of you
+  (standing still 47%), so a fast drive has cars to pass.
+- **On a phone.** A NITRO button next to GAS; it is the gas as well, so one thumb does both. RADIO moved
+  to make room.
+- **A new test.** `test/havoc.py` holds every rule above, 46 checks on the game's own clock. The 1.9 build
+  passes 2 of the first 45. Its first runs found five faults in the new code, all fixed before release: a
+  shot barrel never blew at 60 frames a second; 44 things stood inside or against a street tree; a walker
+  added without a home block stopped the page; a hit on a corner turned a parked car only 23 degrees; a
+  car put back on the road by the game was paid as a 303 m jump. The older suites found two more:
+  `touch.py`, that a new hint named a key on a phone; `city.py`, that the tip said once near the first ramp
+  took the hint line from a job. A tip now waits until the line is free, and check 46 holds that.
+
+What this does not show:
+
+- **Whether it is good enough now.** A script can check that a barrel takes 16 health at 3 m. It cannot
+  say whether that is fun. Nobody has played 2.0 yet.
+- **The sums are first guesses.** $5 to $40 for what is knocked over and $190 for a long jump stand next
+  to story jobs that pay $250 to $3,500. They were not tuned by play; nor was how fast the tank fills.
+- **What the police make of it.** A blast counts as a crime and a cruiser can be spun out. How a whole
+  chase goes with barrels, ramps and nitro in it was not measured (`test/chase_bench.py` was not run).
+- **No real phone.** The NITRO button ran in Chrome's phone emulation only.
+- **The older suites ran on a GitHub computer, not on the PC the game is built on.** That PC was over its
+  load limit with other work. The GitHub computer has no graphics card and draws 9 to 13 frames a second, so
+  each suite ran there for 2.0 and for 1.9 side by side, up to three attempts each
+  (`.github/workflows/suites.yml`). On the last run, for 2.0: `havoc.py` 46/46, `thrill.py` 34/34,
+  `smoke.py` 22/22, `touch.py` 10/10 and the harbor shift, all at the first attempt. Three suites fail there
+  for both builds. `chase.py`: the cruiser that has to stop less than 6 m behind the car stops further
+  back, and the two checks after it are not reached: 6.45 to 6.97 m for 2.0 in seven runs of seven, 5.96 to
+  6.45 m for 1.9, which passed one run of seven. `radio.py`: 11 or 12 of 14.
+  `gates.py`: on the last run it finished for neither build (a screenshot times out after 30 s); on the
+  first run, on a faster computer, it read 9/10 for 2.0 and 8/10 for 1.9. `city.py` read 53, 49 and 53 of 55
+  for 2.0 and 50, 50 and 51 for 1.9: the cab fare, the helicopter and the ten-second head start wait a fixed
+  time. The run of 49 failed four Shadow Run checks that 1.9 failed in no run; why was not found.
+- **What the street costs in frames.** 2,197 more things are drawn. On the GitHub computer the frame rate
+  gate read 11 frames a second for 2.0 and 13 for 1.9 on one run, and 9 for both on the next two. With a
+  graphics card or on a phone it was not measured (`test/fps_ab.py` was not run).
+
+Saves from 1.9 carry over (half a tank, no ramps jumped).
 
 ## Version 1.9 · Sideways
 
@@ -175,6 +246,7 @@ Open <https://juw12.github.io/neon-coast/> in Safari (iPhone, iPad) or Chrome (A
 | Drag the view | Look and aim |
 | CAR / EXIT | In or out of any car |
 | GAS, BRAKE, HAND BRAKE | Drive. BRAKE at a standstill reverses |
+| NITRO | Next to GAS, since 2.0. It is the gas as well, so one thumb does both |
 | FIRE / PUNCH, SWAP | Shoot or punch. Shots find a target near the crosshair; slide the thumb on FIRE to aim yourself. SWAP changes pistol and fists |
 | JUMP, HORN, RADIO | As named |
 | USE, CAB | Appear when they apply: in a property or Sol Wheel ring, in a City Cab |
@@ -299,6 +371,21 @@ Needs Python with Playwright and Chrome. Run from this folder after `python buil
   from a driver who has to wait, a patrol car on a call, five gears, wind, the wider lens, **J** before and
   after the first story job, the number of cars and people, and the phone controls for the slide. Give it
   another build to see which rules are new: `python test/thrill.py old.html` reads 11 of 34 on 1.8.
+- `python test/havoc.py` - 46 checks on what 2.0 added, all waiting on the game's own clock: how many
+  things stand on the street and that none stands in a tree, at a job stop, a shop or a door; what a cone,
+  a lamp post and a barrel cost the car and pay; that a slow car only tips a thing over; a blast by
+  distance, on a parked car, on people and on the next barrel; a ramp at 30 m/s and at 10 m/s, the map
+  marks and the reward for all twelve; that a tip said once waits for a free hint line; the nitro tank,
+  what fills it and what it adds; a parked car shoved, a car spun and its driver stunned; a person thrown;
+  traffic put ahead at speed; the NITRO button on a phone; a save from 1.9. `python test/havoc.py old.html`
+  reads 2 of the first 45 on 1.9 (check 46 came later and was not run on 1.9).
+- `.github/workflows/suites.yml` (since 2.0) runs every suite above on a GitHub computer for each pull
+  request: once for the build of the commit and once for the last release from its own tag, up to three
+  attempts each, with the logs kept. That computer has no graphics card (9 to 13 frames a second), so a
+  check that also fails for the last release says something about the computer, not about the change.
+  `test/thrill.py` had three set-ups made steady for it (a patrol car put in a lane, the crowd counted as
+  a median over 4 s, the horn taken from a car that drives towards the player; no limit changed), and
+  `test/harbor.py` prints where the van is when a stop does not load.
 - `python test/chase_bench.py NeonCoast.html 2 21` - how long a car lasts in a chase. It holds a Vanta GT
   at a set speed (here 21 m/s) at a set number of stars (here two) for 30 s of game time, with the other
   traffic removed, and reports whether the car was wrecked, the stars at the end and the damage from
