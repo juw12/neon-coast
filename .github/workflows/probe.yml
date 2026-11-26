@@ -1,0 +1,38 @@
+name: probe
+
+# Not for main: a look at which GitHub computer draws the game fastest. Runs only for branches named probe/.
+on:
+  push:
+    branches: ["probe/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest, macos-13]
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install --quiet playwright
+      - name: The 1.9 build, from its tag
+        shell: bash
+        run: git show v1.9.0:NeonCoast.html > old.html
+      - name: Probe (Linux needs a display for the run with a window)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a python test/probe.py NeonCoast.html old.html
+      - name: Probe
+        if: runner.os != 'Linux'
+        run: python test/probe.py NeonCoast.html old.html
