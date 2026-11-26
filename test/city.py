@@ -307,12 +307,37 @@ def run():
               offer["name"] == "Paper Round" and offer["reward"] == 550 and offer["steps"] == 4 and offer["foot"], json.dumps(offer))
         marker = page.evaluate("() => NEON.mission.startMarker.text")
         check("the Paper Round beam is labelled ON FOOT", "ON FOOT" in marker, marker)
+        # PROBE ONLY: the beam is moved to the corner that has a ramp just inside 45 m (NEON_FOOT_CORNER=ramp),
+        # or to the corner furthest from every ramp (NEON_FOOT_CORNER=far)
+        if os.environ.get('NEON_FOOT_CORNER'):
+            print('forced corner: ' + json.dumps(page.evaluate("""(want) => { const n = NEON; let best = null;
+                for (let i = 1; i <= 8; i++) for (let j = 1; j <= 8; j++) { const b = n.blocks[i][j];
+                    if (!b || b.type === 'park') continue;
+                    const at = [b.x0 + 2.4, b.z0 + 2.4];
+                    const d = Math.min(...n.ramps.map((r) => Math.hypot(r.x - at[0], r.z - at[1])));
+                    if (want === 'ramp' ? (d < 45 && (!best || d > best.d)) : (!best || d > best.d)) best = { at, d, i, j };
+                }
+                n.mission.offer.at = best.at; n.mission.startMarker.x = best.at[0]; n.mission.startMarker.z = best.at[1];
+                return Object.assign(best, { told: n.save.havocTold, line: document.getElementById('hint').textContent.slice(0, 30),
+                    shown: document.getElementById('hint').classList.contains('show') }); }""", os.environ['NEON_FOOT_CORNER'])), flush=True)
         # arrive by car (1.7): the round does not start from the driver's seat, and the hint says why
         page.evaluate("""() => { const n = NEON, p = n.player;
             const car = n.vehicles.filter(v => v.driver !== 'ai' && !v.dead)
               .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
             p.x = car.x + 2.2; p.z = car.z; n.tryEnterExit();
-            const at = n.mission.offer.at; n.player.car.x = at[0]; n.player.car.z = at[1]; n.player.car.vx = n.player.car.vz = 0; }""")
+            const at = n.mission.offer.at; n.player.car.x = at[0]; n.player.car.z = at[1]; n.player.car.vx = n.player.car.vz = 0;
+            // what the hint line said, frame by frame, for the line the check prints: it decides nothing
+            const el = document.getElementById('hint'), start = performance.now();
+            const seen = window.__line = { on: true, frames: 0, longest: 0, last: start, said: [], was: '' };
+            const look = () => { if (!seen.on) return;
+                const now = performance.now(), c = n.player.car, shown = el.classList.contains('show');
+                seen.frames++; seen.longest = Math.max(seen.longest, now - seen.last); seen.last = now;
+                const words = (shown ? '' : '(hidden) ') + el.textContent.slice(0, 22);
+                if (words !== seen.was && seen.said.length < 12) { seen.was = words;
+                    seen.said.push({ ms: Math.round(now - start), line: words, wait: Math.round((n.mission.footNote || 0) * 100) / 100,
+                        vf: c ? Math.round((c.vf || 0) * 100) / 100 : null, off: c ? Math.round(Math.hypot(c.x - at[0], c.z - at[1]) * 100) / 100 : null }); }
+                requestAnimationFrame(look); };
+            look(); }""")
         page.wait_for_timeout(700)
         # (the beam stands on the corner of a block picked at random: the line says which, and how far the car is from it)
         refused = page.evaluate("""() => { const n = NEON, c = n.player.car, m = n.mission.startMarker, at = n.mission.offer.at;
@@ -320,7 +345,9 @@ def run():
             return { active: n.mission.active, car: !!c, hint: document.getElementById('hint').textContent,
                 shown: document.getElementById('hint').classList.contains('show'), beam: at.map(Math.round),
                 from_beam: round(c && m ? Math.hypot(c.x - m.x, c.z - m.z) : -1), speed: round(c ? Math.abs(c.vf || 0) : -1),
-                ramp: round(Math.min(...(n.ramps || []).map((r) => Math.hypot(r.x - at[0], r.z - at[1])), 9999)) }; }""")
+                ramp: round(Math.min(...(n.ramps || []).map((r) => Math.hypot(r.x - at[0], r.z - at[1])), 9999)),
+                frames: (window.__line || {}).frames, longest_ms: Math.round((window.__line || {}).longest || 0),
+                line: ((window.__line || {}).on = false, (window.__line || {}).said) }; }""")
         check("the round does not start from a car, and the hint says it is on foot",
               refused["car"] and not refused["active"] and "on foot" in refused["hint"], json.dumps(refused))
         # step out at the beam: now it starts, and the title card says on foot

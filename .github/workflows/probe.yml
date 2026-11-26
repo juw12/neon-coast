@@ -17,34 +17,41 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: every Paper Round corner, 2.0.1 then 2.0
+          - name: city with the Paper Round beam 44.8 m from a ramp, 2.0.1
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/foot_beam.py NeonCoast.html;python test/foot_beam.py v20.html
-          - name: city three times, 2.0.1 (a)
-            args: "--disable-gpu-vsync --disable-frame-rate-limit"
-            window: ""
+            corner: "ramp"
             run: python test/city.py;python test/city.py;python test/city.py
-          - name: city three times, 2.0.1 (b)
+          - name: city with the Paper Round beam 44.8 m from a ramp, 2.0
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/city.py;python test/city.py;python test/city.py
-          - name: city three times, 2.0.1 (c)
-            args: "--disable-gpu-vsync --disable-frame-rate-limit"
-            window: ""
-            run: python test/city.py;python test/city.py;python test/city.py
-          - name: city three times, 2.0.1 (d)
-            args: "--disable-gpu-vsync --disable-frame-rate-limit"
-            window: ""
-            run: python test/city.py;python test/city.py;python test/city.py
-          - name: city three times, 2.0
-            args: "--disable-gpu-vsync --disable-frame-rate-limit"
-            window: ""
+            corner: "ramp"
             run: cp v20.html NeonCoast.html;python test/city.py;python test/city.py;python test/city.py
+          - name: city with the Paper Round beam far from every ramp, 2.0.1
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            corner: "far"
+            run: python test/city.py;python test/city.py;python test/city.py
+          - name: chase six times, 2.0.1
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            corner: ""
+            run: python test/chase.py;python test/chase.py;python test/chase.py;python test/chase.py;python test/chase.py;python test/chase.py
+          - name: chase six times, 2.0
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            corner: ""
+            run: python test/chase.py v20.html;python test/chase.py v20.html;python test/chase.py v20.html;python test/chase.py v20.html;python test/chase.py v20.html;python test/chase.py v20.html
+          - name: pace three times, 2.0.1
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            corner: ""
+            run: python test/pace.py;python test/pace.py;python test/pace.py
     env:
       PYTHONUTF8: "1"
       NEON_CHROME_ARGS: ${{ matrix.args }}
       NEON_WINDOW: ${{ matrix.window }}
+      NEON_FOOT_CORNER: ${{ matrix.corner }}
     steps:
       - uses: actions/checkout@v4
         with:

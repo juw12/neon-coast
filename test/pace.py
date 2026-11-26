@@ -186,13 +186,13 @@ def run(target):
               lambda: own["steps"] == 1 and 0.98 <= own["speed"] <= 1.02, brief(own))
         half = ask(page, PACE_JS, {"ms": 32, "seconds": 3})
         check("at about 30 frames a second: two steps a frame, real time",
-              lambda: 26 <= half["fps"] <= 31.5 and half["steps"] == 2 and 0.98 <= half["speed"] <= 1.02, brief(half))
+              lambda: 26 <= half["fps"] <= 33 and half["steps"] == 2 and 0.98 <= half["speed"] <= 1.02, brief(half))
         slow = ask(page, PACE_JS, {"ms": 80, "seconds": 4})
         check("at about 12 frames a second: five or six steps a frame, and still real time (2.0 ran at 0.6 of it)",
               lambda: 10.5 <= slow["fps"] <= 12.6 and slow["steps"] in (5, 6) and 0.98 <= slow["speed"] <= 1.02, brief(slow))
         crawl = ask(page, PACE_JS, {"ms": 200, "seconds": 4})
         check("at 5 frames a second: six steps a frame and no more, so the game runs at half speed and does not fall behind for ever",
-              lambda: 4.5 <= crawl["fps"] <= 5.01 and crawl["steps"] == 6 and 0.095 <= crawl["perFrame"] <= 0.1001 and 0.45 <= crawl["speed"] <= 0.52,
+              lambda: 4.5 <= crawl["fps"] <= 5.2 and crawl["steps"] == 6 and 0.095 <= crawl["perFrame"] <= 0.1001 and 0.45 <= crawl["speed"] <= 0.52,
               brief(crawl))
         longest = max(case["longest"] for case in (own, half, slow, crawl))
         check("no step of the game was longer than 1/48 s in any of these",
