@@ -319,7 +319,13 @@ def run():
             p.x = car.x + 2.2; p.z = car.z; }""")
         page.wait_for_timeout(300)
         page.evaluate("""() => { const n = NEON, p = n.player;
+            // beside the nearest car again: in those 300 ms it may have driven off (a patrol car is not 'ai'), or a
+            // wall may have moved the player out of reach (4.2 m). One run in 17 on GitHub stopped here with no car.
+            const car = n.vehicles.filter(v => v.driver !== 'ai' && !v.dead)
+              .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
+            p.x = car.x + 2.2; p.z = car.z;
             n.tryEnterExit();
+            if (!n.player.car) throw new Error('no car within reach of the player: nearest is ' + Math.hypot(car.x - p.x, car.z - p.z).toFixed(1) + ' m');
             const at = n.mission.offer.at; n.player.car.x = at[0]; n.player.car.z = at[1]; n.player.car.vx = n.player.car.vz = 0;
             // what the hint line said, frame by frame, for the line the check prints: it decides nothing
             const el = document.getElementById('hint'), start = performance.now();
@@ -411,18 +417,26 @@ def run():
             page.evaluate("""(metres) => { clearInterval(window.__pin); window.__pin = setInterval(() => {
                 const n = NEON, c = n.player.car, t = n.mission.car;
                 if (!n.mission.active || !c || !t) return;
-                c.x = t.x - Math.sin(t.h) * metres; c.z = t.z - Math.cos(t.h) * metres; c.h = t.h; c.vx = c.vz = 0; c.hp = c.t.hp; }, 30);
+                c.x = t.x - Math.sin(t.h) * metres; c.z = t.z - Math.cos(t.h) * metres; c.h = t.h; c.vx = c.vz = 0; c.hp = c.t.hp;
+                if (window.__seen) window.__seen.pinned = true; }, 30);
                 window.__age0 = n_age(); function n_age() { const t = NEON.mission.tail; return t ? t.age : 0; }
                 // what the hold saw, frame by frame, for the line a check prints: it decides nothing
                 if (window.__seen) window.__seen.on = false;
                 const seen = window.__seen = { on: true, frames: 0, nearest: 1e9, widest: 0, noCar: 0, inAir: 0, lost: 0, resets: 0, before: 0,
-                    age: 0, zeroAt: 0 };
+                    age: 0, zeroAt: 0, pinned: false, moved: 0, movedGap: -1, movedLost: -1, jump: 0, markX: null, markZ: 0 };
                 { const tail = NEON.mission.tail; if (tail) { seen.age = tail.age; seen.zeroAt = tail.age - tail.lost; seen.before = tail.lost; } }
                 const look = () => { if (!seen.on) return;
                     const n = NEON, c = n.player.car, t = n.mission.car, tail = n.mission.tail;
                     seen.frames++;
                     if (!c) seen.noCar++; else if (c.air) seen.inAir++;
-                    if (c && t) { const gap = Math.hypot(t.x - c.x, t.z - c.z); seen.nearest = Math.min(seen.nearest, gap); seen.widest = Math.max(seen.widest, gap); }
+                    // from the first pin on (before it the car is wherever the job began). moved: how far the game has
+                    // carried the car from the spot the pin put it on, at most, with the gap and the game's count then.
+                    // mark_jump: the furthest the marked car went between two frames
+                    if (c && t && seen.pinned) { const gap = Math.hypot(t.x - c.x, t.z - c.z); seen.nearest = Math.min(seen.nearest, gap); seen.widest = Math.max(seen.widest, gap);
+                        const off = Math.hypot(c.x - (t.x - Math.sin(t.h) * metres), c.z - (t.z - Math.cos(t.h) * metres));
+                        if (off > seen.moved) { seen.moved = off; seen.movedGap = gap; seen.movedLost = tail ? tail.lost : -1; }
+                        if (seen.markX !== null) seen.jump = Math.max(seen.jump, Math.hypot(t.x - seen.markX, t.z - seen.markZ));
+                        seen.markX = t.x; seen.markZ = t.z; }
                     if (tail && n.mission.active) {
                         // the last moment the game's count of seconds too far behind stood at nought, and the last moment seen
                         if (tail.lost === 0 || tail.lost < seen.before) seen.zeroAt = tail.age;
@@ -448,6 +462,7 @@ def run():
                     age: round(tail && tail.age), held: round(tail && tail.age - window.__age0), lost: round(tail && tail.lost),
                     most_lost: round(seen.lost), lost_restarted: seen.resets, nearest: round(seen.nearest), widest: round(seen.widest),
                     ended: round(seen.age), far_from: round(seen.zeroAt),
+                    moved: round(seen.moved), moved_gap: round(seen.movedGap), moved_lost: round(seen.movedLost), mark_jump: round(seen.jump),
                     frames: seen.frames, no_car: seen.noCar, in_air: seen.inAir,
                     ramp: round(c ? Math.min(...(n.ramps || []).map((r) => Math.hypot(r.x - c.x, r.z - c.z)), 9999) : -1) }; }""")
 
