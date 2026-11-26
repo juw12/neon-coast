@@ -76,7 +76,9 @@ AIM_JS = """(setup) => new Promise(done => {
     n.save.difficulty = 1;
     n.setWanted(0); n.wanted.pts = 0; n.setWanted(setup.stars || 2);
     c.hp = c.t.hp; c.crashT = 0;
-    const cop = n.addVehicle('police', -3.2, -62, 0, 'cop');
+    // (2.1) `gap` m behind the car (20 if not given), and `cruiser` m/s: the cruiser on a treadmill of its own
+    const copZ = -42 - (setup.gap || 20);
+    const cop = n.addVehicle('police', -3.2, copZ, 0, 'cop');
     cop.ai.fire = 0.2;
     const dice = Math.random;
     Math.random = () => setup.roll;
@@ -88,7 +90,7 @@ AIM_JS = """(setup) => new Promise(done => {
         const drop = prev - c.hp; prev = c.hp;
         if (Math.abs(drop - 6) < 0.01) hits++; else if (drop > 0.01) other++;
         c.x = -3.2; c.z = -42; c.h = 0; c.vx = 0; c.vz = setup.speed;
-        cop.x = -3.2; cop.z = -62; cop.h = 0; cop.vx = 0; cop.vz = 0;
+        cop.x = -3.2; cop.z = copZ; cop.h = 0; cop.vx = 0; cop.vz = setup.cruiser || 0;
         if (clock >= setup.seconds || c.dead || n.state !== 'play') {
             Math.random = dice;
             n.removeVehicle(cop);
@@ -294,6 +296,18 @@ def run(target):
             one = page.evaluate(PURSUIT_JS, {"stars": 1, "gap": 48, "police": 40, "seconds": 8, "reach": ARREST_REACH})
             check("at one star a cruiser brakes too (2.0.1: it rammed at full speed)",
                   one["nearest"] < ARREST_REACH and 0 <= one["arrive"] < 10 and one["share"] < 0.05, brief(one))
+            page.evaluate(REST_JS, 1.0)
+            near = page.evaluate(AIM_JS, {"speed": 0, "roll": 0.3, "seconds": 4, "stars": 3, "gap": 10})
+            page.evaluate(REST_JS, 1.0)
+            rolling = page.evaluate(AIM_JS, {"speed": 0, "roll": 0.3, "seconds": 4, "stars": 3, "gap": 10, "cruiser": 20})
+            check("an officer 10 m away in a standing cruiser hits on a roll of 0.3; from a cruiser doing 20 m/s the same rolls miss",
+                  near["hits"] >= 3 and rolling["hits"] == 0 and not rolling["dead"], brief({"standing": near, "rolling": rolling}))
+            page.evaluate(REST_JS, 1.0)
+            slow_fire = page.evaluate(AIM_JS, {"speed": 0, "roll": 0.2, "seconds": 6, "stars": 3, "gap": 10, "cruiser": 20})
+            page.evaluate(REST_JS, 1.0)
+            quick_fire = page.evaluate(AIM_JS, {"speed": 0, "roll": 0.2, "seconds": 6, "stars": 3, "gap": 10})
+            check("a better roll (0.2) still hits from the moving cruiser, at most two thirds as often as from the standing one",
+                  slow_fire["hits"] >= 2 and slow_fire["hits"] <= quick_fire["hits"] * 0.67, brief({"rolling": slow_fire, "standing": quick_fire}))
             page.evaluate(REST_JS, 1.0)
             fire = page.evaluate(BURN_JS, {"speed": 20, "sit": 4.2})
             check("a car at zero health says it is on fire within half a second, and is still whole 4.2 s later (2.0.1: gone at 3.6 s, unsaid)",

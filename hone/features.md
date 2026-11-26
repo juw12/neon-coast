@@ -171,7 +171,7 @@
   nothing moved by script). Since 1.4 it plays three story jobs instead of one: job 1 First Wheels, job 2
   Hot Delivery (against the 80 s clock) and job 4 Borrowed Time (a car theft with the police after it).
   Since 1.7 it also plays job 3 Midnight Sprint and job 6 Coastline Run (the two races), job 5 Heat Wave
-  (the three-star getaway) and Shadow Run. New in 1.8: `test/chase.py` (13 checks that set up crashes with
+  (the three-star getaway) and Shadow Run. New in 1.8: `test/chase.py` (22 checks since 2.1, 13 before, that set up crashes with
   a patrol car, police gunfire and a pursuit and let the game run them: who gets the wanted points, the 40%
   limit of one crash, hits on a standing and on a fast car, braking at two stars and ramming at three) and
   `test/chase_bench.py` (not pass/fail: how long a car lasts with the police after it). New in 1.9:
@@ -210,6 +210,13 @@
   the power on (one thumb cannot hold GAS and HAND BRAKE together), the stick is finer near its middle
   (half the stick is a third of the wheel) and on Android a crash is felt as a short vibration.
   `test/touch.py` checks all of this on an emulated phone and on WebKit; no real phone has run it yet.
+- A chase you can read (release 2.1): one star brakes behind the player like two stars; from three stars
+  the police ram one at a time (after a police crash the others hold off 10 s at three stars, 7 at four,
+  4 at five) and up to three stars one such crash takes at most 25% of the car; an officer in a cruiser
+  faster than 6 m/s shoots half as often without the close-range bonus; a car at zero health says
+  "Your car is on fire! Get out: [F]", burns 5.5 s with the player in it (3.6 s otherwise) and can be
+  left at any speed (up to 30 health for the jump, at least 2.6 s to run). On a phone the corner under
+  the map shows one name at a time (district, car, radio).
 - A slow screen does not slow the game (release 2.0.1): a frame that comes late is cut into steps of
   1/60 s, up to six a frame, so the game keeps real time down to 10 frames a second (2.0 ran at 0.49 to
   0.62 of it at 12 frames a second) and the radio keeps its beat.

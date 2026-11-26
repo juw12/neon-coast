@@ -1,0 +1,146 @@
+{
+  "mode": "score",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "weights": {
+    "C1": 0.25,
+    "C2": 0.25,
+    "C3": 0.25,
+    "C4": 0.15,
+    "C5": 0.1
+  },
+  "judges": {
+    "Pega-Vision": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 8.0,
+        "C4": 9.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "'Get into the red car ahead [F]... JOB 46 m' (Screenshot 2); 'A new player who stands still for 3.5 seconds is shown the walking keys' (Fact sheet).",
+        "C2": "'Pretty graphics adds a glow pass... Day and night cycle' (Fact sheet); 'Sol Wheel at dusk' (Screenshot 7) shows distinct mood.",
+        "C3": "'Six story jobs... Odd jobs... Cab fares... Property' (Fact sheet); Owner played 1.8/1.9 and said 'not fun enough' (Fact sheet).",
+        "C4": "'HUD boxes do not overlap at 1024 x 640...' (G8 Passed); 'The HUD is cash and health; the stars appear only when you are wanted' (Fact sheet).",
+        "C5": "'One line on the title screen says it is an original game' (Fact sheet); 'No one else has played any version' (Fact sheet - extreme honesty)."
+      },
+      "fixes": [
+        "Job 5 ('Heat Wave') fails 10/12 times in testing with 'nothing on screen says so [why the car blew up]'; add clear vehicle destruction feedback.",
+        "Job 5 completion rate is 16% (2/12) by script due to aggressive police AI (47 m/s vs player 21 m/s); tune pursuit difficulty or player vehicle durability.",
+        "Mobile HUD displays 9 action buttons plus a stick on one side; consolidate controls or use context-sensitive visibility to reduce clutter."
+      ],
+      "total": 8.6,
+      "seconds": 35.3
+    },
+    "Pega-Thinking": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 9.0,
+        "C4": 8.0,
+        "C5": 9.0
+      },
+      "evidence": {
+        "C1": "Title screen shows controls; first view shows 'Get into the red car ahead [F]'; job beam stands 40m ahead in first view; learner phase prevents early arrest; first job ends at landmark (Sol Wheel pier).",
+        "C2": "Four districts with distinct looks (Meridian aqua/coral towers, Sol Beach pastel hotels, Rustport rust/ochre), day/night cycle with lit windows and neon, Sol Wheel and Coastliner airship as landmarks, 86 painted walls. Screenshots show recognizable neon-coast aesthetic but geometry remains somewhat blocky.",
+        "C3": "Six story jobs, six odd job kinds (Rush Order, Repo Run, Block Dash, Hot Parcel, Paper Round, Shadow Run), cab fares, property, hidden packages, stunt ramps, barrels, nitro, police 1-5 stars with helicopter at 4, perks that tie activities together, money sinks (respray, repair, Tune-up shop).",
+        "C4": "G8 passed (no overlaps at 3 sizes); HUD is cash+health with stars only when wanted; weapon line only for 5s; clock moved to map/pause; pause screen is three buttons + settings + perks. Phone HUD has many buttons but is functional.",
+        "C5": "Own city/names/art; G9 passed; title screen has 'not affiliated' line; fact sheet plainly states limits: 'How the driving feels to a person' not covered, 'No one else has played any version', owner said 'not fun enough'/'not good enough'."
+      },
+      "fixes": [
+        "Heat Wave job is nearly unplayable (2 of 12 script runs finished, 27 arrests/takeouts) — cruisers at 47 m/s vs starter car at 44 m/s while script drives at 21 m/s; needs balancing, a visible damage/warning indicator, or a faster starter car for that mission.",
+        "Car death has no on-screen warning: 'a car at zero health burns for 3.6 s and then blows up with the driver; nothing on screen says so, and the game does not let the player out of a car faster than 7 m/s' — add a visible 'eject now' prompt or audio cue before the explosion.",
+        "Only one human (the owner) has ever played it, and he said 'not fun enough' / 'not good enough'; recruit additional playtesters before shipping, especially for Heat Wave difficulty and the new Havoc systems (ramps, barrels, nitro)."
+      ],
+      "total": 8.6,
+      "seconds": 35.6
+    },
+    "GLM-5.3-Flash": {
+      "scores": {
+        "C1": 9.0,
+        "C2": 8.0,
+        "C3": 8.0,
+        "C4": 8.0,
+        "C5": 10.0
+      },
+      "evidence": {
+        "C1": "First job beam 'stands 40 m ahead in the car's own lane, in the first view'; screenshot shows 'Get into the red car ahead [F] — JOB 40 m'; title shows 'the keys you need first'; learner phase means 'crimes bring no stars' and the car 'cannot be wrecked'. Not 10: no stranger has ever played it and the only human verdicts on versions with this intro were 'not fun enough'/'not good enough', so the 'without reading anything twice' claim is unverified.",
+        "C2": "Consistent pastel-neon idiom with day and night: 'Meridian towers are aqua, coral, cream and lilac instead of grey', glow pass at night, Sol Wheel dusk shot is striking. Not 10: several street-level shots (Meridian day/dusk) still read as plain window-textured boxes with blob trees, and the look is a familiar low-poly synthwave style rather than unmistakably its own.",
+        "C3": "Huge breadth that interlocks: 'six story jobs', six odd-job kinds, cab fares, property, packages, perks, barrels, ramps, nitro, police escape pay. Not 10: 'The sums are first guesses, not tuned by play'; Heat Wave 'finished 2 of 12 runs' with 23 wrecks; the owner said 'not fun enough'/'not good enough' and 2.0+ is unplayed by anyone.",
+        "C4": "'PASS G8 HUD overlap: no overlaps at 3 sizes'; 'the HUD is cash and health; the stars appear only when you are wanted'; transient lines fold away. Not 10: the phone portrait screenshot stacks minimap, cash, health, perk card, radio, street name, hint and job line on the top edge at once — dense at a glance.",
+        "C5": "'An original game and is not affiliated with the publisher or the series it is often compared to'; own city/names throughout (G9 pass); limits stated plainly: 'No real phone or tablet has run the game yet', 'One person has played it: the owner', 'nobody has listened to it', 'The sums are first guesses, not tuned by play'."
+      },
+      "fixes": [
+        "Rebalance Heat Wave and chase fairness: cruisers (47 m/s) outrun the starter car (44 m/s), each crash takes up to 40% health, a dead car 'burns for 3.6 s and then blows up with the driver' with 'nothing on screen says so', and you cannot exit above 7 m/s — the script finished only 2 of 12 runs. Slow cruisers to the player's car, add a burning-car warning and exit override.",
+        "Tune the economy and difficulty by actual play: payouts are admitted 'first guesses, not tuned by play', and the only human feedback ('not fun enough', 'not good enough') predates 2.0 — get a few strangers through the first ten minutes and adjust.",
+        "Declutter the phone portrait HUD: the top edge stacks perk card, radio line, street name, hint and job line simultaneously; hide or rotate transient lines so it reads at a glance like the desktop HUD."
+      ],
+      "total": 8.45,
+      "seconds": 435.7
+    }
+  },
+  "quorum": 3,
+  "council_score": 8.45,
+  "criterion_median": {
+    "C1": 9.0,
+    "C2": 8.0,
+    "C3": 8.0,
+    "C4": 8.0,
+    "C5": 10.0
+  },
+  "criterion_spread": {
+    "C1": 0.0,
+    "C2": 0.0,
+    "C3": 1.0,
+    "C4": 1.0,
+    "C5": 1.0
+  },
+  "split_criteria": [],
+  "judge_total_range": [
+    8.45,
+    8.6
+  ],
+  "fixes": [
+    {
+      "judge": "Pega-Vision",
+      "fix": "Job 5 ('Heat Wave') fails 10/12 times in testing with 'nothing on screen says so [why the car blew up]'; add clear vehicle destruction feedback."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Job 5 completion rate is 16% (2/12) by script due to aggressive police AI (47 m/s vs player 21 m/s); tune pursuit difficulty or player vehicle durability."
+    },
+    {
+      "judge": "Pega-Vision",
+      "fix": "Mobile HUD displays 9 action buttons plus a stick on one side; consolidate controls or use context-sensitive visibility to reduce clutter."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Heat Wave job is nearly unplayable (2 of 12 script runs finished, 27 arrests/takeouts) — cruisers at 47 m/s vs starter car at 44 m/s while script drives at 21 m/s; needs balancing, a visible damage/warning indicator, or a faster starter car for that mission."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Car death has no on-screen warning: 'a car at zero health burns for 3.6 s and then blows up with the driver; nothing on screen says so, and the game does not let the player out of a car faster than 7 m/s' — add a visible 'eject now' prompt or audio cue before the explosion."
+    },
+    {
+      "judge": "Pega-Thinking",
+      "fix": "Only one human (the owner) has ever played it, and he said 'not fun enough' / 'not good enough'; recruit additional playtesters before shipping, especially for Heat Wave difficulty and the new Havoc systems (ramps, barrels, nitro)."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Rebalance Heat Wave and chase fairness: cruisers (47 m/s) outrun the starter car (44 m/s), each crash takes up to 40% health, a dead car 'burns for 3.6 s and then blows up with the driver' with 'nothing on screen says so', and you cannot exit above 7 m/s — the script finished only 2 of 12 runs. Slow cruisers to the player's car, add a burning-car warning and exit override."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Tune the economy and difficulty by actual play: payouts are admitted 'first guesses, not tuned by play', and the only human feedback ('not fun enough', 'not good enough') predates 2.0 — get a few strangers through the first ten minutes and adjust."
+    },
+    {
+      "judge": "GLM-5.3-Flash",
+      "fix": "Declutter the phone portrait HUD: the top edge stacks perk card, radio line, street name, hint and job line simultaneously; hide or rotate transient lines so it reads at a glance like the desktop HUD."
+    }
+  ],
+  "label": "council-judged (3 judges)"
+}
