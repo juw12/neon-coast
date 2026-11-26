@@ -307,16 +307,44 @@ def run():
               offer["name"] == "Paper Round" and offer["reward"] == 550 and offer["steps"] == 4 and offer["foot"], json.dumps(offer))
         marker = page.evaluate("() => NEON.mission.startMarker.text")
         check("the Paper Round beam is labelled ON FOOT", "ON FOOT" in marker, marker)
-        # arrive by car (1.7): the round does not start from the driver's seat, and the hint says why
+        # arrive by car (1.7): the round does not start from the driver's seat, and the hint says why.
+        # The player first stands beside the car for a moment, as someone who walked to it. Since the new game of
+        # check 10 they had not left the spot where the game starts, so the first-timer's walking keys were still
+        # up; getting into a car from there clears the hint line, and with it the note this check is about, which the
+        # game had written a moment earlier in the same step. Up to run 9 the check read the words of a line that
+        # was no longer shown, and failed when the next words on it were the ramp tip (a ramp within 45 m, 2.0 on).
         page.evaluate("""() => { const n = NEON, p = n.player;
             const car = n.vehicles.filter(v => v.driver !== 'ai' && !v.dead)
               .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
-            p.x = car.x + 2.2; p.z = car.z; n.tryEnterExit();
-            const at = n.mission.offer.at; n.player.car.x = at[0]; n.player.car.z = at[1]; n.player.car.vx = n.player.car.vz = 0; }""")
+            p.x = car.x + 2.2; p.z = car.z; }""")
+        page.wait_for_timeout(300)
+        page.evaluate("""() => { const n = NEON, p = n.player;
+            n.tryEnterExit();
+            const at = n.mission.offer.at; n.player.car.x = at[0]; n.player.car.z = at[1]; n.player.car.vx = n.player.car.vz = 0;
+            // what the hint line said, frame by frame, for the line the check prints: it decides nothing
+            const el = document.getElementById('hint'), start = performance.now();
+            const seen = window.__line = { on: true, frames: 0, longest: 0, last: start, said: [], was: '' };
+            const look = () => { if (!seen.on) return;
+                const now = performance.now(), c = n.player.car, shown = el.classList.contains('show');
+                seen.frames++; seen.longest = Math.max(seen.longest, now - seen.last); seen.last = now;
+                const words = (shown ? '' : '(hidden) ') + el.textContent.slice(0, 22);
+                if (words !== seen.was && seen.said.length < 12) { seen.was = words;
+                    seen.said.push({ ms: Math.round(now - start), line: words, wait: Math.round((n.mission.footNote || 0) * 100) / 100,
+                        vf: c ? Math.round((c.vf || 0) * 100) / 100 : null, off: c ? Math.round(Math.hypot(c.x - at[0], c.z - at[1]) * 100) / 100 : null }); }
+                requestAnimationFrame(look); };
+            look(); }""")
         page.wait_for_timeout(700)
-        refused = page.evaluate("""() => ({ active: NEON.mission.active, car: !!NEON.player.car, hint: document.getElementById('hint').textContent })""")
+        # (the beam stands on the corner of a block picked at random: the line says which, and how far the car is from it)
+        refused = page.evaluate("""() => { const n = NEON, c = n.player.car, m = n.mission.startMarker, at = n.mission.offer.at;
+            const round = (v) => typeof v === 'number' && isFinite(v) ? Math.round(v * 100) / 100 : -1;
+            return { active: n.mission.active, car: !!c, hint: document.getElementById('hint').textContent,
+                shown: document.getElementById('hint').classList.contains('show'), beam: at.map(Math.round),
+                from_beam: round(c && m ? Math.hypot(c.x - m.x, c.z - m.z) : -1), speed: round(c ? Math.abs(c.vf || 0) : -1),
+                ramp: round(Math.min(...(n.ramps || []).map((r) => Math.hypot(r.x - at[0], r.z - at[1])), 9999)),
+                frames: (window.__line || {}).frames, longest_ms: Math.round((window.__line || {}).longest || 0),
+                line: ((window.__line || {}).on = false, (window.__line || {}).said) }; }""")
         check("the round does not start from a car, and the hint says it is on foot",
-              refused["car"] and not refused["active"] and "on foot" in refused["hint"], json.dumps(refused))
+              refused["car"] and not refused["active"] and "on foot" in refused["hint"] and refused["shown"], json.dumps(refused))
         # step out at the beam: now it starts, and the title card says on foot
         page.evaluate("""() => { const n = NEON, c = n.player.car; c.vx = c.vz = 0; n.tryEnterExit();
             const at = n.mission.offer.at; n.player.x = at[0]; n.player.z = at[1]; }""")
@@ -373,24 +401,55 @@ def run():
             page.wait_for_timeout(500)
             return told
 
-        def hold_behind(metres, seconds):
+        def hold_behind(metres, seconds, until_over=False):
+            # until_over: the hold goes on (up to 12 s longer) until the game ends the job. The car is put
+            # `metres` behind the marked car every 30 ms, and now and then the game moves it in between (out of
+            # a building, off another car): once in the suites of run 9 the gap fell to 58 m and the game
+            # rightly started its eight seconds again. The checks that use it read the game's own count.
             # seconds are counted on the game's own clock (the tail's age): under 20 frames a second the game
             # runs slower than the wall clock, and a wall-clock wait would end before the game's timer does
             page.evaluate("""(metres) => { clearInterval(window.__pin); window.__pin = setInterval(() => {
                 const n = NEON, c = n.player.car, t = n.mission.car;
                 if (!n.mission.active || !c || !t) return;
                 c.x = t.x - Math.sin(t.h) * metres; c.z = t.z - Math.cos(t.h) * metres; c.h = t.h; c.vx = c.vz = 0; c.hp = c.t.hp; }, 30);
-                window.__age0 = n_age(); function n_age() { const t = NEON.mission.tail; return t ? t.age : 0; } }""", metres)
+                window.__age0 = n_age(); function n_age() { const t = NEON.mission.tail; return t ? t.age : 0; }
+                // what the hold saw, frame by frame, for the line a check prints: it decides nothing
+                if (window.__seen) window.__seen.on = false;
+                const seen = window.__seen = { on: true, frames: 0, nearest: 1e9, widest: 0, noCar: 0, inAir: 0, lost: 0, resets: 0, before: 0,
+                    age: 0, zeroAt: 0 };
+                { const tail = NEON.mission.tail; if (tail) { seen.age = tail.age; seen.zeroAt = tail.age - tail.lost; seen.before = tail.lost; } }
+                const look = () => { if (!seen.on) return;
+                    const n = NEON, c = n.player.car, t = n.mission.car, tail = n.mission.tail;
+                    seen.frames++;
+                    if (!c) seen.noCar++; else if (c.air) seen.inAir++;
+                    if (c && t) { const gap = Math.hypot(t.x - c.x, t.z - c.z); seen.nearest = Math.min(seen.nearest, gap); seen.widest = Math.max(seen.widest, gap); }
+                    if (tail && n.mission.active) {
+                        // the last moment the game's count of seconds too far behind stood at nought, and the last moment seen
+                        if (tail.lost === 0 || tail.lost < seen.before) seen.zeroAt = tail.age;
+                        seen.age = tail.age;
+                        if (tail.lost < seen.before) seen.resets++;
+                        seen.before = tail.lost; seen.lost = Math.max(seen.lost, tail.lost); }
+                    requestAnimationFrame(look); };
+                requestAnimationFrame(look); }""", metres)
+            longest = seconds + (12 if until_over else 0)
             try:
                 page.wait_for_function(
                     "(s) => !NEON.mission.active || !NEON.mission.tail || NEON.mission.tail.age - window.__age0 >= s",
-                    arg=seconds, polling=50, timeout=int(seconds * 6000) + 10000)
+                    arg=longest, polling=50, timeout=int(longest * 6000) + 10000)
             except Exception:
                 pass          # the checks below read the state and fail on their own terms
             page.wait_for_timeout(200)
             page.evaluate("() => clearInterval(window.__pin)")
-            return page.evaluate("""() => ({ active: NEON.mission.active, money: NEON.save.money,
-                card: document.querySelector('#banner b').textContent + ' / ' + document.querySelector('#banner span').textContent })""")
+            return page.evaluate("""() => { const n = NEON, seen = window.__seen || {}, tail = n.mission.tail, c = n.player.car;
+                const round = (v) => typeof v === 'number' && isFinite(v) ? Math.round(v * 100) / 100 : -1;
+                seen.on = false;
+                return { active: n.mission.active, money: n.save.money,
+                    card: document.querySelector('#banner b').textContent + ' / ' + document.querySelector('#banner span').textContent,
+                    age: round(tail && tail.age), held: round(tail && tail.age - window.__age0), lost: round(tail && tail.lost),
+                    most_lost: round(seen.lost), lost_restarted: seen.resets, nearest: round(seen.nearest), widest: round(seen.widest),
+                    ended: round(seen.age), far_from: round(seen.zeroAt),
+                    frames: seen.frames, no_car: seen.noCar, in_air: seen.inAir,
+                    ramp: round(c ? Math.min(...(n.ramps || []).map((r) => Math.hypot(r.x - c.x, r.z - c.z)), 9999) : -1) }; }""")
 
         told = start_tail()
         check("Shadow Run is offered: get a car, then tail one, for $700",
@@ -417,18 +476,22 @@ def run():
         page.wait_for_timeout(400)
         start_tail()
         page.evaluate("() => { NEON.mission.tail.age = NEON.TAIL.pickup; }")     # past the opening twenty seconds
-        far = hold_behind(100, 9.2)
+        far = hold_behind(100, 9.2, until_over=True)
+        # eight seconds on the game's clock from the last moment its count stood at nought (7.7 to 8.25: the
+        # count is read once a frame, and a frame holds up to 0.1 s of the game at either end)
         check("after the opening, 100 m behind for eight seconds loses them: failed, no pay",
-              not far["active"] and far["money"] == money_before and "lost them" in far["card"], json.dumps(far))
+              not far["active"] and far["money"] == money_before and "lost them" in far["card"]
+              and 7.7 <= far["ended"] - far["far_from"] <= 8.25, json.dumps(far))
         page.wait_for_timeout(400)
         start_tail()
         slow = hold_behind(100, 12.0)         # a slow start: 100 m behind from the first second
         slow["text"] = page.evaluate("() => document.getElementById('objective').textContent")
         check("a slow start is allowed: 100 m behind for the first twelve seconds does not fail, and the line says catch up",
               slow["active"] and "CATCH UP" in slow["text"] and page.evaluate("() => NEON.TAIL.pickup") == 20, json.dumps(slow))
-        gone = hold_behind(100, 17.5)
+        gone = hold_behind(100, 17.5, until_over=True)
         check("never closing up loses them once the opening twenty seconds and eight more are gone",
-              not gone["active"] and gone["money"] == money_before and "lost them" in gone["card"], json.dumps(gone))
+              not gone["active"] and gone["money"] == money_before and "lost them" in gone["card"]
+              and gone["ended"] >= 27.7 and 7.7 <= gone["ended"] - gone["far_from"] <= 8.25, json.dumps(gone))
 
         # 15. (1.7) Borrowed Time: ten seconds of head start before the stars
         page.evaluate("""() => { const n = NEON, c = n.player.car; n.setWanted(0); n.player.hp = 100; n.save.money = 1000;

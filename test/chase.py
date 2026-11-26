@@ -105,6 +105,11 @@ AIM_JS = """(setup) => new Promise(done => {
 # A cruiser comes up behind the standing player at top speed with `stars` wanted stars on, and the game's own
 # police driver is left to decide what to do. Officers' shots are made to miss (the dice are fixed at 0.99)
 # and other cars are removed, so health can only be lost to this one cruiser.
+# The cruiser has arrived when it is inside the game's own arrest reach (7.5 m between centres, checkPolice in
+# src/03-systems.js). Up to run 9 this script used 6 m of its own: a two-star cruiser brakes for 8 m and rolls to a
+# stop 5.7 to 6.9 m behind (read in the suites of run 9), so now and then it stopped just outside 6 m, was never
+# seen to arrive, and arrested the standing player 2.4 s later.
+ARREST_REACH = 7.5
 PURSUIT_JS = """(setup) => new Promise(done => {
     const n = NEON, c = n.player.car;
     for (const v of n.vehicles.slice()) if (v !== c) n.removeVehicle(v);
@@ -125,8 +130,8 @@ PURSUIT_JS = """(setup) => new Promise(done => {
         for (const v of n.vehicles.slice()) if (v !== c && v !== cop) n.removeVehicle(v);
         const gap = Math.hypot(cop.x - c.x, cop.z - c.z);
         // `approach` is the cruiser's speed one frame earlier: on a slow computer the crash can already be over in the
-        // frame that first sees the cruiser within 6 m (since 2.0.1 a frame holds up to six steps of the game)
-        if (gap < 6 && arrive < 0) { arrive = Math.hypot(cop.vx, cop.vz); arriveAt = clock; approach = before; }
+        // frame that first sees the cruiser within reach (since 2.0.1 a frame holds up to six steps of the game)
+        if (gap < setup.reach && arrive < 0) { arrive = Math.hypot(cop.vx, cop.vz); arriveAt = clock; approach = before; }
         before = Math.hypot(cop.vx, cop.vz);
         nearest = Math.min(nearest, gap);
         // stop 0.8 s after the cruiser arrives (one whole crash; an arrest takes 2.4 s), or when time is up
@@ -227,14 +232,20 @@ def run(target):
 
         # 6. two stars: the police pursue and do not ram; from three stars they ram
         page.evaluate(REST_JS, 1.0)
-        pursued = page.evaluate(PURSUIT_JS, {"stars": 2, "gap": 48, "police": 40, "seconds": 8})
+        pursued = page.evaluate(PURSUIT_JS, {"stars": 2, "gap": 48, "police": 40, "seconds": 8, "reach": ARREST_REACH})
         check("at two stars a cruiser coming up behind at 40 m/s brakes: it arrives slower than 10 m/s and takes under 5% of the car",
-              pursued["nearest"] < 6 and 0 <= pursued["arrive"] < 10 and pursued["share"] < 0.05 and pursued["points"] == 0,
+              pursued["nearest"] < ARREST_REACH and 0 <= pursued["arrive"] < 10 and pursued["share"] < 0.05 and pursued["points"] == 0,
               brief(pursued))
-        page.evaluate(REST_JS, 1.0)
-        rammed = page.evaluate(PURSUIT_JS, {"stars": 3, "gap": 48, "police": 40, "seconds": 8})
-        check("at three stars the same cruiser rams: it arrives faster than 30 m/s and takes over 20% of the car",
-              max(rammed["arrive"], rammed["approach"]) > 30 and 0.2 < rammed["share"] <= 0.401 and rammed["points"] == 0, brief(rammed))
+        ramming = "at three stars the same cruiser rams: it arrives faster than 30 m/s and takes over 20% of the car"
+        if pursued["state"] != "play" or pursued["dead"]:
+            # the case above ended the game (an arrest or a wreck): say so instead of failing on a car that is gone
+            check(ramming, False, "not run: the two-star case left the game in state " + str(pursued["state"]))
+        else:
+            page.evaluate(REST_JS, 1.0)
+            rammed = page.evaluate(PURSUIT_JS, {"stars": 3, "gap": 48, "police": 40, "seconds": 8, "reach": ARREST_REACH})
+            check(ramming,
+                  max(rammed["arrive"], rammed["approach"]) > 30 and 0.2 < rammed["share"] <= 0.401 and rammed["points"] == 0,
+                  brief(rammed))
 
         check("no console errors", not problems, "; ".join(problems[:3]))
         browser.close()
