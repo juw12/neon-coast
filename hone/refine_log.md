@@ -1068,7 +1068,7 @@ Goal beyond the goal, unchanged: a stranger opens one link, knows what to do, an
 
 ### Run queue (run 10)
 
-- [ ] R10-0 Baseline v12 = 2.0.1 under rubric v1. The judge kit on the measuring branch (GitHub Macs):
+- [x] R10-0 Baseline v12 = 2.0.1 under rubric v1. The judge kit on the measuring branch (GitHub Macs):
       screenshots, gates, radio, touch, and every job played by key presses. Scored twice, mean taken
 - [ ] R10-1 Round 16: the maker's change from the judges' fixes, built, suites, kit, sheet v13, scored
       twice, blind pair against the best
@@ -1085,3 +1085,28 @@ Goal beyond the goal, unchanged: a stranger opens one link, knows what to do, an
   inside this run is like with like; against v11 and earlier it is not.
 - Assumed: the fact sheet may say more of the truth without the rubric changing: from v12 it says that the
   owner played 1.8 and 1.9 and found them not good enough, and that the suites run on GitHub's Macs.
+
+### Baseline (run 10): v12 = release 2.0.1
+
+Measured on GitHub Macs (measuring branch run 45776611073, nine more Heat Wave runs in run 45779058008):
+gates 10/10 at 91 frames a second, touch 10/10, radio 13/14, job 1 three of three in 27.7 to 28.2 s,
+jobs 2, 3, 4 and 6 two of two, Shadow Run three of three, **Heat Wave 2 of 12**. All 23 logged ends of a
+Heat Wave try were the same: the car wrecked with the player inside. Never an arrest. Health fell in
+steps of up to 40% (police rams); a cruiser reaches 47 m/s, the starter car 44; a car at zero health
+burned for 3.6 s and blew up with nothing on screen saying so, and could not be left above 7 m/s;
+one-star cruisers rammed at full speed (only two stars braked). Sheet: `hone/judge/v12.md`.
+
+Council, twice, same 16 pictures: 8.45 (V 8.6, T 8.6, G 8.45) and 8.70 (V 9.1, T 8.35, G 8.45),
+**mean 8.58**. Criterion medians C1 9 / 9, C2 8 / 8, C3 8 / 9, C4 8 / 8, C5 10 / 10.
+
+What all three judges asked for, in both passes: Heat Wave cannot be finished and a dying car gives no
+warning. Two of three: the phone's upright HUD stacks too many lines. All three also ask for people
+other than the owner to play it, which this loop cannot do.
+
+- Assumed: the baseline already stands above the loop's stop mark (8.5). The round still runs, because
+  the owner asked for more and every judge named the same measured fault. The keep rule stays as it is:
+  a candidate is the new best only with +0.3 and a won blind pair.
+
+| round | change | gates | judge score | pairwise win | kept? | note |
+|---|---|---|---|---|---|---|
+| 0 (v12, release 2.0.1) | none: the shipped build, scored twice as the baseline on GitHub Macs | 10/10 | 8.45 and 8.70, mean 8.58 | - | baseline | Heat Wave 2 of 12 by key presses; first judged pass of 2.0 Havoc |
