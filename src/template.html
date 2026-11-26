@@ -250,7 +250,10 @@ SOFTWARE.
   body.touch #delta { position: static; font-size: 13px; margin-top: 2px; }
   body.touch #perk { width: 172px; margin-top: 6px; padding: 6px 9px 7px; }
   body.touch #perk b, body.touch #perk span { font-size: 11.5px; }
-  body.touch #br { position: static; margin: 3px 0 0 4px; text-align: left; }
+  body.touch #br { position: static; margin: 9px 0 0 4px; text-align: left; }
+  /* one name at a time on a phone: the district first, then the car, then the radio station */
+  body.touch #br:has(#zone.show) #veh, body.touch #br:has(#zone.show) #radio,
+  body.touch #br:has(#veh.show) #radio { display: none; }
   body.touch #zone { font-size: 17px; }
   body.touch #veh { font-size: 14px; }
   body.touch #radio { font-size: 11.5px; }
