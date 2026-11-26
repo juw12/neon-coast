@@ -17,38 +17,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: bare
-            args: ""
-            window: ""
-            run: python test/touch.py;python test/smoke.py;python test/smoke.py;python test/gates.py
-          - name: novsync
-            args: "--disable-gpu-vsync"
-            window: ""
-            run: python test/touch.py;python test/smoke.py;python test/smoke.py;python test/gates.py
-          - name: nolimit
-            args: "--disable-frame-rate-limit"
-            window: ""
-            run: python test/touch.py;python test/smoke.py;python test/smoke.py;python test/gates.py
-          - name: both
+          - name: bench two stars
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/touch.py;python test/smoke.py;python test/smoke.py;python test/gates.py
-          - name: window
-            args: ""
-            window: "1"
-            run: python test/touch.py;python test/smoke.py;python test/smoke.py;python test/gates.py
-          - name: window both
-            args: "--disable-gpu-vsync --disable-frame-rate-limit"
-            window: "1"
-            run: python test/touch.py;python test/smoke.py;python test/smoke.py;python test/gates.py
-          - name: pace both
+            run: python test/chase_bench.py NeonCoast.html 2 21 5;python test/chase_bench.py v19.html 2 21 5;python test/chase_bench.py NeonCoast.html 2 21 5;python test/chase_bench.py v19.html 2 21 5
+          - name: bench three stars
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/pace.py;python test/pace.py;python test/pace.py v20.html
-          - name: pace window
-            args: ""
-            window: "1"
-            run: python test/pace.py;python test/pace.py;python test/pace.py v20.html
+            run: python test/chase_bench.py NeonCoast.html 3 21 5;python test/chase_bench.py v19.html 3 21 5;python test/chase_bench.py NeonCoast.html 3 21 5;python test/chase_bench.py v19.html 3 21 5
+          - name: frame rate
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            run: python test/fps_ab.py NeonCoast.html v19.html;python test/fps_ab.py NeonCoast.html v20.html;python test/fps_ab.py NeonCoast.html v19.html;python test/barrel_rows.py
     env:
       PYTHONUTF8: "1"
       NEON_CHROME_ARGS: ${{ matrix.args }}
