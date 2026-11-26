@@ -1,0 +1,51 @@
+{
+  "mode": "pair",
+  "models": [
+    "Pega-Vision",
+    "Pega-Thinking",
+    "GLM-5.3-Flash"
+  ],
+  "judges": {
+    "Pega-Vision": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both versions pass all hard gates, but Version 2 demonstrates superior performance (123 fps vs 91 fps) and significantly enhances playability by fixing the burning car escape mechanic and tuning police difficulty, which raised Job 5 script completion from 16% to 100%.",
+        "Both versions pass all hard gates, but Version 1 demonstrates superior quality in soft criteria C3 (Things to do) and general polish, featuring higher frame rates (123 vs 91 fps), significantly more stable job completion (9/9 vs 2/12 runs), and critical gameplay fixes like allowing players to exit burning cars."
+      ]
+    },
+    "Pega-Thinking": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Both versions pass all 10 hard gates and share essentially identical visuals and first-minute experience. VERSION 2 (release 2.1) meaningfully improves the chase readability—Heat Wave completion rate jumps from 2/12 to 9/9 runs, the car-on-fire warning lets players escape, and police ramming is tuned to be survivable—which strengthens C3 (Things to do). It also reports a higher frame rate (123 vs 91 fps) and is more transparent about a flaky gate result, slightly helping C5. The differences are modest but favor VERSION 2.",
+        "Both versions pass all 10 hard gates and share the same core game, city, jobs, and atmosphere. VERSION 1 (release 2.1) edges ahead with meaningful playability improvements: police chase mechanics are fairer (one star brakes, three stars ram one at a time, 25% health cap per crash), an on-fire warning lets the player escape a burning car, and the Heat Wave completion rate jumped from 2/12 to 9/9. These improvements primarily benefit C3 (Things to do) and slightly C1 (First minute) and C4 (HUD), while C2 and C5 are essentially tied."
+      ]
+    },
+    "GLM-5.3-Flash": {
+      "picks_AB_BA": [
+        "B",
+        "B"
+      ],
+      "vote": "B",
+      "reasons": [
+        "Version 2 (release 2.1) contains everything version 1 has and adds a fairer, more readable police chase, a burning-car warning with escape, and a phone HUD overlap fix, with dramatically better play results (Heat Wave 9/9 runs vs 2/12) and equally plain, even more candid reporting (including a disclosed one-off flaky G3 run that passed on re-runs). All ten gates pass for both, so the soft criteria tip to version 2 on C3, C4 and C5 with no regressions.",
+        "Both versions are the same game with identical breadth and near-identical screenshots, all gates pass for both, but Version 1 (2.1) directly fixes flaws documented in Version 2's own sheet: the three-star getaway is now actually passable (9/9 vs 2/12 script runs), police chases are fairer and readable (one-at-a-time rams, halved moving gunfire, burning-car escape), and the phone HUD text overlap is resolved. Version 1's disclosure is at least as honest, so it edges ahead on C3 and C4 with no offsetting loss."
+      ]
+    }
+  },
+  "votes": {
+    "A": 0,
+    "B": 3,
+    "tie": 0
+  },
+  "quorum": 3,
+  "b_wins": true,
+  "label": "council-judged (3 judges)"
+}

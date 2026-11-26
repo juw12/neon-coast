@@ -254,6 +254,7 @@ def run(job=1):
         chase_note = 0.0
         no_car_since = None
         fire_since = None
+        bail_open = False            # out of a burning car, not yet in another one
         while time.time() - started < plan["limit"]:
             s = page.evaluate(STATE_JS, bool(plan.get("race")))
             now = time.time()
@@ -289,6 +290,7 @@ def run(job=1):
                     # what the try looked like just before it ended (the last state read while still playing)
                     result.setdefault("down_log", []).append(dict(last_alive, card=s["card"], at=round(now - started, 1)))
                 down = True
+                bail_open = False
                 keys.hold([])
                 page.wait_for_timeout(200)
                 continue
@@ -382,12 +384,17 @@ def run(job=1):
                     keys.hold([])
                     page.keyboard.press("f")
                     result["bailed"] = result.get("bailed", 0) + 1
+                    bail_open = True
                     fire_since = None
                     page.wait_for_timeout(150)
                     continue
             else:
                 fire_since = None
 
+            if bail_open and car["hp"] > 0:
+                # in another car after a bail-out: the jump saved the try so far
+                result["rescued"] = result.get("rescued", 0) + 1
+                bail_open = False
             result["phase"] = "driving to " + (s["job"] or "the job beam") + (" step " + str(s["step"]) if s["active"] else "")
             speed = math.hypot(car["vx"], car["vz"])
             racing = bool(plan.get("race")) and s["through"]
