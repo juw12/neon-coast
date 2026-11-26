@@ -1,4 +1,5 @@
 """Gate checker for Neon Coast (rubric v1, G1-G10). Run: python test/gates.py [--skip-smoke]"""
+import os
 import json
 import re
 import subprocess
@@ -6,6 +7,11 @@ import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+
+# A GitHub Mac draws with its graphics card only in a real window: NEON_WINDOW=1 opens one.
+# NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
+WINDOW = os.environ.get("NEON_WINDOW") == "1"
+EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
 
 ROOT = Path(__file__).resolve().parent.parent
 SHOTS = ROOT / "test" / "shots"
@@ -270,8 +276,8 @@ def main():
     with sync_playwright() as pw:
         browser = pw.chromium.launch(
             channel="chrome",
-            headless=True,
-            args=["--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
+            headless=not WINDOW,
+            args=["--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] + EXTRA_ARGS,
         )
         page = open_page(browser, 1280, 720)
 

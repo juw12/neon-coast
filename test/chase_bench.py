@@ -19,6 +19,11 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
+# A GitHub Mac draws with its graphics card only in a real window: NEON_WINDOW=1 opens one.
+# NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
+WINDOW = os.environ.get("NEON_WINDOW") == "1"
+EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
+
 BENCH_JS = """(setup) => new Promise(done => {
     const n = NEON, p = n.player;
     n.save.mission = 3; n.save.difficulty = 1;
@@ -31,7 +36,7 @@ BENCH_JS = """(setup) => new Promise(done => {
     let last = performance.now(), clock = 0, frames = 0, prev = car.hp, crash = 0, shots = 0, crashes = 0, hits = 0, maxStars = 0, lostAt = -1;
     const tick = () => {
         const now = performance.now();
-        clock += Math.min(0.05, (now - last) / 1000); last = now; frames++;
+        clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now; frames++;
         for (const v of n.vehicles.slice()) if (v.driver === 'ai') n.removeVehicle(v);
         const speed = Math.hypot(car.vx, car.vz);
         n.keys.KeyW = speed < setup.cruise; n.keys.KeyS = false;
@@ -58,8 +63,8 @@ target, stars, cruise = Path(sys.argv[1]), int(sys.argv[2]), float(sys.argv[3])
 runs = int(sys.argv[4]) if len(sys.argv) > 4 else 3
 out = []
 with sync_playwright() as pw:
-    browser = pw.chromium.launch(channel="chrome", headless=True, args=[
-        "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"])
+    browser = pw.chromium.launch(channel="chrome", headless=not WINDOW, args=[
+        "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] + EXTRA_ARGS)
     for _ in range(runs):
         page = browser.new_context(viewport={"width": 1280, "height": 720}).new_page()
         page.goto(target.resolve().as_uri())

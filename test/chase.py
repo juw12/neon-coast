@@ -3,18 +3,24 @@ how well officers shoot at a moving car, and that the police ram only from three
 
 A cruiser is put next to the player's car on a straight street (through the game's test handle,
 window.NEON), both cars are given a speed, and the game is left to run the crash itself. Time is counted
-on the game's own clock (the game never steps more than 0.05 s a frame), so a slow PC cannot fail it.
+on the game's own clock (the game never moves on more than 0.1 s a frame, 0.05 s before 2.0.1), so a slow PC cannot fail it.
 
 It proves the four rules hold. It does not prove that the chase is fun; test/drive.py plays the jobs.
 
     python test/chase.py                  # NeonCoast.html; one line per check, exit code 0 when all pass
     python test/chase.py other.html       # another build that has NEON.addVehicle and NEON.removeVehicle
 """
+import os
 import json
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+
+# A GitHub Mac draws with its graphics card only in a real window: NEON_WINDOW=1 opens one.
+# NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
+WINDOW = os.environ.get("NEON_WINDOW") == "1"
+EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
 
 ROOT = Path(__file__).resolve().parent.parent
 results = []
@@ -44,7 +50,7 @@ CRASH_JS = """(setup) => new Promise(done => {
     let last = performance.now(), clock = 0, hitAt = -1, frames = 0;
     const tick = () => {
         const now = performance.now();
-        clock += Math.min(0.05, (now - last) / 1000); last = now; frames++;
+        clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now; frames++;
         if (hitAt < 0 && (c.hp < hp0 || n.wanted.pts !== pts0)) hitAt = clock;
         if ((hitAt >= 0 && clock - hitAt >= 0.55) || clock > 6) {
             const out = { hit: hitAt >= 0, full, lost: hp0 - c.hp, share: (hp0 - c.hp) / full, points: n.wanted.pts - pts0,
@@ -77,7 +83,7 @@ AIM_JS = """(setup) => new Promise(done => {
     let last = performance.now(), clock = 0, prev = c.hp, hits = 0, other = 0;
     const tick = () => {
         const now = performance.now();
-        clock += Math.min(0.05, (now - last) / 1000); last = now;
+        clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now;
         for (const v of n.vehicles.slice()) if (v !== c && v !== cop) n.removeVehicle(v);
         const drop = prev - c.hp; prev = c.hp;
         if (Math.abs(drop - 6) < 0.01) hits++; else if (drop > 0.01) other++;
@@ -115,7 +121,7 @@ PURSUIT_JS = """(setup) => new Promise(done => {
     let last = performance.now(), clock = 0, nearest = 1e9, arrive = -1, arriveAt = 0;
     const tick = () => {
         const now = performance.now();
-        clock += Math.min(0.05, (now - last) / 1000); last = now;
+        clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now;
         for (const v of n.vehicles.slice()) if (v !== c && v !== cop) n.removeVehicle(v);
         const gap = Math.hypot(cop.x - c.x, cop.z - c.z);
         if (gap < 6 && arrive < 0) { arrive = Math.hypot(cop.vx, cop.vz); arriveAt = clock; }
@@ -140,7 +146,7 @@ REST_JS = """(seconds) => new Promise(done => {
     let last = performance.now(), clock = 0;
     const tick = () => {
         const now = performance.now();
-        clock += Math.min(0.05, (now - last) / 1000); last = now;
+        clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now;
         clock >= seconds ? done(clock) : requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -159,8 +165,8 @@ def brief(crash):
 def run(target):
     problems = []
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(channel="chrome", headless=True, args=[
-            "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"])
+        browser = pw.chromium.launch(channel="chrome", headless=not WINDOW, args=[
+            "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] + EXTRA_ARGS)
         page = browser.new_context(viewport={"width": 1280, "height": 720}).new_page()
         page.on("pageerror", lambda e: problems.append(f"pageerror: {e}"))
         page.on("console", lambda m: problems.append(f"{m.type}: {m.text}") if m.type == "error" else None)
