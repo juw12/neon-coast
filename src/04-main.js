@@ -569,7 +569,7 @@ function updateIntro(dt) {
   if (!intro.on) return;
   if (player.car || dist2(player.x, player.z, START.x, START.z) > 9) {
     intro.on = false;
-    if (intro.shown && player.car) $('hint').classList.remove('show');
+    if (intro.shown && player.car && $('hint').textContent.startsWith('W A S D to walk')) $('hint').classList.remove('show');
     else if (intro.shown) hint('The red car is yours: stand beside it and press F.', 4);
     return;
   }
@@ -784,7 +784,7 @@ window.NEON = {
   props, ramps, fallen, jets, PROP_KINDS, PROP_HIT, PROP_BACK, BARREL_BACK, BLAST, SPIN, RAMP, NITRO, AHEAD, LOOSE_MASS, nitro, warp, kerbTaken, worksAt,
   knockProp, blast, shootProps, rampAt, rampHeight, kerbBusy, nearPlace, stuntJump, resetHavoc, spawnTraffic, roadStop, downPed,
   addPed, insideBox, lampMesh, lamps, FERRY, START, styleSmash, hint, pace, STEP, MAX_STEPS,
-  style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, carSound, updateStyle, honk,
+  style, STYLE, styleMult, DRIFT, CROWD, SPEED_FEEL, GETAWAY_PAY, HOLD_FIRE_SPEED, RAM_REST, FUSE, FUSE_DRIVER, FUSE_RUN, CRASH_SHARE, CRASH_SHARE_LOW, carSound, updateStyle, honk,
   get honks() {
     return honkCount;
   },
