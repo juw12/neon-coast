@@ -1247,7 +1247,7 @@ Goal beyond the goal, unchanged: a stranger opens one link, knows what to do, an
       next miss explains itself. Not explained
 - [x] R11-5 Further rounds while a round gains 0.3 and wins its pair (at most 5).
       stop: round 17 won its pair and gained 0.05, under 0.3. No round 18
-- [ ] R11-6 Sync: PR, release, live check, landing page, log, memory
+- [x] R11-6 Sync: PR, release, live check, landing page, log, memory
 
 ### Assumptions (run 11)
 
@@ -1345,3 +1345,61 @@ any low-poly city (one, both passes); the walking keys at once and the first job
 
 - Assumed: 2.2 ships although it is not a new best by the rule, as 2.1 did: the pair is won, the suites
   are green and the played job supports it.
+
+## Handoff (run 11)
+
+- Stopped: round 17 won its pair but gained 0.05, under the 0.3 the loop asks for, so no round 18 (the
+  run's own rule R11-5). 2.2 is shipped. Best sheet for a next pair by the rule: `hone/judge/v13.md`
+  (8.73; a candidate needs 9.03 and a won pair). The shipped build's sheet is `hone/judge/v14.md` (8.78).
+- What the loop cannot do, and every judge names first: someone other than the owner plays it, and a
+  real phone runs it. One link to send: https://juw12.github.io/neon-coast/
+- Open, with what is known:
+  1. The radio tone check (Neon FM against Coast 98) sits on its own line: six reads, three under 0.01
+     and three over. Either the check gets a steadier measure (a longer take, or the music bus alone
+     without the engine) or the two stations get a different sound. The second needs ears.
+  2. Job 6 by key presses needed a second try in both runs (out of time on the first; one of two in
+     v13). The script yields to traffic 87 to 170 times a run; a person does not. Not looked into.
+  3. The rescue after a bail-out rests on one run. More runs of `test/drive.py` on job 5 would show how
+     often the car burns at all (1 of 9 in 2.2, 5 of 8 in 2.1 the same day, not explained).
+  4. G7 frame rate read 95 and 74 for the same build on two GitHub Macs (v13: 123). Not looked into.
+  5. `thrill.py` (33 of 34) and `havoc.py` (46 of 47) on the slow Windows computer, red since 2.1: a bin
+     hit leaves 95% of the speed where the check asks for more than 96%; a two-star getaway paid $70
+     where the check expects $60. Not looked into.
+  6. One judge each: day streets that look less like any low-poly city; the walking keys at once
+     instead of after 3.5 s; the first job's red car marked.
+  7. Not explained, not seen again: gates 9/10 once in run 10 (the steering check). `smoke.py` now
+     prints speed, place, health and cars near, so a next miss explains itself.
+- The 8 s and the 6.5 m are first guesses. Smashing pays $30 a minute after fines by a script that
+  drives badly; whether that is too little is for a person to say.
+- The ASUS was over its load limit all run: nothing was built into a browser or tested on it.
+- Branch `probe/runner` holds the measuring workflow and the judge kit and is not for main. A commit
+  message there with `[only: kit ]` runs the kit job alone.
+- Left from before: R6-7, R5-11.
+- Next command: `/hone neon-coast` (run 12 starts from what Juwen, or anyone he sends the link to, says
+  about 2.2).
+
+## Sync (run 11, 2026-11-26)
+
+- GitHub repo: [PR 21](https://github.com/juw12/neon-coast/pull/21) squash-merged, main `26d42e5`; release
+  [v2.2.0](https://github.com/juw12/neon-coast/releases/tag/v2.2.0) with `NeonCoast.html` (956,826 bytes).
+  Merged green: suites run 45861927086 (head `a6f459f`, the game and the tests) and run 45867897044 (head
+  `72718cb`, the same build plus the docs): every job of the commit on the Macs, and `chase.py` on the
+  slow computer. Not green, and not required: `thrill.py` and `havoc.py` on the slow computer (still
+  running at the merge in the second run, red in the first), and touch, chase, smoke and gates of
+  v2.1.0, which fail the new checks by design.
+- Suites runs of this pull request: 45848321047 and 45860532168 (both cancelled by a newer push),
+  45861927086, 45867897044.
+- Measuring runs on `probe/runner`: 45831404287 (step one alone), 45831598538 (cancelled), 45848411827
+  (the release build: kit, played jobs, bench, economy), 45861963703 (the kit again, for the pictures).
+- Live check: https://juw12.github.io/neon-coast/NeonCoast.html has the same bytes as the build on main
+  (956,826 bytes, sha256 `5c82f92c`) and `sw.js` names the cache `neon-coast-2.2.0` (read over HTTP). The
+  live page was not opened in a browser this run.
+- Profile README: unchanged.
+- Portfolio: catalog `juw12/projects` unchanged.
+- Landing page: `juw12/juw12.github.io` [PR 8](https://github.com/juw12/juw12.github.io/pull/8), `52823ab`;
+  https://juw12.github.io/p/neon-coast/ shows SECOND CAR / 02.2 and two 2.2 items above the 2.1 ones
+  (read over HTTP).
+- Obsidian: a line in `journal/2026-11-27.md`, saved through Cairn (in the vault; its GitHub copy follows
+  with Cairn's own sync).
+- Not done: nothing run on the ASUS; no person has played 2.2; the four-versions gate (`platforms.py`)
+  and Featured (`featured.py`), as in runs 8 to 10.
