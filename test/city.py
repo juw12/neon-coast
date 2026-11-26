@@ -326,19 +326,6 @@ def run():
               offer["name"] == "Paper Round" and offer["reward"] == 550 and offer["steps"] == 4 and offer["foot"], json.dumps(offer))
         marker = page.evaluate("() => NEON.mission.startMarker.text")
         check("the Paper Round beam is labelled ON FOOT", "ON FOOT" in marker, marker)
-        # PROBE ONLY: the beam is moved to the corner that has a ramp just inside 45 m (NEON_FOOT_CORNER=ramp),
-        # or to the corner furthest from every ramp (NEON_FOOT_CORNER=far)
-        if os.environ.get('NEON_FOOT_CORNER'):
-            print('forced corner: ' + json.dumps(page.evaluate("""(want) => { const n = NEON; let best = null;
-                for (let i = 1; i <= 8; i++) for (let j = 1; j <= 8; j++) { const b = n.blocks[i][j];
-                    if (!b || b.type === 'park') continue;
-                    const at = [b.x0 + 2.4, b.z0 + 2.4];
-                    const d = Math.min(...n.ramps.map((r) => Math.hypot(r.x - at[0], r.z - at[1])));
-                    if (want === 'ramp' ? (d < 45 && (!best || d > best.d)) : (!best || d > best.d)) best = { at, d, i, j };
-                }
-                n.mission.offer.at = best.at; n.mission.startMarker.x = best.at[0]; n.mission.startMarker.z = best.at[1];
-                return Object.assign(best, { told: n.save.havocTold, line: document.getElementById('hint').textContent.slice(0, 30),
-                    shown: document.getElementById('hint').classList.contains('show') }); }""", os.environ['NEON_FOOT_CORNER'])), flush=True)
         # arrive by car (1.7): the round does not start from the driver's seat, and the hint says why.
         # The player first stands beside the car for a moment, as someone who walked to it. Since the new game of
         # check 10 they had not left the spot where the game starts, so the first-timer's walking keys were still
