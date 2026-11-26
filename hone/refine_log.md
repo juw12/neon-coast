@@ -1075,7 +1075,7 @@ Goal beyond the goal, unchanged: a stranger opens one link, knows what to do, an
 - [x] R10-2 Further rounds while a round gains 0.3 and wins its pair (at most 5)
       stop: session limit, after one round. Round 16 gained 0.15, so by the rule no further round
       was owed on gain either
-- [ ] R10-3 Sync: PR, release if the game changed, live check, landing page, log, memory
+- [x] R10-3 Sync: PR, release if the game changed, live check, landing page, log, memory
 
 ### Assumptions (run 10)
 
@@ -1174,3 +1174,51 @@ Read plainly:
   (the shipped build), and its score to beat by 0.3 is 8.73.
 - Assumed: one round only. The session that ran it is at its limit; further rounds start from the
   handoff below.
+
+## Handoff (run 10)
+
+- Stopped: session limit, after one round (round 16). Best sheet for the next pair: `hone/judge/v13.md`
+  (release 2.1), council mean 8.73 under rubric v1; a next candidate needs 9.03 and a won pair.
+- First thing next run: `.github/workflows/suites.yml` still compares with tag `v2.0.1`; change it to
+  `v2.1.0` with the first game change, or its "chase (v2.0.1)" job stays red on purpose for no reason.
+- The judges' open fixes, in the order they were named: (1) people other than the owner play it (the
+  loop cannot do this; one link to send: https://juw12.github.io/neon-coast/); (2) leaving a burning car
+  should be survivable: every lost Heat Wave try ends shot on foot within seconds with three police cars
+  inside 10 m (ideas not tried: officers hold fire for a moment after a bail-out, or a parked car within
+  reach); (3) fewer touch buttons at once on a phone; (4) the title's Enter shortcut starts the courier
+  shift before any first job.
+- Not explained: gates 9/10 once on the release build (G3, "A steers left: heading change 0.04 rad");
+  the FIRE check of `chase.py` failing 3 of 6 in one red run of `c48ac03`. Neither came back. If either
+  does, read the run before changing a limit.
+- Not measured: four and five stars with the new rest times (7 s, 4 s); the one-name-at-a-time rule on a
+  phone has no check; `test/drive.py` neither runs nor takes another car after a bail-out, so the
+  bail-out's worth to a person is unknown.
+- The ASUS was over its load limit all run: nothing was built into a browser or tested on it. Every
+  browser result of run 10 is from GitHub's Macs or the slow GitHub Windows computer.
+- Branch `probe/runner` holds the measuring workflow and the judge kit and is not for main.
+- Left from before: R9-10, R6-7, R5-11.
+- Next command: `/hone neon-coast` (run 11 starts from what Juwen, or anyone he sends the link to, says
+  about 2.1).
+
+## Sync (run 10, 2026-11-26)
+
+- GitHub repo: [PR 19](https://github.com/juw12/neon-coast/pull/19) squash-merged, main `432d432`; release
+  [v2.1.0](https://github.com/juw12/neon-coast/releases/tag/v2.1.0) with `NeonCoast.html` (954,390 bytes).
+  Merged green: suites run 45793636283 (head `a9b53d5`, the game) and run 45807657266 (head `ce3211f`,
+  the same build plus the docs). Not green, and not required, in both: `havoc.py` and `thrill.py` on the
+  slow computer, and the "chase (v2.0.1)" job, which fails the nine new checks by design.
+- Suites runs of this pull request: 45786688000 (red: the hint fault that `touch.py` caught),
+  45793636283, 45807657266.
+- Measuring runs on `probe/runner`: 45776611073, 45779058008 (baseline), 45782717153, 45786730213,
+  45794408686, 45803113639.
+- Live check: https://juw12.github.io/neon-coast/NeonCoast.html has the same bytes as the build on main
+  (954,390 bytes, sha256 `c38223ac`) and `sw.js` names the cache `neon-coast-2.1.0` (read over HTTP). The
+  live page was not opened in a browser this run.
+- Profile README: unchanged.
+- Portfolio: catalog `juw12/projects` unchanged.
+- Landing page: `juw12/juw12.github.io` [PR 7](https://github.com/juw12/juw12.github.io/pull/7), `b38bb92`;
+  https://juw12.github.io/p/neon-coast/ shows WAY OUT / 02.1 and two 2.1 items above the 2.0.1 ones
+  (read over HTTP).
+- Obsidian: a line in `journal/2026-11-26.md`, saved through Cairn.
+- Not done: nothing run on the ASUS; no person has played 2.1; the four-versions gate (`platforms.py`)
+  and Featured (`featured.py`), as in runs 8 and 9.
