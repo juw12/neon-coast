@@ -550,6 +550,10 @@ const HORN_HZ = { sedan: 370, taxi: 415, sports: 494, muscle: 311, pickup: 277, 
 let honkCount = 0;           // horns played so far (read by the checks)
 let gameClock = 0;           // seconds of play, advanced by the main loop
 
+const RAM_REST = [0, 0, 0, 10, 7, 4];   // s after a police ram in which no police car rams again, by stars
+const FUSE = 3.6;            // s a car burns before it blows up
+const FUSE_DRIVER = 5.5;     // the same with the player at the wheel: time to read the warning and get out
+const FUSE_RUN = 2.6;        // s left at least after the player has got out
 const PURSUIT_CLOSE = 4;     // m/s: how much faster than the player's car a two-star cruiser arrives
 const PURSUIT_GAP = 8;       // m between car centres at which it has slowed to that (bumpers meet at about 5)
 const PURSUIT_BRAKE = 18;    // m/s2 of the 30 its brakes can do: it starts to slow down about 60 m out
@@ -581,7 +585,10 @@ function aiDrive(v, dt) {
       tz = a.cz;
       want = a.want;
     }
-    if (wanted.stars === 2 && player.car) {
+    if ((wanted.stars <= 2 || wanted.ramRest > 0) && player.car) {
+      // Since 2.1 this also holds at one star (before, a one-star cruiser came in at full speed and hit harder
+      // than a two-star one), and from three stars for RAM_REST seconds after any police car has hit the
+      // player's car: they ram one at a time, and between two rams they sit behind.
       // two stars: pursue, do not ram. The cruiser brakes on its way in, seen or not, so that it reaches the
       // player's car no more than PURSUIT_CLOSE m/s faster than the car drives away from it, and then holds
       // that speed. From three stars it rams at full speed, as before.
@@ -656,6 +663,7 @@ function damageVehicle(v, amount) {
 // Every hit in the CRASH_WINDOW seconds after the first one is the same crash, also the wall the car is
 // shoved into. Crashes without a police car are not capped.
 const CRASH_SHARE = 0.4;
+const CRASH_SHARE_LOW = 0.25;   // up to three stars (since 2.1): four rams wreck a car, not three
 const CRASH_WINDOW = 0.6;
 function impact(v, speed, police) {
   if (speed < 4) return;
@@ -666,8 +674,9 @@ function impact(v, speed, police) {
       v.crashSum = 0;
     }
     if (v.crashT > 0) {
-      amount = Math.min(amount, Math.max(0, v.t.hp * CRASH_SHARE - v.crashSum));
+      amount = Math.min(amount, Math.max(0, v.t.hp * (wanted.stars <= 3 ? CRASH_SHARE_LOW : CRASH_SHARE) - v.crashSum));
       v.crashSum += amount;
+      wanted.took.ram += amount;      // read by the checks: what the police took by ramming
     }
   }
   damageVehicle(v, amount);
@@ -822,7 +831,9 @@ function updateVehicle(v, dt) {
     if (v.hp <= 0) {
       if (v.driver && v.driver !== 'player') ejectDriver(v);
       v.burn += dt;
-      if (v.burn > 3.6) explode(v);
+      // the engine is dead and the car will blow: say so for as long as the player sits in it
+      if (v === player.car && state === 'play') hint('Your car is on fire! Get out: [F]', 0.6);
+      if (v.burn > (v === player.car ? FUSE_DRIVER : FUSE)) explode(v);
     }
   } else {
     v.deadT += dt;
@@ -939,6 +950,7 @@ function collideVehicles() {
               const own = mine === B ? closeA : closeB;
               const theirs = mine === B ? closeB : closeA;
               if (own > 5 && own >= theirs) crime(1.3);
+              if (wanted.stars >= 3) wanted.ramRest = RAM_REST[wanted.stars];
             } else {
               crime(mine.driver ? 0.3 : 0);
             }
@@ -1036,11 +1048,20 @@ function exitCar() {
 
 function tryEnterExit() {
   if (player.car) {
-    if (Math.hypot(player.car.vx, player.car.vz) > 7) {
+    const car = player.car;
+    const speed = Math.hypot(car.vx, car.vz);
+    const burning = car.hp <= 0 && !car.dead;
+    if (speed > 7 && !burning) {
       hint('Slow down to get out');
       return;
     }
     exitCar();
+    if (burning) {
+      // out of a burning car at any speed: a jump from a fast one hurts, and there is time left to run
+      car.burn = Math.min(car.burn, FUSE - FUSE_RUN);
+      if (speed > 7) hurt(Math.min(30, speed * 0.8), 'wasted');
+      if (state === 'play') hint('Run! It is about to blow.', 2.6);
+    }
     return;
   }
   let best = null;

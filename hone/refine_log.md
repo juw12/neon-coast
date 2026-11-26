@@ -1056,3 +1056,32 @@ start spot) and is not fixed.
   is as it was when the suites first passed; the hint line at the start spot is not fixed; the
   four-versions gate (`platforms.py`), Featured (`featured.py`), a fact sheet and a council score, as in
   run 8.
+
+## Run 10 (2026-11-26, "hone it till 10/10", from the shipped 2.0.1 build)
+
+Ask: Juwen said to hone it till 10/10. A 10 is not something this loop can show: the judges read a fact
+sheet and screenshots, and the one person who played (1.8, 1.9) said it was not good enough. So this run
+does what the loop can do: score the shipped build under the frozen rubric (the last scored build was
+1.7), take the judges' fixes, change the game, score again, keep the better one.
+
+Goal beyond the goal, unchanged: a stranger opens one link, knows what to do, and wants to keep going.
+
+### Run queue (run 10)
+
+- [ ] R10-0 Baseline v12 = 2.0.1 under rubric v1. The judge kit on the measuring branch (GitHub Macs):
+      screenshots, gates, radio, touch, and every job played by key presses. Scored twice, mean taken
+- [ ] R10-1 Round 16: the maker's change from the judges' fixes, built, suites, kit, sheet v13, scored
+      twice, blind pair against the best
+- [ ] R10-2 Further rounds while a round gains 0.3 and wins its pair (at most 5)
+- [ ] R10-3 Sync: PR, release if the game changed, live check, landing page, log, memory
+
+### Assumptions (run 10)
+
+- Assumed: "10/10" is the wish, not a number to report. The loop stops at its own rules (rubric v1 frozen,
+  five rounds at most, two rounds without gain); no 10 is claimed.
+- Assumed: the ASUS is over its load limit, so every browser run of this run is on GitHub's Macs. The
+  judge kit therefore reads a different computer than the sheets up to v11 (the ASUS has no graphics
+  card). The baseline is taken again here, on the same computers as the candidates, so the comparison
+  inside this run is like with like; against v11 and earlier it is not.
+- Assumed: the fact sheet may say more of the truth without the rubric changing: from v12 it says that the
+  owner played 1.8 and 1.9 and found them not good enough, and that the suites run on GitHub's Macs.

@@ -641,7 +641,7 @@ function checkPerks(quiet) {
 }
 
 // ---------- wanted level ----------
-const wanted = { pts: 0, stars: 0, evade: 0, bust: 0, spawnT: 0, peak: 0, seenT: 0, callT: 20 };
+const wanted = { pts: 0, stars: 0, evade: 0, bust: 0, spawnT: 0, peak: 0, seenT: 0, callT: 20, ramRest: 0, took: { ram: 0, shot: 0 } };
 const STAR_PTS = [0, 1, 3, 6, 10, 15];
 const COPS_PER_STAR = [0, 1, 2, 3, 4, 6];
 const HOLD_FIRE_SPEED = 8;                       // m/s: at two stars officers do not shoot at a car faster than this
@@ -821,6 +821,7 @@ function updateHeli(dt) {
 
 function updateWanted(dt) {
   const [px, pz] = focus();
+  wanted.ramRest = Math.max(0, wanted.ramRest - dt);
   const fromAbove = updateHeli(dt);
   if (wanted.stars === 0) {
     wanted.pts = Math.max(0, wanted.pts - dt * 0.03);
@@ -865,8 +866,10 @@ function updateWanted(dt) {
         const ez = pz + (hit ? 0 : rand(-2.5, 2.5));
         tracer(v.x, 1.4, v.z, ex, 1.1, ez);
         sfx.shot(clamp(1 - d / 50, 0.15, 0.6));
-        if (hit && player.car) damageVehicle(player.car, 6);
-        else if (hit) hurt(7, 'wasted');
+        if (hit && player.car) {
+          damageVehicle(player.car, 6);
+          wanted.took.shot += 6;
+        } else if (hit) hurt(7, 'wasted');
       }
     }
   }
