@@ -361,6 +361,11 @@ CHAIN_JS = """() => new Promise(done => {""" + TOOLS + """
             out.blasts = (n.save.smashed || 0) - smashed0;
             out.card = card();
             out.lost = c.t.hp - c.hp;
+            // the blast brought a star. The suite rests 5 s after this with the car standing, and nothing takes police
+            // cars off the road in that time: one that stops beside the car makes an arrest in 2.4 s, the game takes
+            // the player out of the car, and every case after this one needs the car. So the star goes here.
+            out.stars = n.wanted.stars;
+            n.setWanted(0); n.wanted.pts = 0;
             return done(out);
         }
         requestAnimationFrame(tick);

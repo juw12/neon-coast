@@ -314,7 +314,13 @@ def run():
             p.x = car.x + 2.2; p.z = car.z; n.tryEnterExit();
             const at = n.mission.offer.at; n.player.car.x = at[0]; n.player.car.z = at[1]; n.player.car.vx = n.player.car.vz = 0; }""")
         page.wait_for_timeout(700)
-        refused = page.evaluate("""() => ({ active: NEON.mission.active, car: !!NEON.player.car, hint: document.getElementById('hint').textContent })""")
+        # (the beam stands on the corner of a block picked at random: the line says which, and how far the car is from it)
+        refused = page.evaluate("""() => { const n = NEON, c = n.player.car, m = n.mission.startMarker, at = n.mission.offer.at;
+            const round = (v) => typeof v === 'number' && isFinite(v) ? Math.round(v * 100) / 100 : -1;
+            return { active: n.mission.active, car: !!c, hint: document.getElementById('hint').textContent,
+                shown: document.getElementById('hint').classList.contains('show'), beam: at.map(Math.round),
+                from_beam: round(c && m ? Math.hypot(c.x - m.x, c.z - m.z) : -1), speed: round(c ? Math.abs(c.vf || 0) : -1),
+                ramp: round(Math.min(...(n.ramps || []).map((r) => Math.hypot(r.x - at[0], r.z - at[1])), 9999)) }; }""")
         check("the round does not start from a car, and the hint says it is on foot",
               refused["car"] and not refused["active"] and "on foot" in refused["hint"], json.dumps(refused))
         # step out at the beam: now it starts, and the title card says on foot
@@ -380,7 +386,18 @@ def run():
                 const n = NEON, c = n.player.car, t = n.mission.car;
                 if (!n.mission.active || !c || !t) return;
                 c.x = t.x - Math.sin(t.h) * metres; c.z = t.z - Math.cos(t.h) * metres; c.h = t.h; c.vx = c.vz = 0; c.hp = c.t.hp; }, 30);
-                window.__age0 = n_age(); function n_age() { const t = NEON.mission.tail; return t ? t.age : 0; } }""", metres)
+                window.__age0 = n_age(); function n_age() { const t = NEON.mission.tail; return t ? t.age : 0; }
+                // what the hold saw, frame by frame, for the line a check prints: it decides nothing
+                if (window.__seen) window.__seen.on = false;
+                const seen = window.__seen = { on: true, frames: 0, nearest: 1e9, widest: 0, noCar: 0, inAir: 0, lost: 0, resets: 0, before: 0 };
+                const look = () => { if (!seen.on) return;
+                    const n = NEON, c = n.player.car, t = n.mission.car, tail = n.mission.tail;
+                    seen.frames++;
+                    if (!c) seen.noCar++; else if (c.air) seen.inAir++;
+                    if (c && t) { const gap = Math.hypot(t.x - c.x, t.z - c.z); seen.nearest = Math.min(seen.nearest, gap); seen.widest = Math.max(seen.widest, gap); }
+                    if (tail) { if (tail.lost < seen.before) seen.resets++; seen.before = tail.lost; seen.lost = Math.max(seen.lost, tail.lost); }
+                    requestAnimationFrame(look); };
+                requestAnimationFrame(look); }""", metres)
             try:
                 page.wait_for_function(
                     "(s) => !NEON.mission.active || !NEON.mission.tail || NEON.mission.tail.age - window.__age0 >= s",
@@ -389,8 +406,15 @@ def run():
                 pass          # the checks below read the state and fail on their own terms
             page.wait_for_timeout(200)
             page.evaluate("() => clearInterval(window.__pin)")
-            return page.evaluate("""() => ({ active: NEON.mission.active, money: NEON.save.money,
-                card: document.querySelector('#banner b').textContent + ' / ' + document.querySelector('#banner span').textContent })""")
+            return page.evaluate("""() => { const n = NEON, seen = window.__seen || {}, tail = n.mission.tail, c = n.player.car;
+                const round = (v) => typeof v === 'number' && isFinite(v) ? Math.round(v * 100) / 100 : -1;
+                seen.on = false;
+                return { active: n.mission.active, money: n.save.money,
+                    card: document.querySelector('#banner b').textContent + ' / ' + document.querySelector('#banner span').textContent,
+                    age: round(tail && tail.age), held: round(tail && tail.age - window.__age0), lost: round(tail && tail.lost),
+                    most_lost: round(seen.lost), lost_restarted: seen.resets, nearest: round(seen.nearest), widest: round(seen.widest),
+                    frames: seen.frames, no_car: seen.noCar, in_air: seen.inAir,
+                    ramp: round(c ? Math.min(...(n.ramps || []).map((r) => Math.hypot(r.x - c.x, r.z - c.z)), 9999) : -1) }; }""")
 
         told = start_tail()
         check("Shadow Run is offered: get a car, then tail one, for $700",

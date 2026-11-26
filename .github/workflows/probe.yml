@@ -17,22 +17,30 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: three stars, 2.0.1 then 1.9
+          - name: every Paper Round corner, 2.0.1 then 2.0
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/chase_bench.py NeonCoast.html 3 21 8;python test/chase_bench.py v19.html 3 21 8
-          - name: three stars, 1.9 then 2.0.1
+            run: python test/foot_beam.py NeonCoast.html;python test/foot_beam.py v20.html
+          - name: city three times, 2.0.1 (a)
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/chase_bench.py v19.html 3 21 8;python test/chase_bench.py NeonCoast.html 3 21 8
-          - name: three stars 2.0, two stars 2.0.1 and 1.9
+            run: python test/city.py;python test/city.py;python test/city.py
+          - name: city three times, 2.0.1 (b)
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/chase_bench.py v20.html 3 21 8;python test/chase_bench.py NeonCoast.html 2 21 6;python test/chase_bench.py v19.html 2 21 6
-          - name: the old way, to see the patrol cars
+            run: python test/city.py;python test/city.py;python test/city.py
+          - name: city three times, 2.0.1 (c)
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/chase_bench.py NeonCoast.html 3 21 5 old;python test/chase_bench.py v19.html 3 21 5 old
+            run: python test/city.py;python test/city.py;python test/city.py
+          - name: city three times, 2.0.1 (d)
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            run: python test/city.py;python test/city.py;python test/city.py
+          - name: city three times, 2.0
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            run: cp v20.html NeonCoast.html;python test/city.py;python test/city.py;python test/city.py
     env:
       PYTHONUTF8: "1"
       NEON_CHROME_ARGS: ${{ matrix.args }}
