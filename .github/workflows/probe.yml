@@ -51,6 +51,21 @@ jobs:
             id: drive5c
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             run: python test/drive.py 3 5
+          - name: 2.0.1 with this script, job 5, three runs
+            id: base5
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            html: v2.0.1
+            run: env NEON_HTML=base.html python test/drive.py 3 5
+          - name: 2.0.1 with this script, job 5, three more runs
+            id: base5b
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            html: v2.0.1
+            run: env NEON_HTML=base.html python test/drive.py 3 5
+          - name: 2.0.1 with this script, job 5, another three runs
+            id: base5c
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            html: v2.0.1
+            run: env NEON_HTML=base.html python test/drive.py 3 5
           - name: drive job 6, two runs
             id: drive6
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
@@ -71,6 +86,8 @@ jobs:
         with:
           python-version: "3.13"
       - run: python -m pip install --quiet playwright
+      - if: matrix.html
+        run: curl -sSL -o base.html https://github.com/juw12/neon-coast/releases/download/${{ matrix.html }}/NeonCoast.html && ls -l base.html
       - if: matrix.id == 'kit'
         run: python -m playwright install webkit
       - name: ${{ matrix.name }}
