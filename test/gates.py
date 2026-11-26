@@ -8,10 +8,21 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-# A GitHub Mac draws with its graphics card only in a real window: NEON_WINDOW=1 opens one.
+# NEON_WINDOW=1 opens a real window instead of a headless browser (a GitHub Mac uses its graphics card in both).
 # NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
 WINDOW = os.environ.get("NEON_WINDOW") == "1"
 EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
+# A browser without a window draws no faster than its own frame cap, whatever the graphics card can do (a
+# GitHub Mac: 21 to 28 frames a second capped, 75 to 155 without the cap). NEON_FPS_UNCAPPED=1 measures the
+# frame-rate gate in a browser of its own with the cap off. Only that gate: with the cap off a screenshot
+# can wait 30 s for a frame and time out, so the other gates run in the usual browser.
+FPS_UNCAPPED = os.environ.get("NEON_FPS_UNCAPPED") == "1"
+UNCAP = ["--disable-gpu-vsync", "--disable-frame-rate-limit"]
+FPS_JS = """() => new Promise(done => {
+    let frames = 0; const t0 = performance.now();
+    const tick = () => { frames++; performance.now() - t0 < 3000 ? requestAnimationFrame(tick) : done(frames / 3); };
+    requestAnimationFrame(tick);
+})"""
 
 ROOT = Path(__file__).resolve().parent.parent
 SHOTS = ROOT / "test" / "shots"
@@ -274,11 +285,20 @@ def main():
         gate("G3 core loop", smoke.returncode == 0, f"{passed} checks pass" if not failed else "; ".join(failed)[:300])
 
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(
-            channel="chrome",
-            headless=not WINDOW,
-            args=["--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] + EXTRA_ARGS,
-        )
+        base_args = ["--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] + EXTRA_ARGS
+        uncapped_fps = None
+        if FPS_UNCAPPED:
+            # before the main browser opens, so the two do not draw at the same time
+            fast = pw.chromium.launch(channel="chrome", headless=not WINDOW, args=base_args + UNCAP)
+            fast_page = open_page(fast, 1280, 720)
+            fast_page.click("#btn-new")
+            fast_page.wait_for_timeout(1500)
+            uncapped_fps = (
+                fast_page.evaluate(FPS_JS),
+                fast_page.evaluate("() => NEON.save.quality === 1 && NEON.state === 'play'"),
+            )
+            fast.close()
+        browser = pw.chromium.launch(channel="chrome", headless=not WINDOW, args=base_args)
         page = open_page(browser, 1280, 720)
 
         ok, detail = run_clear_start(page)
@@ -287,15 +307,14 @@ def main():
         ok, detail = run_mouse_look(page)
         gate("G6 mouse look", ok, detail)
 
-        fps = page.evaluate(
-            """() => new Promise(done => {
-                let frames = 0; const t0 = performance.now();
-                const tick = () => { frames++; performance.now() - t0 < 3000 ? requestAnimationFrame(tick) : done(frames / 3); };
-                requestAnimationFrame(tick);
-            })"""
-        )
-        pretty = page.evaluate("() => NEON.save.quality === 1 && NEON.state === 'play'")
-        gate("G7 frame rate", pretty and fps >= 60, f"{fps:.0f} fps at 1280x720, Pretty, in play: {pretty}")
+        if uncapped_fps is None:
+            fps = page.evaluate(FPS_JS)
+            pretty = page.evaluate("() => NEON.save.quality === 1 && NEON.state === 'play'")
+            how = ""
+        else:
+            fps, pretty = uncapped_fps
+            how = ", in a browser of its own without the display's frame cap"
+        gate("G7 frame rate", pretty and fps >= 60, f"{fps:.0f} fps at 1280x720, Pretty, in play: {pretty}{how}")
 
         ok, report = run_jobs(page)
         gate("G4 all jobs", ok, "; ".join(report))

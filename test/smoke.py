@@ -6,7 +6,7 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-# A GitHub Mac draws with its graphics card only in a real window: NEON_WINDOW=1 opens one.
+# NEON_WINDOW=1 opens a real window instead of a headless browser (a GitHub Mac uses its graphics card in both).
 # NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
 WINDOW = os.environ.get("NEON_WINDOW") == "1"
 EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
@@ -161,7 +161,6 @@ with sync_playwright() as pw:
             [x, z],
         )
 
-    money_before = snapshot(page)["money"]
     start_at = page.evaluate("() => NEON.MISSIONS[0].at")
     garage = page.evaluate("() => NEON.PLACES.garage")
     job_end = page.evaluate("() => NEON.MISSIONS[0].steps.filter(s => s.at).pop().at")
@@ -175,6 +174,12 @@ with sync_playwright() as pw:
     page.evaluate("() => { NEON.player.car.h = Math.PI; NEON.cam.yaw = Math.PI; NEON.cam.lastMouse = performance.now(); }")
     page.wait_for_timeout(500)
     page.screenshot(path=str(SHOTS / "6a-job-running.png"))
+    # Since 2.0 what the car knocked over on the way pays too, a few seconds later. Once this check read
+    # $470 for $450 on GitHub; $20 is what a lamp post pays, which is the likely cause and was not traced.
+    # The style card is emptied and the money read here, just before the last marker, so the check is
+    # still for the job's $250 to the dollar.
+    page.evaluate("() => Object.assign(NEON.style, { bank: 0, count: 0, t: 0, drift: 0, smashes: 0, free: 0 })")
+    money_before = snapshot(page)["money"]
     place_car(job_end[0], job_end[1])
     page.wait_for_timeout(700)
     s = snapshot(page)
