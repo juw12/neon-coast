@@ -2,7 +2,7 @@
 
 Until 2.0 a slow frame was one long step of up to 0.05 s: under 20 frames a second the game ran in slow motion,
 and how far a car went before its brakes stopped it depended on the frame rate. Now a long frame is cut into
-steps of about 1/60 s, up to six of them. This suite makes the frames slow itself (it keeps the page busy for
+steps of about 1/60 s, up to six of them, and time a frame could not use is owed to the next. This suite makes the frames slow itself (it keeps the page busy for
 a set time each frame) and reads the game's clock, the steps it took, a car's acceleration and braking, and
 the radio's beat. It needs a computer that draws the game at 40 frames a second or more to begin with.
 
@@ -182,8 +182,8 @@ def run(target):
         check("at about 30 frames a second: two steps a frame, real time",
               lambda: 26 <= half["fps"] <= 31.5 and half["steps"] == 2 and 0.98 <= half["speed"] <= 1.02, brief(half))
         slow = ask(page, PACE_JS, {"ms": 80, "seconds": 4})
-        check("at about 12 frames a second: five steps a frame, and still real time (2.0 ran at 0.6 of it)",
-              lambda: 10.5 <= slow["fps"] <= 12.6 and slow["steps"] == 5 and 0.98 <= slow["speed"] <= 1.02, brief(slow))
+        check("at about 12 frames a second: five or six steps a frame, and still real time (2.0 ran at 0.6 of it)",
+              lambda: 10.5 <= slow["fps"] <= 12.6 and slow["steps"] in (5, 6) and 0.98 <= slow["speed"] <= 1.02, brief(slow))
         crawl = ask(page, PACE_JS, {"ms": 200, "seconds": 4})
         check("at 5 frames a second: six steps a frame and no more, so the game runs at half speed and does not fall behind for ever",
               lambda: 4.5 <= crawl["fps"] <= 5.01 and crawl["steps"] == 6 and 0.095 <= crawl["perFrame"] <= 0.1001 and 0.45 <= crawl["speed"] <= 0.52,
