@@ -31,6 +31,16 @@ def check(name, ok, detail=""):
     print(("PASS  " if ok else "FAIL  ") + name + (("  |  " + str(detail)) if detail else ""))
 
 
+# Getting into a cab. The player is put on the cab's own spot, so no car in the next lane is nearer (F takes the
+# nearest car within 4.2 m), and the cab is not one standing at the job beam (a car that stops in it starts the
+# story job, and then T is refused). One city run in about fifty on GitHub stopped because the shift had not begun.
+BOARD_A_CAB = """() => { const n = NEON, p = n.player, m = n.mission.startMarker;
+    const cab = n.vehicles.find(v => v.type === 'taxi' && !v.dead && v.hp > 0 && !(m && Math.hypot(v.x - m.x, v.z - m.z) < 30));
+    if (!cab) throw new Error('no City Cab on the map');
+    cab.vx = cab.vz = 0; p.x = cab.x; p.z = cab.z; n.tryEnterExit();
+    if (p.car !== cab) throw new Error('the player is not in the cab but in ' + (p.car ? 'a ' + p.car.type : 'no car')); }"""
+
+
 def run():
     problems = []
     with sync_playwright() as pw:
@@ -90,8 +100,7 @@ def run():
         page.keyboard.press("t")
         page.wait_for_timeout(200)
         check("T without a cab is refused", page.evaluate("() => !NEON.cab.on && !NEON.mission.active"))
-        page.evaluate("""() => { const n = NEON, p = n.player; const cab = n.vehicles.find(v => v.type === 'taxi' && !v.dead);
-            cab.vx = cab.vz = 0; p.x = cab.x + 2.2; p.z = cab.z; n.tryEnterExit(); }""")
+        page.evaluate(BOARD_A_CAB)
         page.wait_for_timeout(400)
         page.keyboard.press("t")
         page.wait_for_timeout(600)
@@ -138,16 +147,24 @@ def run():
         check("helicopter leaves when the stars go", page.evaluate("() => !NEON.heli.on && !NEON.heli.mesh.visible"))
 
         # 6. property: refused without the money, E buys on foot, rent builds up and is collected
+        def player_now():
+            # for the line a check prints: one run in fifteen on GitHub failed the next two checks and said nothing
+            return json.dumps(page.evaluate("""() => { const n = NEON, p = n.player, at = n.PROPERTIES[0].at;
+                return { money: n.save.money, props: Object.keys(n.save.props), car: !!p.car, hp: Math.round(p.hp), stars: n.wanted.stars,
+                    from_door: Math.round(Math.hypot(p.x - at[0], p.z - at[1]) * 10) / 10,
+                    hint: document.getElementById('hint').textContent.slice(0, 60),
+                    card: document.querySelector('#banner b').textContent + ' / ' + document.querySelector('#banner span').textContent }; }"""))
+
         page.evaluate("""() => { const n = NEON, p = n.player; if (p.car) { p.car.vx = p.car.vz = 0; n.tryEnterExit(); }
             const at = n.PROPERTIES[0].at; n.addMoney(-n.save.money + 500); p.x = at[0]; p.z = at[1]; }""")
         page.wait_for_timeout(500)
         page.keyboard.press("e")
         page.wait_for_timeout(300)
-        check("property is refused when you cannot pay", page.evaluate("() => NEON.save.props.bungalow === undefined && NEON.save.money === 500"))
+        check("property is refused when you cannot pay", page.evaluate("() => NEON.save.props.bungalow === undefined && NEON.save.money === 500"), player_now())
         page.evaluate("() => NEON.addMoney(2000)")
         page.keyboard.press("e")
         page.wait_for_timeout(400)
-        check("E buys the property on foot", page.evaluate("() => NEON.save.props.bungalow !== undefined && NEON.save.money === 500"))
+        check("E buys the property on foot", page.evaluate("() => NEON.save.props.bungalow !== undefined && NEON.save.money === 500"), player_now())
         # one game hour passes in a real minute: wait, step out, step back in
         page.evaluate("() => { NEON.player.x += 12; }")
         page.wait_for_timeout(6000)
@@ -194,12 +211,14 @@ def run():
               after_ride["t"] == 0 and after_ride["hp"] == 100 and after_ride["visible"] and not after_ride["car"], json.dumps(after_ride))
 
         # 6d. a cab will not pick up while the police are after you; it does once they are gone
-        page.evaluate("""() => { const n = NEON, p = n.player; const cab = n.vehicles.find(v => v.type === 'taxi' && !v.dead);
-            cab.vx = cab.vz = 0; p.x = cab.x + 2.2; p.z = cab.z; n.tryEnterExit(); }""")
+        page.evaluate(BOARD_A_CAB)
         page.wait_for_timeout(400)
         page.keyboard.press("t")
         page.wait_for_timeout(4200)
-        page.evaluate("""() => { const n = NEON, c = n.player.car, at = n.mission.def.steps[0].at;
+        page.evaluate("""() => { const n = NEON, c = n.player.car;
+            if (!n.cab.on || !n.mission.active || !n.mission.def.cab) throw new Error('the cab shift did not start: ' + JSON.stringify({
+                cab: n.cab.on, job: n.mission.active ? n.mission.def.name : '', car: c ? c.type : '', hint: document.getElementById('hint').textContent }));
+            const at = n.mission.def.steps[0].at;
             n.setWanted(1); c.x = at[0]; c.z = at[1]; c.vx = c.vz = 0; }""")
         page.wait_for_timeout(1300)
         hot = page.evaluate("() => ({ step: NEON.mission.step, text: document.getElementById('objective').textContent })")
@@ -319,13 +338,13 @@ def run():
             p.x = car.x + 2.2; p.z = car.z; }""")
         page.wait_for_timeout(300)
         page.evaluate("""() => { const n = NEON, p = n.player;
-            // beside the nearest car again: in those 300 ms it may have driven off (a patrol car is not 'ai'), or a
+            // onto the spot of the nearest car: in those 300 ms it may have driven off (a patrol car is not 'ai'), or a
             // wall may have moved the player out of reach (4.2 m). One run in 17 on GitHub stopped here with no car.
             const car = n.vehicles.filter(v => v.driver !== 'ai' && !v.dead)
               .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
-            p.x = car.x + 2.2; p.z = car.z;
+            p.x = car.x; p.z = car.z;
             n.tryEnterExit();
-            if (!n.player.car) throw new Error('no car within reach of the player: nearest is ' + Math.hypot(car.x - p.x, car.z - p.z).toFixed(1) + ' m');
+            if (n.player.car !== car) throw new Error('the player is not in the car they stood beside');
             const at = n.mission.offer.at; n.player.car.x = at[0]; n.player.car.z = at[1]; n.player.car.vx = n.player.car.vz = 0;
             // what the hint line said, frame by frame, for the line the check prints: it decides nothing
             const el = document.getElementById('hint'), start = performance.now();
@@ -463,7 +482,25 @@ def run():
                     most_lost: round(seen.lost), lost_restarted: seen.resets, nearest: round(seen.nearest), widest: round(seen.widest),
                     ended: round(seen.age), far_from: round(seen.zeroAt),
                     moved: round(seen.moved), moved_gap: round(seen.movedGap), moved_lost: round(seen.movedLost), mark_jump: round(seen.jump),
-                    frames: seen.frames, no_car: seen.noCar, in_air: seen.inAir,
+                    frames: seen.frames, no_car: seen.noCar, in_air: seen.inAir, at: c ? [Math.round(c.x), Math.round(c.z)] : null,
+                    // when the game could not place the marked car ("They never showed"): the places it tries from here, and
+                    // how many of them each of its rules turns down (see spawnTail)
+                    places: /never showed/.test(document.querySelector('#banner span').textContent) && c ? (() => {
+                        const CELL = 84, HALF = 430, N = 10, LANE = 3.2, DX = [1, 0, -1, 0], DZ = [0, 1, 0, -1];
+                        const roadC = (i) => -HALF + i * CELL + 10, clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+                        const nodeOf = (x) => clamp(Math.round((x + HALF - 10) / CELL), 0, N);
+                        const count = { tried: 0, off_map: 0, too_near: 0, too_far: 0, car_in_the_way: 0, free: 0, cars: n.vehicles.length };
+                        for (let a = -3; a <= 3; a++) for (let b = -3; b <= 3; b++) for (let d = 0; d < 4; d++) {
+                            const i = clamp(nodeOf(c.x) + a, 0, N), j = clamp(nodeOf(c.z) + b, 0, N), ni = i + DX[d], nj = j + DZ[d], rd = (d + 1) & 3;
+                            count.tried++;
+                            if (ni < 0 || nj < 0 || ni > N || nj > N) { count.off_map++; continue; }
+                            const x = roadC(i) + DX[d] * CELL / 2 + DX[rd] * LANE, z = roadC(j) + DZ[d] * CELL / 2 + DZ[rd] * LANE;
+                            const gap = Math.hypot(x - c.x, z - c.z);
+                            if (gap < 26) { count.too_near++; continue; }
+                            if (gap > 130) { count.too_far++; continue; }
+                            if (n.vehicles.some((v) => Math.hypot(v.x - x, v.z - z) < 9)) { count.car_in_the_way++; continue; }
+                            count.free++; }
+                        return count; })() : null,
                     ramp: round(c ? Math.min(...(n.ramps || []).map((r) => Math.hypot(r.x - c.x, r.z - c.z)), 9999) : -1) }; }""")
 
         told = start_tail()
