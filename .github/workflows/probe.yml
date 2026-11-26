@@ -17,29 +17,42 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: pace
-            run: python test/pace.py; python test/pace.py v20.html
-          - name: economy
-            run: python test/economy.py 3 300
-          - name: job 2
-            run: python test/drive.py 2 2
-          - name: Shadow Run
-            run: python test/drive.py 2 tail
-          - name: cost
-            run: python test/probe3.py NeonCoast.html v20.html v19.html
-          - name: gates
-            run: python test/gates.py
-          - name: city
-            run: python test/city.py; python test/city.py
-          - name: chase
-            run: python test/chase.py; python test/chase.py
-          - name: radio
-            run: python test/radio.py; python test/radio.py
-          - name: touch
-            run: python -m playwright install webkit; python test/touch.py
+          - name: bare
+            args: ""
+            window: ""
+            run: python test/touch.py;python test/smoke.py;python test/smoke.py;python test/gates.py
+          - name: novsync
+            args: "--disable-gpu-vsync"
+            window: ""
+            run: python test/touch.py;python test/smoke.py;python test/smoke.py;python test/gates.py
+          - name: nolimit
+            args: "--disable-frame-rate-limit"
+            window: ""
+            run: python test/touch.py;python test/smoke.py;python test/smoke.py;python test/gates.py
+          - name: both
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            run: python test/touch.py;python test/smoke.py;python test/smoke.py;python test/gates.py
+          - name: window
+            args: ""
+            window: "1"
+            run: python test/touch.py;python test/smoke.py;python test/smoke.py;python test/gates.py
+          - name: window both
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: "1"
+            run: python test/touch.py;python test/smoke.py;python test/smoke.py;python test/gates.py
+          - name: pace both
+            args: "--disable-gpu-vsync --disable-frame-rate-limit"
+            window: ""
+            run: python test/pace.py;python test/pace.py;python test/pace.py v20.html
+          - name: pace window
+            args: ""
+            window: "1"
+            run: python test/pace.py;python test/pace.py;python test/pace.py v20.html
     env:
       PYTHONUTF8: "1"
-      NEON_CHROME_ARGS: "--disable-gpu-vsync --disable-frame-rate-limit"
+      NEON_CHROME_ARGS: ${{ matrix.args }}
+      NEON_WINDOW: ${{ matrix.window }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,6 +61,7 @@ jobs:
         with:
           python-version: "3.13"
       - run: python -m pip install --quiet playwright
+      - run: python -m playwright install webkit
       - name: The builds of 1.9 and 2.0, from their tags
         shell: bash
         run: |
@@ -57,6 +71,10 @@ jobs:
         shell: bash
         run: |
           set +e
-          ${{ matrix.run }}
-          echo "exit code of the last command: $?"
+          IFS=';' read -ra COMMANDS <<< "${{ matrix.run }}"
+          for command in "${COMMANDS[@]}"; do
+            echo "=== $command"
+            $command
+            echo "exit code of [$command]: $?"
+          done
           exit 0
