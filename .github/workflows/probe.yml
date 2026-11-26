@@ -17,18 +17,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: bench two stars
+          - name: where the crashes are, three stars
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/chase_bench.py NeonCoast.html 2 21 5;python test/chase_bench.py v19.html 2 21 5;python test/chase_bench.py NeonCoast.html 2 21 5;python test/chase_bench.py v19.html 2 21 5
-          - name: bench three stars
+            run: python test/chase_bench.py NeonCoast.html 3 21 6;python test/chase_bench.py v19.html 3 21 6;python test/chase_bench.py v20.html 3 21 6
+          - name: the same street with no police
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/chase_bench.py NeonCoast.html 3 21 5;python test/chase_bench.py v19.html 3 21 5;python test/chase_bench.py NeonCoast.html 3 21 5;python test/chase_bench.py v19.html 3 21 5
-          - name: frame rate
+            run: python test/chase_bench.py NeonCoast.html 0 21 4;python test/chase_bench.py v19.html 0 21 4;python test/chase_bench.py v20.html 0 21 4
+          - name: where the crashes are, two stars
             args: "--disable-gpu-vsync --disable-frame-rate-limit"
             window: ""
-            run: python test/fps_ab.py NeonCoast.html v19.html;python test/fps_ab.py NeonCoast.html v20.html;python test/fps_ab.py NeonCoast.html v19.html;python test/barrel_rows.py
+            run: python test/chase_bench.py NeonCoast.html 2 21 6;python test/chase_bench.py v19.html 2 21 6;python test/chase_bench.py v20.html 2 21 6
     env:
       PYTHONUTF8: "1"
       NEON_CHROME_ARGS: ${{ matrix.args }}

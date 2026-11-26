@@ -34,6 +34,8 @@ BENCH_JS = """(setup) => new Promise(done => {
     n.setWanted(0); n.wanted.pts = 0; n.setWanted(setup.stars);
     const full = car.t.hp;
     let last = performance.now(), clock = 0, frames = 0, prev = car.hp, crash = 0, shots = 0, crashes = 0, hits = 0, maxStars = 0, lostAt = -1;
+    let speedBefore = 0, headingBefore = 0;
+    const log = [];                  // one entry for every crash: where, how fast, and how far the nearest police car was
     const tick = () => {
         const now = performance.now();
         clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now; frames++;
@@ -44,7 +46,17 @@ BENCH_JS = """(setup) => new Promise(done => {
         let err = want - car.h; while (err > Math.PI) err -= 2 * Math.PI; while (err < -Math.PI) err += 2 * Math.PI;
         n.keys.KeyA = err > 0.03; n.keys.KeyD = err < -0.03;
         const drop = prev - car.hp; prev = car.hp;
-        if (drop > 0.01) { if (drop <= 6.01) { shots += drop; hits++; } else { crash += drop; crashes++; } }
+        if (drop > 0.01) {
+            if (drop <= 6.01) { shots += drop; hits++; }
+            else {
+                crash += drop; crashes++;
+                let near = 999, count = 0;
+                for (const v of n.vehicles) if (v.type === 'police' && v !== car) { count++; near = Math.min(near, Math.hypot(v.x - car.x, v.z - car.z)); }
+                log.push({ t: +clock.toFixed(1), lost: +drop.toFixed(0), x: +car.x.toFixed(1), z: Math.round(car.z), from: +speedBefore.toFixed(1), to: +speed.toFixed(1),
+                    heading: +headingBefore.toFixed(2), police_m: +near.toFixed(1), police: count, others: n.vehicles.length - count - 1 });
+            }
+        }
+        speedBefore = speed; headingBefore = car.h;
         maxStars = Math.max(maxStars, n.wanted.stars);
         if (n.wanted.stars === 0 && lostAt < 0) lostAt = clock;
         const over = !p.car || car.dead || car.hp <= 0 || n.state !== 'play';
@@ -52,7 +64,7 @@ BENCH_JS = """(setup) => new Promise(done => {
             n.keys.KeyW = n.keys.KeyA = n.keys.KeyD = false;
             return done({ wrecked: over, seconds: +clock.toFixed(1), left: +(Math.max(0, car.hp) / full).toFixed(2), crashes,
                 crash: +crash.toFixed(0), shot_hits: hits, shots: +shots.toFixed(0), max_stars: maxStars, end_stars: n.wanted.stars,
-                lost_police_at: lostAt, z: Math.round(car.z), fps: Math.round(frames / Math.max(clock, 0.1)), state: n.state });
+                lost_police_at: lostAt, z: Math.round(car.z), fps: Math.round(frames / Math.max(clock, 0.1)), state: n.state, crash_log: log });
         }
         requestAnimationFrame(tick);
     };
