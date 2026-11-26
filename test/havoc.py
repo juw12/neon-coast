@@ -4,7 +4,7 @@ barrels that go up, stunt ramps, a nitro tank that tricks fill, parked cars that
 hard hits that turn a car round, people thrown by a fast car, and traffic put on the road ahead at speed.
 
 The player's car is placed through the game's test handle (window.NEON) and the game is left to run each case
-itself. Time is counted on the game's own clock (the game never steps more than 0.05 s a frame), so a slow PC
+itself. Time is counted on the game's own clock (the game never moves on more than 0.1 s a frame, 0.05 s before 2.0.1), so a slow PC
 cannot fail it. Run it against an older build to see which rules are new: there they fail.
 
 It proves the rules hold. It does not prove that the game is more fun: only playing it can.
@@ -12,11 +12,17 @@ It proves the rules hold. It does not prove that the game is more fun: only play
     python test/havoc.py                 # NeonCoast.html; one line per check, exit code 0 when all pass
     python test/havoc.py other.html      # another build
 """
+import os
 import json
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+
+# A GitHub Mac draws with its graphics card only in a real window: NEON_WINDOW=1 opens one.
+# NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
+WINDOW = os.environ.get("NEON_WINDOW") == "1"
+EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
 
 ROOT = Path(__file__).resolve().parent.parent
 results = []
@@ -25,7 +31,7 @@ results = []
 TOOLS = """
     const n = NEON, c = n.player.car;
     let last = performance.now(), clock = 0;
-    const step = () => { const now = performance.now(); const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt; return dt; };
+    const step = () => { const now = performance.now(); const dt = Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now; clock += dt; return dt; };
     const empty = (keep) => {
         for (const v of n.vehicles.slice()) if (v !== c && !keep.includes(v)) n.removeVehicle(v);
     };
@@ -676,7 +682,7 @@ FOOT_JS = """(setup) => new Promise(done => {
     const out = { high: 0, minU: 99, maxU: -99 };
     let last = performance.now(), clock = 0;
     const tick = () => {
-        const now = performance.now(); clock += Math.min(0.05, (now - last) / 1000); last = now;
+        const now = performance.now(); clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now;
         for (const key of ['KeyW', 'KeyS', 'KeyA', 'KeyD', 'Space', 'ShiftLeft']) n.keys[key] = key === 'KeyW';
         n.cam.yaw = r.h + (setup.reverse ? Math.PI : 0);
         const u = (p.x - r.x) * r.fx + (p.z - r.z) * r.fz;
@@ -697,7 +703,7 @@ REST_JS = """(seconds) => new Promise(done => {
     let last = performance.now(), clock = 0;
     const tick = () => {
         const now = performance.now();
-        clock += Math.min(0.05, (now - last) / 1000); last = now;
+        clock += Math.min(NEON.STEP * NEON.MAX_STEPS || 0.05, (now - last) / 1000); last = now;
         if (NEON.player.car) NEON.player.car.vx = NEON.player.car.vz = 0;
         clock >= seconds ? done(clock) : requestAnimationFrame(tick);
     };
@@ -745,8 +751,8 @@ def brief(value):
 def run(target):
     problems = []
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(channel="chrome", headless=True, args=[
-            "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"])
+        browser = pw.chromium.launch(channel="chrome", headless=not WINDOW, args=[
+            "--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] + EXTRA_ARGS)
         page = browser.new_context(viewport={"width": 1280, "height": 720}).new_page()
         page.on("pageerror", lambda e: problems.append(f"pageerror: {e}"))
         page.on("console", lambda m: problems.append(f"{m.type}: {m.text}") if m.type == "error" else None)

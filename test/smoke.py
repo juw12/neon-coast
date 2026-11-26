@@ -1,9 +1,15 @@
 """Play-test NeonCoast.html in real Chrome: load, start, walk, drive, police, pause."""
+import os
 import json
 import sys
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
+
+# A GitHub Mac draws with its graphics card only in a real window: NEON_WINDOW=1 opens one.
+# NEON_CHROME_ARGS adds flags (the frame-rate gate runs without the 60 Hz cap of the display).
+WINDOW = os.environ.get("NEON_WINDOW") == "1"
+EXTRA_ARGS = os.environ.get("NEON_CHROME_ARGS", "").split()
 
 ROOT = Path(__file__).resolve().parent.parent
 SHOTS = ROOT / "test" / "shots"
@@ -39,8 +45,8 @@ def snapshot(page):
 with sync_playwright() as pw:
     browser = pw.chromium.launch(
         channel="chrome",
-        headless=True,
-        args=["--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
+        headless=not WINDOW,
+        args=["--autoplay-policy=no-user-gesture-required", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] + EXTRA_ARGS,
     )
     page = browser.new_page(viewport={"width": 1280, "height": 720})
     page.on("console", lambda m: problems.append(f"console.{m.type}: {m.text}") if m.type in ("error", "warning") else None)

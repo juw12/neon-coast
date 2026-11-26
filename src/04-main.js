@@ -734,14 +734,14 @@ renderSettings();
 resetSession();
 showScreen('title');
 
-// The game moves in steps of 1/60 s or less, however slowly the screen is drawn. Until 2.0 a slow frame was
+// The game moves in steps of about 1/60 s (never more than 1/48 s), however slowly the screen is drawn. Until 2.0 a slow frame was
 // one long step of up to 0.05 s, so where a cruiser's brakes stopped it depended on the frame rate, and
 // under 20 frames a second the game ran in slow motion. A long frame is now cut into equal steps, up to
 // six: the game keeps real time down to 10 frames a second and only then runs slower. A screen at 60 Hz
 // or more takes one step a frame, as before.
 const STEP = 1 / 60;
 const MAX_STEPS = 6;
-const pace = { steps: 1, simMs: 0 };       // read by the checks: steps in the last frame, time they took
+const pace = { steps: 1, step: 0, simMs: 0 };       // read by the checks: steps in the last frame, how long each was, the time they took
 let lastTime = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
@@ -760,6 +760,7 @@ function frame(now) {
     update(state === 'dead' ? part * 0.4 : part * timeScale(part), part, k === steps);
   }
   pace.steps = steps;
+  pace.step = part;
   pace.simMs += (performance.now() - simStart - pace.simMs) * 0.1;
   renderFrame();
 }
